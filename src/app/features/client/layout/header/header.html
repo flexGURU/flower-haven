@@ -1,14 +1,31 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
   <div class="container mx-auto px-4 py-4">
-    <div class="flex items-center justify-between">
-      <div class="flex items-center">
-        <a routerLink="/" class="flex items-center gap-2 text-2xl font-bold">
-          <img src="assets/fh.png" class="w-20 h-20" alt="Flower Haven Logo" />
+    <div class="flex items-center justify-between flex-wrap">
+      <!-- Logo and Brand -->
+      <div class="flex items-center space-x-2">
+        <a
+          routerLink="/"
+          class="flex items-center gap-2 text-xl sm:text-2xl font-bold"
+        >
+          <img
+            src="assets/fh.png"
+            class="w-14 h-14 sm:w-20 sm:h-20"
+            alt="Flower Haven Logo"
+          />
           <span>Flower Haven</span>
         </a>
       </div>
 
-      <div class="flex-1 max-w-md mx-8">
+      <!-- Mobile Menu Button -->
+      <button
+        class="block sm:hidden text-gray-700 focus:outline-none"
+        (click)="isMobileMenuOpen = !isMobileMenuOpen"
+      >
+        <i class="pi pi-bars text-2xl"></i>
+      </button>
+
+      <!-- Search (centered on larger screens) -->
+      <div class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-3 sm:my-0">
         <div class="relative">
           <input
             type="text"
@@ -27,7 +44,8 @@
         </div>
       </div>
 
-      <div class="flex items-center space-x-4">
+      <!-- Icons (right) -->
+      <div class="flex items-center space-x-3 mt-3 sm:mt-0">
         <button
           pButton
           type="button"
@@ -35,7 +53,6 @@
           class="p-button-text p-button-rounded"
           label="Account"
         ></button>
-
         <button
           pButton
           type="button"
@@ -43,7 +60,6 @@
           class="p-button-text p-button-rounded"
           label="Wishlist"
         ></button>
-
         <button
           pButton
           type="button"
@@ -63,16 +79,19 @@
     </div>
   </div>
 
+  <!-- Nav Section -->
   <nav class="bg-pink-600 text-white">
     <div class="container mx-auto px-4">
-      <div class="flex items-center space-x-8 py-3">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:space-x-8 py-3"
+        [ngClass]="{'hidden': !isMobileMenuOpen, 'flex': isMobileMenuOpen, 'sm:flex': true}"
+      >
         <a
           routerLink="/products"
           class="hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
+          >All Products</a
         >
-          All Products
-        </a>
 
         <div class="relative group">
           <button
@@ -82,7 +101,7 @@
             <i class="pi pi-chevron-down ml-1"></i>
           </button>
           <div
-            class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 min-w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+            class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 min-w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
           >
             <a
               *ngFor="let category of categories"
@@ -98,33 +117,26 @@
           routerLink="/subscriptions"
           class="hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
+          >Subscriptions</a
         >
-          Subscriptions
-        </a>
-
         <a
           routerLink="/gifts"
           class="hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
+          >Gifts</a
         >
-          Gifts
-        </a>
-
         <a
           routerLink="/about"
           class="hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
+          >About</a
         >
-          About
-        </a>
-
         <a
           routerLink="/contact"
           class="hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
+          >Contact</a
         >
-          Contact
-        </a>
       </div>
     </div>
   </nav>
