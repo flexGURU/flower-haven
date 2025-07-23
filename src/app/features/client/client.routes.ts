@@ -1,0 +1,18 @@
+import { Component } from '@angular/core';
+import { Routes } from '@angular/router';
+import { ClientLayout } from './layout/client.layout';
+import { HomeLayoutComponent } from './components/home/layout/layout';
+import { ProductComponent } from './components/products/product_list/product';
+import { ProductDetailComponent } from './components/products/product_detail/product_detail';
+
+export const clientRoutes: Routes = [
+  {
+    path: '',
+    component: ClientLayout,
+    children: [
+      { path: '', component: HomeLayoutComponent },
+      { path: 'products', component: ProductComponent },
+      { path: 'products/:id', component: ProductDetailComponent },
+    ],
+  },
+];

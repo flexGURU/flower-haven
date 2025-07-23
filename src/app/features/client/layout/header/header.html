@@ -1,0 +1,131 @@
+<header class="bg-white shadow-md sticky top-0 z-50">
+  <div class="container mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center">
+        <a routerLink="/" class="flex items-center gap-2 text-2xl font-bold">
+          <img src="assets/fh.png" class="w-20 h-20" alt="Flower Haven Logo" />
+          <span>Flower Haven</span>
+        </a>
+      </div>
+
+      <div class="flex-1 max-w-md mx-8">
+        <div class="relative">
+          <input
+            type="text"
+            pInputText
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="onSearch()"
+            placeholder="Search flowers, gifts..."
+            class="w-full pl-4 pr-12 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
+          />
+          <button
+            (click)="onSearch()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-pink-600"
+          >
+            🔍
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <button
+          pButton
+          type="button"
+          icon="pi pi-user"
+          class="p-button-text p-button-rounded"
+          label="Account"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-heart"
+          class="p-button-text p-button-rounded"
+          label="Wishlist"
+        ></button>
+
+        <button
+          pButton
+          type="button"
+          icon="pi pi-shopping-cart"
+          class="p-button-text p-button-rounded relative"
+          routerLink="/cart"
+        >
+          <p-badge
+            *ngIf="cartItemCount > 0"
+            [value]="cartItemCount.toString()"
+            severity="danger"
+            class="absolute -top-2 -right-2"
+          ></p-badge>
+          Cart
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bg-pink-600 text-white">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center space-x-8 py-3">
+        <a
+          routerLink="/products"
+          class="hover:text-pink-200 transition-colors"
+          routerLinkActive="text-pink-200"
+        >
+          All Products
+        </a>
+
+        <div class="relative group">
+          <button
+            class="hover:text-pink-200 transition-colors flex items-center"
+          >
+            Categories
+            <i class="pi pi-chevron-down ml-1"></i>
+          </button>
+          <div
+            class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 min-w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+          >
+            <a
+              *ngFor="let category of categories"
+              [routerLink]="['/category', category.id]"
+              class="block px-4 py-2 hover:bg-pink-50 hover:text-pink-600"
+            >
+              {{ category.name }}
+            </a>
+          </div>
+        </div>
+
+        <a
+          routerLink="/subscriptions"
+          class="hover:text-pink-200 transition-colors"
+          routerLinkActive="text-pink-200"
+        >
+          Subscriptions
+        </a>
+
+        <a
+          routerLink="/gifts"
+          class="hover:text-pink-200 transition-colors"
+          routerLinkActive="text-pink-200"
+        >
+          Gifts
+        </a>
+
+        <a
+          routerLink="/about"
+          class="hover:text-pink-200 transition-colors"
+          routerLinkActive="text-pink-200"
+        >
+          About
+        </a>
+
+        <a
+          routerLink="/contact"
+          class="hover:text-pink-200 transition-colors"
+          routerLinkActive="text-pink-200"
+        >
+          Contact
+        </a>
+      </div>
+    </div>
+  </nav>
+</header>

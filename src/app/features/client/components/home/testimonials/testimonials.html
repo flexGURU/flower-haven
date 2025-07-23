@@ -1,0 +1,37 @@
+<section class="testimonials py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">
+          What Our Customers Say
+        </h2>
+      </div>
+
+      <p-carousel
+        [value]="testimonials"
+        [numVisible]="3"
+        [numScroll]="1"
+        [circular]="true"
+        [autoplayInterval]="5000"
+        [responsiveOptions]="carouselResponsiveOptions"
+      >
+        <ng-template let-testimonial pTemplate="item">
+          <div class="p-4">
+            <div class="bg-gray-50 p-6 rounded-lg text-center">
+              <div class="mb-4">
+                <i class="pi pi-star-fill text-yellow-400"></i>
+                <i class="pi pi-star-fill text-yellow-400"></i>
+                <i class="pi pi-star-fill text-yellow-400"></i>
+                <i class="pi pi-star-fill text-yellow-400"></i>
+                <i class="pi pi-star-fill text-yellow-400"></i>
+              </div>
+              <p class="text-gray-600 mb-4">"{{ testimonial.text }}"</p>
+              <div class="font-semibold">{{ testimonial.name }}</div>
+              <div class="text-sm text-gray-500">
+                {{ testimonial.location }}
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </p-carousel>
+    </div>
+  </section>

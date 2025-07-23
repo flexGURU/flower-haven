@@ -1,0 +1,159 @@
+<div class="product-list-page py-8">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- Filters Sidebar -->
+      <div class="lg:w-1/4">
+        <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
+          <h3 class="text-lg font-semibold mb-4">Filters</h3>
+
+          <!-- Price Range -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2">Price Range</label>
+            <p-slider
+              [(ngModel)]="priceRange"
+              [range]="true"
+              [min]="0"
+              [max]="500"
+              (onSlideEnd)="applyFilters()"
+            ></p-slider>
+            <div class="flex justify-between text-sm text-gray-600 mt-2">
+              <span>\${{priceRange[0]}}</span>
+              <span>\${{priceRange[1]}}</span>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-2">Categories</label>
+            <div class="space-y-2">
+              <div
+                *ngFor="let category of categories"
+                class="flex items-center"
+              >
+                <p-checkbox
+                  [(ngModel)]="selectedCategories"
+                  [value]="category.id"
+                  (onChange)="applyFilters()"
+                ></p-checkbox>
+                <label class="ml-2 text-sm">{{category.name}}</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Availability -->
+          <div class="mb-6">
+            <div class="flex items-center">
+              <p-checkbox
+                [(ngModel)]="inStockOnly"
+                [binary]="true"
+                (onChange)="applyFilters()"
+              ></p-checkbox>
+              <label class="ml-2 text-sm">In Stock Only</label>
+            </div>
+          </div>
+
+          <button
+            pButton
+            type="button"
+            label="Clear Filters"
+            class="p-button-outlined w-full"
+            (click)="clearFilters()"
+          ></button>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="lg:w-3/4">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{pageTitle}}</h1>
+            <p class="text-gray-600">{{totalProducts}} products found</p>
+          </div>
+
+          <div class="flex items-center gap-4">
+            <label class="text-sm font-medium">Sort by:</label>
+            <p-select
+              [(ngModel)]="sortBy"
+              [options]="sortOptions"
+              optionLabel="label"
+              optionValue="value"
+              (onChange)="applyFilters()"
+              class="w-48"
+            ></p-select>
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div *ngFor="let product of products" class="product-card">
+            <p-card
+              class="h-full hover:shadow-lg transition-shadow duration-300"
+            >
+              <ng-template pTemplate="header">
+                <div class="relative">
+                  <img
+                    [src]="product.image"
+                    [alt]="product.name"
+                    class="w-full h-48 object-cover cursor-pointer"
+                    [routerLink]="['/products', product.id]"
+                  />
+                  <div class="absolute top-2 right-2">
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-heart"
+                      class="p-button-rounded p-button-text p-button-sm bg-white shadow-md"
+                    ></button>
+                  </div>
+                  <div
+                    *ngIf="!product.stock"
+                    class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+                  >
+                    <span class="text-white font-semibold">Out of Stock</span>
+                  </div>
+                </div>
+              </ng-template>
+
+              <div class="p-4">
+                <h3
+                  class="font-semibold text-lg mb-2 cursor-pointer hover:text-pink-600"
+                  [routerLink]="['/products', product.id]"
+                >
+                  {{product.name}}
+                </h3>
+                <p class="text-gray-600 text-sm mb-3 line-clamp-2">
+                  {{product.description}}
+                </p>
+                <div class="flex justify-between items-center">
+                  <span class="text-2xl font-bold text-pink-600"
+                    >\${{product.price}}</span
+                  >
+                  <button
+                    pButton
+                    type="button"
+                    label="Add to Cart"
+                    class="p-button-sm"
+                    [disabled]="!product.stock"
+                    (click)="addToCart(product)"
+                  ></button>
+                </div>
+              </div>
+            </p-card>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+
+        <p-paginator
+          *ngIf="totalProducts > pageSize"
+          [rows]="pageSize"
+          [totalRecords]="totalProducts"
+          [first]="(currentPage - 1) * pageSize"
+          (onPageChange)="onPageChange($event)"
+          [rowsPerPageOptions]="[ 12, 24, 48]"
+        ></p-paginator>
+      </div>
+    </div>
+  </div>
+</div>
