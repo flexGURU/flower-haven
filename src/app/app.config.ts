@@ -6,12 +6,19 @@ import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
 import PurplePreset from './preset';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideAnimationsAsync(), provideZoneChangeDetection({ eventCoalescing: true }), provideRouter(routes), providePrimeNG({ 
-    theme: {
-      preset: PurplePreset,
-      options: {darkModeSelector: '.my-app-dark'}
-    }
-  })]
+  providers: [
+    provideHttpClient(withFetch()),
+    provideAnimationsAsync(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    providePrimeNG({
+      theme: {
+        preset: PurplePreset,
+        options: { darkModeSelector: '.my-app-dark' },
+      },
+    }),
+  ],
 };

@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
-import { Category } from '../../../../shared/models/models';
+import { Category, Product } from '../../../../shared/models/models';
 import { ProductService } from '../../../../shared/services/product.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
@@ -32,13 +32,14 @@ import { ToastModule } from 'primeng/toast';
     ToastModule
 ],
 })
-export class ProductForm {
+export class ProductFormComponent {
   productForm: FormGroup;
   categories: Category[] = [];
   productImages: string[] = [];
-  isEditMode = false;
   productId: string | null = null;
   saving = false;
+  @Input() productData!: Product
+  @Input() isEditMode!: boolean
 
   constructor(
     private fb: FormBuilder,
@@ -56,7 +57,6 @@ export class ProductForm {
       inStock: [true],
       featured: [false],
       active: [true],
-      tags: [[]],
     });
   }
 

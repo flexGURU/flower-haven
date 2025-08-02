@@ -1,261 +1,272 @@
- <div class="product-form">
-      <!-- Page Header -->
-      <div class="flex items-center mb-6">
-        <button 
-          pButton 
-          type="button" 
-          icon="pi pi-arrow-left" 
-          class="p-button-text mr-4"
-          routerLink="/admin/products"
-        ></button>
-        <div>
-          <h1 class="text-3xl font-bold text-gray-800 mb-2">
-            {{isEditMode ? 'Edit Product' : 'Add New Product'}}
-          </h1>
-          <p class="text-gray-600">
-            {{isEditMode ? 'Update product information' : 'Create a new product for your catalog'}}
-          </p>
-        </div>
-      </div>
+<div class="product-form">
+  <!-- Page Header -->
+  <div class="flex items-center mb-6">
+    <button
+      pButton
+      type="button"
+      icon="pi pi-arrow-left"
+      class="p-button-text mr-4"
+      routerLink="/admin/products"
+    ></button>
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">
+        {{isEditMode ? 'Edit Product' : 'Add New Product'}}
+      </h1>
+      <p class="text-gray-600">
+        <!-- {{isEditMode ? 'Update product information' : 'Create a new product for
+        your catalog'}} -->
+      </p>
+    </div>
+  </div>
 
-      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Main Product Info -->
-          <div class="lg:col-span-2 space-y-6">
-            <!-- Basic Information -->
-            <p-card>
-              <ng-template pTemplate="header">
-                <div class="p-4 border-b">
-                  <h3 class="text-lg font-semibold">Basic Information</h3>
-                </div>
-              </ng-template>
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Main Product Info -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Basic Information -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b">
+              <h3 class="text-lg font-semibold">Basic Information</h3>
+            </div>
+          </ng-template>
 
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Product Name *</label>
-                  <input 
-                    type="text" 
-                    pInputText
-                    formControlName="name"
-                    placeholder="Enter product name"
-                    class="w-full"
-                    [class.ng-invalid]="productForm.get('name')?.invalid && productForm.get('name')?.touched"
-                  />
-                  <small 
-                    *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched"
-                    class="text-red-500"
-                  >
-                    Product name is required
-                  </small>
-                </div>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Product Name *</label
+              >
+              <input
+                type="text"
+                pInputText
+                formControlName="name"
+                placeholder="Enter product name"
+                class="w-full"
+                [class.ng-invalid]="productForm.get('name')?.invalid && productForm.get('name')?.touched"
+              />
+              <small
+                *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched"
+                class="text-red-500"
+              >
+                Product name is required
+              </small>
+            </div>
 
-                <div>
-                  <label class="block text-sm font-medium mb-2">Description *</label>
-                  <textarea 
-                    pInputTextarea
-                    formControlName="description"
-                    placeholder="Enter product description"
-                    rows="4"
-                    class="w-full"
-                    [class.ng-invalid]="productForm.get('description')?.invalid && productForm.get('description')?.touched"
-                  ></textarea>
-                  <small 
-                    *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched"
-                    class="text-red-500"
-                  >
-                    Description is required
-                  </small>
-                </div>
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Description *</label
+              >
+              <textarea
+                pInputTextarea
+                formControlName="description"
+                placeholder="Enter product description"
+                rows="4"
+                class="w-full"
+                [class.ng-invalid]="productForm.get('description')?.invalid && productForm.get('description')?.touched"
+              ></textarea>
+              <small
+                *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched"
+                class="text-red-500"
+              >
+                Description is required
+              </small>
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Price *</label>
-                    <p-inputNumber
-                      formControlName="price"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      placeholder="0.00"
-                      class="w-full"
-                    ></p-inputNumber>
-                    <small 
-                      *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched"
-                      class="text-red-500"
-                    >
-                      Price is required
-                    </small>
-                  </div>
-
-                  <div>
-                    <label class="block text-sm font-medium mb-2">Category *</label>
-                    <p-select 
-                      formControlName="categoryId"
-                      [options]="categories"
-                      optionLabel="name"
-                      optionValue="id"
-                      placeholder="Select category"
-                      class="w-full"
-                    ></p-select>
-                    <small 
-                      *ngIf="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched"
-                      class="text-red-500"
-                    >
-                      Category is required
-                    </small>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-sm font-medium mb-2">Tags</label>
-                  <p-chip
-                    formControlName="tags"
-                    placeholder="Add tags (press Enter)"
-                    class="w-full"
-                  ></p-chip>
-                  <small class="text-gray-500">Add relevant tags to help customers find this product</small>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Price *</label>
+                <p-inputNumber
+                  formControlName="price"
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  placeholder="0.00"
+                  class="w-full"
+                ></p-inputNumber>
+                <small
+                  *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched"
+                  class="text-red-500"
+                >
+                  Price is required
+                </small>
               </div>
-            </p-card>
-
-            <!-- Product Images -->
-            <p-card>
-              <ng-template pTemplate="header">
-                <div class="p-4 border-b">
-                  <h3 class="text-lg font-semibold">Product Images</h3>
-                </div>
-              </ng-template>
 
               <div>
-                <p-fileUpload 
-                  mode="advanced"
-                  [multiple]="true"
-                  accept="image/*"
-                  [maxFileSize]="5000000"
-                  (onUpload)="onImageUpload($event)"
-                  (onRemove)="onImageRemove($event)"
-                  [auto]="false"
-                  chooseLabel="Choose Images"
-                  uploadLabel="Upload"
-                  cancelLabel="Cancel"
+                <label class="block text-sm font-medium mb-2">Category *</label>
+                <p-select
+                  formControlName="categoryId"
+                  [options]="categories"
+                  optionLabel="name"
+                  optionValue="id"
+                  placeholder="Select category"
+                  class="w-full"
+                ></p-select>
+                <small
+                  *ngIf="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched"
+                  class="text-red-500"
                 >
-                  <ng-template pTemplate="content">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4" *ngIf="productImages.length > 0">
-                      <div *ngFor="let image of productImages; let i = index" class="relative">
-                        <img [src]="image" class="w-full h-24 object-cover rounded-lg" />
-                        <button 
-                          type="button"
-                          class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                          (click)="removeImage(i)"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </ng-template>
-                </p-fileUpload>
-                <small class="text-gray-500">Upload up to 5 images. First image will be the main product image.</small>
+                  Category is required
+                </small>
               </div>
-            </p-card>
-          </div>
-
-          <!-- Sidebar -->
-          <div class="space-y-6">
-            <!-- Inventory -->
-            <p-card>
-              <ng-template pTemplate="header">
-                <div class="p-4 border-b">
-                  <h3 class="text-lg font-semibold">Inventory</h3>
-                </div>
-              </ng-template>
-
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm font-medium mb-2">Stock Quantity *</label>
-                  <p-inputNumber
-                    formControlName="stockQuantity"
-                    [min]="0"
-                    placeholder="0"
-                    class="w-full"
-                  ></p-inputNumber>
-                  <small 
-                    *ngIf="productForm.get('stockQuantity')?.invalid && productForm.get('stockQuantity')?.touched"
-                    class="text-red-500"
-                  >
-                    Stock quantity is required
-                  </small>
-                </div>
-
-                <div class="flex items-center">
-                  <p-checkbox 
-                    formControlName="inStock"
-                    [binary]="true"
-                    inputId="inStock"
-                  ></p-checkbox>
-                  <label for="inStock" class="ml-2">Available for purchase</label>
-                </div>
-              </div>
-            </p-card>
-
-            <!-- Product Status -->
-            <p-card>
-              <ng-template pTemplate="header">
-                <div class="p-4 border-b">
-                  <h3 class="text-lg font-semibold">Status</h3>
-                </div>
-              </ng-template>
-
-              <div class="space-y-4">
-                <div class="flex items-center">
-                  <p-checkbox 
-                    formControlName="featured"
-                    [binary]="true"
-                    inputId="featured"
-                  ></p-checkbox>
-                  <label for="featured" class="ml-2">Featured product</label>
-                </div>
-
-                <div class="flex items-center">
-                  <p-checkbox 
-                    formControlName="active"
-                    [binary]="true"
-                    inputId="active"
-                  ></p-checkbox>
-                  <label for="active" class="ml-2">Active (visible to customers)</label>
-                </div>
-              </div>
-            </p-card>
-
-            <!-- Actions -->
-            <div class="space-y-3">
-              <button 
-                pButton 
-                type="submit" 
-                [label]="isEditMode ? 'Update Product' : 'Create Product'"
-                class="w-full p-button-lg"
-                [loading]="saving"
-                [disabled]="productForm.invalid"
-              ></button>
-              
-              <button 
-                pButton 
-                type="button" 
-                label="Save as Draft" 
-                class="w-full p-button-outlined"
-                (click)="saveAsDraft()"
-                [loading]="saving"
-              ></button>
-              
-              <button 
-                pButton 
-                type="button" 
-                label="Cancel" 
-                class="w-full p-button-text"
-                routerLink="/admin/products"
-              ></button>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
+        </p-card>
 
-    <p-toast></p-toast>
+        <!-- Product Images -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b">
+              <h3 class="text-lg font-semibold">Product Images</h3>
+            </div>
+          </ng-template>
+
+          <div>
+            <p-fileUpload
+              mode="advanced"
+              [multiple]="true"
+              accept="image/*"
+              [maxFileSize]="5000000"
+              (onUpload)="onImageUpload($event)"
+              (onRemove)="onImageRemove($event)"
+              [auto]="false"
+              chooseLabel="Choose Images"
+              uploadLabel="Upload"
+              cancelLabel="Cancel"
+            >
+              <ng-template pTemplate="content">
+                <div
+                  class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4"
+                  *ngIf="productImages.length > 0"
+                >
+                  <div
+                    *ngFor="let image of productImages; let i = index"
+                    class="relative"
+                  >
+                    <img
+                      [src]="image"
+                      class="w-full h-24 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                      (click)="removeImage(i)"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              </ng-template>
+            </p-fileUpload>
+            <small class="text-gray-500"
+              >Upload up to 5 images. First image will be the main product
+              image.</small
+            >
+          </div>
+        </p-card>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Inventory -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b">
+              <h3 class="text-lg font-semibold">Inventory</h3>
+            </div>
+          </ng-template>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2"
+                >Stock Quantity *</label
+              >
+              <p-inputNumber
+                formControlName="stockQuantity"
+                [min]="0"
+                placeholder="0"
+                class="w-full"
+              ></p-inputNumber>
+              <small
+                *ngIf="productForm.get('stockQuantity')?.invalid && productForm.get('stockQuantity')?.touched"
+                class="text-red-500"
+              >
+                Stock quantity is required
+              </small>
+            </div>
+
+            <div class="flex items-center">
+              <p-checkbox
+                formControlName="inStock"
+                [binary]="true"
+                inputId="inStock"
+              ></p-checkbox>
+              <label for="inStock" class="ml-2">Available for purchase</label>
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Product Status -->
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b">
+              <h3 class="text-lg font-semibold">Status</h3>
+            </div>
+          </ng-template>
+
+          <div class="space-y-4">
+            <div class="flex items-center">
+              <p-checkbox
+                formControlName="featured"
+                [binary]="true"
+                inputId="featured"
+              ></p-checkbox>
+              <label for="featured" class="ml-2">Featured product</label>
+            </div>
+
+            <div class="flex items-center">
+              <p-checkbox
+                formControlName="active"
+                [binary]="true"
+                inputId="active"
+              ></p-checkbox>
+              <label for="active" class="ml-2"
+                >Active (visible to customers)</label
+              >
+            </div>
+          </div>
+        </p-card>
+
+        <!-- Actions -->
+        <div class="space-y-3">
+          <button
+            pButton
+            type="submit"
+            [label]="isEditMode ? 'Update Product' : 'Create Product'"
+            class="w-full p-button-lg"
+            [loading]="saving"
+            [disabled]="productForm.invalid"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            label="Save as Draft"
+            class="w-full p-button-outlined"
+            (click)="saveAsDraft()"
+            [loading]="saving"
+          ></button>
+
+          <button
+            pButton
+            type="button"
+            label="Cancel"
+            class="w-full p-button-text"
+            routerLink="/admin/products"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<p-toast></p-toast>

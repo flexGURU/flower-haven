@@ -14,7 +14,8 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
-import { ProductForm } from "../product-form/product-form";
+import { ProductFormComponent } from '../product-form/product-form';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-product-management',
@@ -25,15 +26,15 @@ import { ProductForm } from "../product-form/product-form";
     FormsModule,
     TableModule,
     BadgeModule,
-    RouterLink,
+DialogModule,
     ToastModule,
     ConfirmDialog,
     CommonModule,
     ButtonModule,
     PaginatorModule,
     InputTextModule,
-    ProductForm
-],
+    ProductFormComponent,
+  ],
   providers: [ConfirmationService, MessageService],
 })
 export class ProductManagement {
@@ -41,8 +42,7 @@ export class ProductManagement {
   filteredProducts: Product[] = [];
   categories: Category[] = [];
   loading = false;
-  productForm = false
-
+  productForm = false;
 
   // Filters
   searchTerm = '';
@@ -124,8 +124,59 @@ export class ProductManagement {
     console.log('status', status);
   }
 
-  editProduct(product: Product, status: string) {
-    console.log('status', status);
+  
+
+  showProductDetails = false;
+  isEditMode = false;
+  selectedProduct: any = null;
+
+  showProductForm() {
+    this.isEditMode = false;
+    this.selectedProduct = null;
+    this.productForm = true;
+  }
+
+  editProduct(product: any) {
+    this.isEditMode = true;
+    this.selectedProduct = { ...product };
+    this.productForm = true;
+  }
+
+  viewProduct(product: any) {
+    this.selectedProduct = product;
+    this.showProductDetails = true;
+  }
+
+  editProductFromDetails() {
+    this.showProductDetails = false;
+    this.editProduct(this.selectedProduct);
+  }
+
+  onProductSave(productData: any) {
+    // Handle save logic
+    this.productForm = false;
+    // Refresh your products list
+  }
+
+  onFormCancel() {
+    this.productForm = false;
+  }
+
+  onFormClose() {
+    this.selectedProduct = null;
+    this.isEditMode = false;
+  }
+
+  getStockLabel(stock: number): string {
+    if (stock === 0) return 'Out of Stock';
+    if (stock <= 10) return 'Low Stock';
+    return 'In Stock';
+  }
+
+  getStockSeverity(stock: number): "info" | "success" | "warn" | "danger" | "secondary" | "contrast" {
+    if (stock === 0) return 'danger';
+    if (stock <= 10) return 'warn';
+    return 'success';
   }
 
   deleteProduct(productId: string) {}

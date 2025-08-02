@@ -9,7 +9,8 @@
       type="button"
       label="Add New Product"
       icon="pi pi-plus"
-      (click)="productForm=true"
+      class="p-button-primary"
+      (click)="showProductForm()"
     ></button>
   </div>
 
@@ -77,6 +78,7 @@
       [rowsPerPageOptions]="[10, 25, 50]"
       [loading]="loading"
       styleClass="p-datatable-striped"
+      [globalFilterFields]="['name', 'description']"
     >
       <ng-template pTemplate="header">
         <tr>
@@ -84,7 +86,6 @@
           <th pSortableColumn="name">
             Name <p-sortIcon field="name"></p-sortIcon>
           </th>
-
           <th pSortableColumn="price">
             Price (KES) <p-sortIcon field="price"></p-sortIcon>
           </th>
@@ -102,45 +103,60 @@
         <tr>
           <td>
             <img
-              [src]="product.image"
+              [src]="product.image || 'assets/images/no-image.png'"
               [alt]="product.name"
-              class="w-12 h-12 object-cover rounded-lg"
+              class="w-12 h-12 object-cover rounded-lg border"
             />
           </td>
           <td>
             <div>
-              <p class="font-medium">{{product.name}}</p>
+              <p class="font-medium text-gray-900">{{ product.name }}</p>
               <p class="text-sm text-gray-500 truncate max-w-xs">
-                {{product.description}}
+                {{ product.description }}
               </p>
             </div>
           </td>
-          <td class="font-semibold">{{product.price}}</td>
-          <td>
-            {{product.stock}}
-            <span>
-              <p-badge [severity]="getStockClass(product.stock)"></p-badge
-            ></span>
+          <td class="font-semibold text-gray-900">
+            {{ product.price | currency:'KES':'symbol':'1.2-2' }}
           </td>
-
-          <td>{{product.createdAt | date:'short'}}</td>
           <td>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <span class="font-medium">{{ product.stock }}</span>
+              <p-badge
+                [value]="getStockLabel(product.stock)"
+                [severity]="getStockSeverity(product.stock)"
+              ></p-badge>
+            </div>
+          </td>
+          <td class="text-gray-600">{{ product.createdAt | date:'short' }}</td>
+          <td>
+            <div class="flex gap-1">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm p-button-secondary"
+                (click)="viewProduct(product)"
+                pTooltip="View Details"
+                tooltipPosition="top"
+              ></button>
               <button
                 pButton
                 type="button"
                 icon="pi pi-pencil"
-                class="p-button-text p-button-sm"
-                (click)="productForm=true"
+                class="p-button-text p-button-sm p-button-info"
+                (click)="editProduct(product)"
                 pTooltip="Edit Product"
+                tooltipPosition="top"
               ></button>
               <button
                 pButton
                 type="button"
                 icon="pi pi-trash"
-                class="p-button-text p-button-danger p-button-sm"
+                class="p-button-text p-button-sm p-button-danger"
                 (click)="confirmDelete(product)"
                 pTooltip="Delete Product"
+                tooltipPosition="top"
               ></button>
             </div>
           </td>
@@ -149,20 +165,156 @@
 
       <ng-template pTemplate="emptymessage">
         <tr>
-          <td colspan="8" class="text-center py-8">
+          <td colspan="6" class="text-center py-12">
             <div class="text-gray-500">
-              <i class="pi pi-box text-4xl mb-4 block"></i>
-              <p>No products found</p>
+              <i class="pi pi-box text-5xl mb-4 block text-gray-300"></i>
+              <p class="text-lg font-medium mb-2">No products found</p>
+              <p class="text-sm">
+                Try adjusting your search criteria or add a new product
+              </p>
             </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="6" class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+            <p class="mt-2 text-gray-600">Loading products...</p>
           </td>
         </tr>
       </ng-template>
     </p-table>
   </div>
 </div>
-@if (productForm) {
-<app-product-form />
-}
 
-<p-confirmDialog></p-confirmDialog>
-<p-toast></p-toast>
+<!-- Product Form Dialog/Popup -->
+<p-dialog
+  [(visible)]="productForm"
+  [header]="isEditMode ? 'Edit Product' : 'Add New Product'"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '800px' }"
+  [baseZIndex]="10000"
+  styleClass="product-form-dialog"
+  (onHide)="onFormClose()"
+>
+  <ng-template pTemplate="content">
+    <div class="product-form-container">
+      <app-product-form
+        [productData]="selectedProduct"
+        [isEditMode]="isEditMode"
+        (onSave)="onProductSave($event)"
+        (onCancel)="onFormCancel()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Product Details Dialog -->
+<p-dialog
+  [(visible)]="showProductDetails"
+  header="Product Details"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [baseZIndex]="10000"
+>
+  <ng-template pTemplate="content">
+    <div class="product-details" *ngIf="selectedProduct">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <img
+            [src]="selectedProduct.image || 'assets/images/no-image.png'"
+            [alt]="selectedProduct.name"
+            class="w-full h-64 object-cover rounded-lg border"
+          />
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600"
+              >Product Name</label
+            >
+            <p class="text-lg font-semibold text-gray-900">
+              {{ selectedProduct.name }}
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600"
+              >Description</label
+            >
+            <p class="text-gray-800">
+              {{ selectedProduct.description || 'No description available' }}
+            </p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-600"
+                >Price</label
+              >
+              <p class="text-xl font-bold text-green-600">
+                {{ selectedProduct.price | currency:'KES':'symbol':'1.2-2' }}
+              </p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-600"
+                >Stock</label
+              >
+              <div class="flex items-center gap-2">
+                <span class="text-lg font-semibold"
+                  >{{ selectedProduct.stock }}</span
+                >
+                <p-badge
+                  [value]="getStockLabel(selectedProduct.stock)"
+                  [severity]="getStockSeverity(selectedProduct.stock)"
+                ></p-badge>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600"
+              >Created Date</label
+            >
+            <p class="text-gray-800">
+              {{ selectedProduct.createdAt | date:'full' }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <button
+        pButton
+        type="button"
+        label="Edit"
+        icon="pi pi-pencil"
+        class="p-button-primary"
+        (click)="editProductFromDetails()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Close"
+        icon="pi pi-times"
+        class="p-button-outlined"
+        (click)="showProductDetails = false"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog
+  [style]="{ width: '450px' }"
+  [baseZIndex]="10000"
+></p-confirmDialog>
+
+<!-- Toast Messages -->
+<p-toast [baseZIndex]="20000" position="top-right"></p-toast>
