@@ -1,0 +1,40 @@
+<div class="bg-white shadow flex items-center justify-between px-10 md:px-20">
+  <!-- Logo Section -->
+  <div class="px-6 py-4 flex items-center">
+    <div>
+      <img
+        src="assets/fh.png"
+        class="w-14 h-14 sm:w-20 sm:h-20"
+        alt="Flower Haven Logo"
+      />
+    </div>
+
+    <div class="ml-3">
+      <span class="">Admin Floral Haven </span>
+
+      <div class="text_3xl text-pink-600">Welcome Back </div>
+    </div>
+  </div>
+
+  <!-- Logout Button -->
+  <div class="hidden md:block">
+    <button
+      pButton
+      type="button"
+      label="Logout"
+      icon="pi pi-sign-out"
+      class="p-button-danger bg-red-500"
+      (click)="logOut()"
+    ></button>
+  </div>
+  <div class="md:hidden">
+    <button
+      pButton
+      type="button"
+      label=""
+      icon="pi pi-sign-out"
+      class="p-button-danger"
+      (click)="logOut()"
+    ></button>
+  </div>
+</div>

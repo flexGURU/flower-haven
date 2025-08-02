@@ -15,7 +15,7 @@ export class ProductService {
       image:
         'https://images.unsplash.com/photo-1587300003388-59208cc962cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=60',
       categoryId: '1',
-      stock: 20,
+      stock: 0,
       createdAt: new Date(),
     },
     {
@@ -98,12 +98,12 @@ export class ProductService {
 
   products$ = this.productsSubject.asObservable();
 
-  addProduct(product: Product) {
+  createProduct(product: Product) {
     const products = this.productsSubject.value;
     this.productsSubject.next([...products, product]);
   }
 
-  updateProduct(product: Product) {
+  updateProduct(id: string, product: Product) {
     const products = this.productsSubject.value;
     const index = products.findIndex((p) => p.id === product.id);
     if (index !== -1) {
@@ -199,7 +199,7 @@ export class ProductService {
 
   getProductsByCategory(categoryId: string) {
     return this.productsSubject.value.filter(
-      (product) => product.categoryId === categoryId
+      (product) => product.categoryId === categoryId,
     );
   }
 }
