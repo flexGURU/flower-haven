@@ -18,7 +18,7 @@ export class NavComponent {
       {
         label: 'Category',
         icon: 'pi pi-folder',
-        routerLink: 'category',
+        routerLink: 'categories',
       },
 
       {

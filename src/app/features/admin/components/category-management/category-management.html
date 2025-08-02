@@ -1,0 +1,306 @@
+<div class="category-management">
+  <!-- Page Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 m-2">Category Management</h1>
+      <p class="text-gray-600 ml-2">
+        Manage product categories and their details
+      </p>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Add New Category"
+      icon="pi pi-plus"
+      class="p-button-primary"
+      (click)="showCategoryForm()"
+    ></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Search</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="searchTerm"
+          placeholder="Search categories..."
+          class="w-full"
+          (input)="applyFilters()"
+        />
+      </div>
+
+      <div class="flex items-end">
+        <button
+          pButton
+          type="button"
+          label="Clear Filters"
+          class="p-button-outlined w-full"
+          (click)="clearFilters()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="bg-white rounded-lg shadow-sm px-10">
+    <p-table
+      [value]="filteredCategories"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} categories"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      styleClass="p-datatable-striped"
+      [globalFilterFields]="['name', 'description']"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="name">
+            Category Name <p-sortIcon field="name"></p-sortIcon>
+          </th>
+          <th pSortableColumn="description">
+            Description <p-sortIcon field="description"></p-sortIcon>
+          </th>
+          <th>Product Count</th>
+          <th style="width: 120px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-category>
+        <tr>
+          <td>
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold"
+              >
+                {{ category.name.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <p class="font-medium text-gray-900">{{ category.name }}</p>
+                <p class="text-sm text-gray-500">ID: {{ category.id }}</p>
+              </div>
+            </div>
+          </td>
+          <td>
+            <p
+              class="text-gray-800 max-w-md truncate"
+              [title]="category.description"
+            >
+              {{ category.description || 'No description available' }}
+            </p>
+          </td>
+          <td>
+            <div class="flex items-center gap-2">
+              <span class="font-medium"
+                >{{ getProductCount(category.id) }}</span
+              >
+              <p-badge
+                [value]="getProductCount(category.id).toString()"
+                severity="info"
+              ></p-badge>
+            </div>
+          </td>
+          <td>
+            <div class="flex gap-1">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-text p-button-sm p-button-secondary"
+                (click)="viewCategory(category)"
+                pTooltip="View Details"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-text p-button-sm p-button-info"
+                (click)="editCategory(category)"
+                pTooltip="Edit Category"
+                tooltipPosition="top"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-sm p-button-danger"
+                (click)="confirmDelete(category)"
+                pTooltip="Delete Category"
+                tooltipPosition="top"
+                [disabled]="getProductCount(category.id) > 0"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="4" class="text-center py-12">
+            <div class="text-gray-500">
+              <i class="pi pi-tags text-5xl mb-4 block text-gray-300"></i>
+              <p class="text-lg font-medium mb-2">No categories found</p>
+              <p class="text-sm">
+                Try adjusting your search criteria or add a new category
+              </p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="loadingbody">
+        <tr>
+          <td colspan="4" class="text-center py-8">
+            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+            <p class="mt-2 text-gray-600">Loading categories...</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Category Form Dialog/Popup -->
+<p-dialog
+  [(visible)]="categoryForm"
+  [header]="isEditMode ? 'Edit Category' : 'Add New Category'"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [baseZIndex]="10000"
+  styleClass="category-form-dialog"
+  (onHide)="onFormClose()"
+>
+  <ng-template pTemplate="content">
+    <div class="category-form-container">
+      <app-category-form
+        [categoryData]="selectedCategory"
+        [isEditMode]="isEditMode"
+        (onSave)="onCategorySave($event)"
+        (onCancel)="onFormCancel()"
+      />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Category Details Dialog -->
+<p-dialog
+  [(visible)]="showCategoryDetails"
+  header="Category Details"
+  [modal]="true"
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [baseZIndex]="10000"
+>
+  <ng-template pTemplate="content">
+    @if (selectedCategory) {
+    <div class="category-details">
+      <div class="space-y-6">
+        <!-- Category Header -->
+        <div
+          class="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg"
+        >
+          <div
+            class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl"
+          >
+            {{ selectedCategory.name.charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-900">
+              {{ selectedCategory.name }}
+            </h3>
+            <p class="text-sm text-gray-600">ID: {{ selectedCategory.id }}</p>
+          </div>
+        </div>
+
+        <!-- Category Information -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >Category Name</label
+            >
+            <p class="text-lg font-semibold text-gray-900">
+              {{ selectedCategory.name }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >Description</label
+            >
+            <p class="text-gray-800 leading-relaxed">
+              {{ selectedCategory.description || 'No description available' }}
+            </p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1"
+              >Products in Category</label
+            >
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-semibold text-blue-600"
+                >{{ getProductCount(selectedCategory.id) }}</span
+              >
+              <span class="text-gray-600">products</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Statistics -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-4 bg-blue-50 rounded-lg text-center">
+            <div class="text-2xl font-bold text-blue-600">
+              {{ getProductCount(selectedCategory.id) }}
+            </div>
+            <div class="text-sm text-blue-800">Total Products</div>
+          </div>
+          <div class="p-4 bg-green-50 rounded-lg text-center">
+            <div class="text-2xl font-bold text-green-600">
+              {{ getActiveProductCount(selectedCategory.id) }}
+            </div>
+            <div class="text-sm text-green-800">Active Products</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    }
+  </ng-template>
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end gap-2">
+      <button
+        pButton
+        type="button"
+        label="Edit"
+        icon="pi pi-pencil"
+        class="p-button-primary"
+        (click)="editCategoryFromDetails()"
+      ></button>
+      <button
+        pButton
+        type="button"
+        label="Close"
+        icon="pi pi-times"
+        class="p-button-outlined"
+        (click)="showCategoryDetails = false"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
+
+<!-- Confirmation Dialog -->
+<p-confirmDialog
+  [style]="{ width: '450px' }"
+  [baseZIndex]="10000"
+></p-confirmDialog>
+
+<!-- Toast Messages -->
+<p-toast [baseZIndex]="20000" position="top-right"></p-toast>

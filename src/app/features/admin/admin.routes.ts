@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { AdminLayout } from './layout/admin.layout';
 import { DashboardComponent } from './components/dashboard/dashboard';
 import { ProductManagement } from './components/product_management/product_management';
+import { CategoryComponent } from '../client/components/home/category/category';
+import { CategoryManagement } from './components/category-management/category-management';
 
 export const adminRoutes: Routes = [
   {
@@ -10,11 +12,15 @@ export const adminRoutes: Routes = [
     children: [
       {
         path: 'dashboard',
-        component: DashboardComponent
+        component: DashboardComponent,
       },
-       {
+      {
         path: 'products',
-        component: ProductManagement
+        component: ProductManagement,
+      },
+      {
+        path: 'categories',
+        component: CategoryManagement,
       },
     ],
   },
