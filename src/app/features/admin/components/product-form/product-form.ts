@@ -1,19 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { FormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import {
+  FormGroup,
+  FormBuilder,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { Category, Product } from '../../../../shared/models/models';
-import { ProductService } from '../../../../shared/services/product.service';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CardModule } from 'primeng/card';
-import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ChipModule } from 'primeng/chip';
-import { Select, SelectModule } from "primeng/select";
+import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
+import { BadgeModule } from 'primeng/badge';
+import { TextareaModule } from 'primeng/textarea';
+import { ProductService } from '../../../../shared/services/product.service';
 
 @Component({
   selector: 'app-product-form',
@@ -29,112 +34,144 @@ import { ToastModule } from 'primeng/toast';
     ChipModule,
     SelectModule,
     ReactiveFormsModule,
-    ToastModule
-],
+    ToastModule,
+    BadgeModule,
+    TextareaModule,
+  ],
 })
 export class ProductFormComponent {
-  productForm: FormGroup;
-  categories: Category[] = [];
-  productImages: string[] = [];
-  productId: string | null = null;
-  saving = false;
-  @Input() productData!: Product
-  @Input() isEditMode!: boolean
+  @Input() productData: Product | null = null;
+  @Input() isEditMode: boolean = false;
+  @Output() onSave = new EventEmitter<Product>();
+  @Output() onCancelForm = new EventEmitter<void>();
 
-  constructor(
-    private fb: FormBuilder,
-    private productService: ProductService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private messageService: MessageService,
-  ) {
+  productForm!: FormGroup;
+  saving = false;
+  categories: Category[] = []; // Load your categories here
+  currentImageUrl: string | null = null;
+  selectedImagePreview: string | null = null;
+  selectedImageFile: File | null = null;
+
+  productService = inject(ProductService)
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit() {
+    this.initializeForm();
+    this.loadCategories();
+
+    if (this.isEditMode && this.productData) {
+      this.populateForm();
+    }
+  }
+
+  initializeForm() {
     this.productForm = this.fb.group({
-      name: ['', Validators.required],
-      description: ['', Validators.required],
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      description: ['', [Validators.required, Validators.minLength(10)]],
       price: [0, [Validators.required, Validators.min(0.01)]],
       categoryId: ['', Validators.required],
-      stockQuantity: [0, [Validators.required, Validators.min(0)]],
-      inStock: [true],
-      featured: [false],
-      active: [true],
+      stock: [0, [Validators.required, Validators.min(0)]],
     });
   }
 
-  ngOnInit() {
-    this.loadCategories();
-
-    this.route.params.subscribe((params) => {
-      if (params['id']) {
-        this.isEditMode = true;
-        this.productId = params['id'];
-        this.loadProduct(this.productId ?? '');
-      }
-    });
+  populateForm() {
+    if (this.productData) {
+      this.productForm.patchValue({
+        name: this.productData.name,
+        description: this.productData.description,
+        price: this.productData.price,
+        categoryId: this.productData.categoryId,
+        stock: this.productData.stock,
+      });
+      this.currentImageUrl = this.productData.image;
+    }
   }
 
   loadCategories() {
-    this.productService.getCategories().subscribe((categories) => {
-      this.categories = categories;
-    });
+    this.productService.getCategories().subscribe(reponse => {
+        this.categories = reponse
+    })
   }
 
-  loadProduct(id: string) {}
+  onImageSelect(event: any) {
+    const file = event.files[0];
+    if (file) {
+      this.selectedImageFile = file;
 
-  onImageUpload(event: any) {
-    // Handle image upload
-    for (let file of event.files) {
+      // Create preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.productImages.push(e.target.result);
+        this.selectedImagePreview = e.target.result;
       };
       reader.readAsDataURL(file);
     }
   }
 
-  onImageRemove(event: any) {
-    // Handle image removal
+  removeCurrentImage() {
+    this.currentImageUrl = null;
   }
 
-  removeImage(index: number) {
-    this.productImages.splice(index, 1);
+  getStockStatus(): string {
+    const stockValue = this.productForm.get('stock')?.value || 0;
+    if (stockValue === 0) return 'Out of Stock';
+    if (stockValue <= 10) return 'Low Stock';
+    return 'In Stock';
   }
 
-  onSubmit() {
+  getStockSeverity():
+    | 'info'
+    | 'success'
+    | 'warn'
+    | 'danger'
+    | 'secondary'
+    | 'contrast' {
+    const stockValue = this.productForm.get('stock')?.value || 0;
+    if (stockValue === 0) return 'danger';
+    if (stockValue <= 10) return 'warn';
+    return 'success';
+  }
+
+  async onSubmit() {
     if (this.productForm.valid) {
       this.saving = true;
-      const formData = {
-        ...this.productForm.value,
-        images: this.productImages,
-      };
 
-      const operation = this.isEditMode
-        ? this.productService.updateProduct(this.productId!, formData)
-        : this.productService.createProduct(formData);
+      try {
+        let imageUrl = this.currentImageUrl;
 
-    //   operation.subscribe({
-    //     next: (product) => {
-    //       this.messageService.add({
-    //         severity: 'success',
-    //         summary: 'Success',
-    //         detail: `Product ${this.isEditMode ? 'updated' : 'created'} successfully`,
-    //       });
-    //       this.router.navigate(['/admin/products']);
-    //     },
-    //     error: (error) => {
-    //       console.error('Error saving product:', error);
-    //       this.messageService.add({
-    //         severity: 'error',
-    //         summary: 'Error',
-    //         detail: `Failed to ${this.isEditMode ? 'update' : 'create'} product`,
-    //       });
-    //       this.saving = false;
-    //     },
-    //   });
+        // Upload new image if selected
+        if (this.selectedImageFile) {
+          imageUrl = await this.uploadImage(this.selectedImageFile);
+        }
+
+        const productData: Product = {
+          id: this.isEditMode ? this.productData!.id : '', // Will be generated by backend
+          name: this.productForm.value.name,
+          description: this.productForm.value.description,
+          price: this.productForm.value.price,
+          image: imageUrl || '',
+          categoryId: this.productForm.value.categoryId,
+          stock: this.productForm.value.stock,
+          createdAt: this.isEditMode ? this.productData!.createdAt : new Date(),
+        };
+
+        this.onSave.emit(productData);
+      } catch (error) {
+        console.error('Error saving product:', error);
+        // Handle error
+      } finally {
+        this.saving = false;
+      }
     }
   }
 
-  saveAsDraft() {
-    // Save as draft logic
-    this.onSubmit();
+  async uploadImage(file: File): Promise<string> {
+    // Implement your image upload logic here
+    // Return the uploaded image URL
+    return '';
+  }
+
+  onCancel() {
+    this.onCancelForm.emit();
   }
 }
