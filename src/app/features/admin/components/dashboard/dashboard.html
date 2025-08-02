@@ -1,0 +1,147 @@
+<div class="dashboard">
+  <!-- Page Header -->
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-800 mb-2 ml-3">Dashboard</h1>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <p-card class="stats-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+          <p class="text-2xl font-bold text-gray-900">
+            KES {{stats.totalRevenue | number}}
+          </p>
+        </div>
+        <div class="bg-green-100 p-3 rounded-full">
+          <i class="pi pi-dollar text-green-600 text-xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card class="stats-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total Orders</p>
+          <p class="text-2xl font-bold text-gray-900">{{stats.totalOrders}}</p>
+        </div>
+        <div class="bg-blue-100 p-3 rounded-full">
+          <i class="pi pi-shopping-cart text-blue-600 text-xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card class="stats-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Active Subscriptions</p>
+          <p class="text-2xl font-bold text-gray-900">
+            {{stats.activeSubscriptions}}
+          </p>
+        </div>
+        <div class="bg-purple-100 p-3 rounded-full">
+          <i class="pi pi-calendar text-purple-600 text-xl"></i>
+        </div>
+      </div>
+    </p-card>
+
+    <p-card class="stats-card">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-600">Total products</p>
+          <p class="text-2xl font-bold text-gray-900">
+            {{stats.totalCustomers}}
+          </p>
+        </div>
+        <div class="bg-pink-100 p-3 rounded-full">
+          <i class="pi pi-users text-pink-600 text-xl"></i>
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Revenue Chart -->
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Orders -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Recent Orders</h3>
+          <button
+            pButton
+            type="button"
+            label="View All"
+            class="p-button-text p-button-sm"
+            routerLink="/admin/orders"
+          ></button>
+        </div>
+      </ng-template>
+
+      <p-table [value]="recentOrders" [paginator]="false">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-order>
+          <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.customerName }}</td>
+            <td>KES {{ order.total }}</td>
+            <td>
+              <p-badge
+                [value]="order.status"
+                [severity]="getOrderStatusSeverity(order.status)"
+              ></p-badge>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <!-- Stock Summary -->
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">Stock Summary</h3>
+          <button
+            pButton
+            type="button"
+            label="View Stock"
+            class="p-button-text p-button-sm"
+            routerLink="/admin/products"
+          ></button>
+        </div>
+      </ng-template>
+
+      <p-table [value]="stockSummary" [paginator]="false">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>Status</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-product>
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.quantity }}</td>
+            <td>
+              <p-badge
+                [value]="getStockStatus(product.quantity)"
+                [severity]="getStockSeverity(product.quantity)"
+              ></p-badge>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+</div>
