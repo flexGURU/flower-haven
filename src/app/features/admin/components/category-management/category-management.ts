@@ -23,7 +23,9 @@ import { ButtonModule } from 'primeng/button';
     BadgeModule,
     TableModule,
     FormsModule,
-    PaginatorModule, InputTextModule,ButtonModule
+    PaginatorModule,
+    InputTextModule,
+    ButtonModule,
   ],
   providers: [MessageService, ConfirmationService],
 })
@@ -216,5 +218,12 @@ export class CategoryManagement {
 
   private generateId(): string {
     return Date.now().toString();
+  }
+  getStockSeverity(
+    stock: number,
+  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    if (stock === 0) return 'danger';
+    if (stock <= 10) return 'warn';
+    return 'success';
   }
 }
