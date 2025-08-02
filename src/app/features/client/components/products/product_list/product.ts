@@ -12,6 +12,8 @@ import { SelectModule } from 'primeng/select';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-product',
@@ -27,8 +29,9 @@ import { PaginatorModule } from 'primeng/paginator';
     CardModule,
     ButtonModule,
     RouterLink,
+    ToastModule,
   ],
-  standalone: true, // Assuming this is a standalone component
+  providers: [MessageService],
 })
 export class ProductComponent {
   allProducts: Product[] = []; // Store all products fetched
@@ -55,6 +58,7 @@ export class ProductComponent {
 
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private messageService = inject(MessageService);
   constructor(private route: ActivatedRoute) {}
 
   ngOnInit() {
@@ -85,13 +89,13 @@ export class ProductComponent {
 
     // Filter by Price Range
     filteredProducts = filteredProducts.filter(
-      (p) => p.price >= this.priceRange[0] && p.price <= this.priceRange[1]
+      (p) => p.price >= this.priceRange[0] && p.price <= this.priceRange[1],
     );
 
     // Filter by Categories
     if (this.selectedCategories.length > 0) {
       filteredProducts = filteredProducts.filter(
-        (p) => this.selectedCategories.includes(p.categoryId) // Assuming product has categoryId
+        (p) => this.selectedCategories.includes(p.categoryId), // Assuming product has categoryId
       );
     }
 
@@ -157,6 +161,14 @@ export class ProductComponent {
   }
 
   addToCart(product: Product) {
+    console.log("pp");
+    
     this.cartService.addToCart(product);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Info',
+      detail: `${product.name} added to cart`,
+      life: 3000,
+    });
   }
 }
