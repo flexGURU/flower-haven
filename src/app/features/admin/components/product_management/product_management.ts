@@ -14,6 +14,7 @@ import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
+import { ProductForm } from "../product-form/product-form";
 
 @Component({
   selector: 'app-product-management',
@@ -31,7 +32,8 @@ import { InputTextModule } from 'primeng/inputtext';
     ButtonModule,
     PaginatorModule,
     InputTextModule,
-  ],
+    ProductForm
+],
   providers: [ConfirmationService, MessageService],
 })
 export class ProductManagement {
@@ -39,8 +41,8 @@ export class ProductManagement {
   filteredProducts: Product[] = [];
   categories: Category[] = [];
   loading = false;
+  productForm = false
 
-  productStatus = 'add';
 
   // Filters
   searchTerm = '';

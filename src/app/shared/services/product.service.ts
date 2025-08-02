@@ -98,12 +98,12 @@ export class ProductService {
 
   products$ = this.productsSubject.asObservable();
 
-  addProduct(product: Product) {
+  createProduct(product: Product) {
     const products = this.productsSubject.value;
     this.productsSubject.next([...products, product]);
   }
 
-  updateProduct(product: Product) {
+  updateProduct(id: string, product: Product) {
     const products = this.productsSubject.value;
     const index = products.findIndex((p) => p.id === product.id);
     if (index !== -1) {
@@ -199,7 +199,7 @@ export class ProductService {
 
   getProductsByCategory(categoryId: string) {
     return this.productsSubject.value.filter(
-      (product) => product.categoryId === categoryId
+      (product) => product.categoryId === categoryId,
     );
   }
 }

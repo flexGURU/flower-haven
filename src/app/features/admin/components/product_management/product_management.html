@@ -9,7 +9,7 @@
       type="button"
       label="Add New Product"
       icon="pi pi-plus"
-      (click)="addProduct(productStatus='add')"
+      (click)="productForm=true"
     ></button>
   </div>
 
@@ -131,7 +131,7 @@
                 type="button"
                 icon="pi pi-pencil"
                 class="p-button-text p-button-sm"
-                (click)="editProduct(product, productStatus = 'edit')"
+                (click)="productForm=true"
                 pTooltip="Edit Product"
               ></button>
               <button
@@ -160,6 +160,9 @@
     </p-table>
   </div>
 </div>
+@if (productForm) {
+<app-product-form />
+}
 
 <p-confirmDialog></p-confirmDialog>
 <p-toast></p-toast>
