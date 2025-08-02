@@ -53,28 +53,26 @@
           class="p-button-text p-button-rounded"
           label="Account"
         ></button>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-heart"
-          class="p-button-text p-button-rounded"
-          label="Wishlist"
-        ></button>
-        <button
-          pButton
-          type="button"
-          icon="pi pi-shopping-cart"
-          class="p-button-text p-button-rounded relative"
-          routerLink="/cart"
-        >
+
+        <div class="relative inline-block">
+          <button
+            pButton
+            type="button"
+            icon="pi pi-shopping-cart"
+            class="p-button-text p-button-rounded"
+            routerLink="/cart"
+          >
+            Cart
+          </button>
+
+          @if (cartItemCount > 0) {
           <p-badge
-            *ngIf="cartItemCount > 0"
             [value]="cartItemCount.toString()"
             severity="danger"
-            class="absolute -top-2 -right-2"
+            class="absolute -top-2 -right-1 z-10"
           ></p-badge>
-          Cart
-        </button>
+          }
+        </div>
       </div>
     </div>
   </div>

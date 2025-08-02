@@ -22,7 +22,7 @@ import { ProductService } from '../../../../shared/services/product.service';
 })
 export class HeaderComponent {
   isMobileMenuOpen: boolean = false;
-  cartItemCount: number = 9;
+  cartItemCount = 0;
   cartTotal = 10;
 
   router = inject(Router);
@@ -30,6 +30,7 @@ export class HeaderComponent {
   productsService = inject(ProductService);
 
   searchQuery = '';
+  
 
   onSearch() {
     if (this.searchQuery.trim()) {
@@ -49,11 +50,18 @@ export class HeaderComponent {
 
   ngOnInit() {
     this.loadCategories();
+     this.cartService.cart$.subscribe(cart => {
+      this.cartItemCount = cart.items.reduce((count, item) => count + item.quantity, 0);
+    })
   }
 
   loadCategories() {
     this.productsService.getCategories().subscribe((response) => {
       this.categories = response;
     });
+  }
+
+  cartCount() {
+    this.cartItemCount = this.cartService.getCartItemCount();
   }
 }
