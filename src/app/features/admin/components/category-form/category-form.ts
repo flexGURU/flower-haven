@@ -64,7 +64,7 @@ export class CategoryForm {
         [
           Validators.required,
           Validators.minLength(10),
-          Validators.maxLength(500),
+          Validators.maxLength(200),
         ],
       ],
     });

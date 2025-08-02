@@ -68,14 +68,15 @@
   </div>
 
   <!-- Products Table -->
-  <div class="bg-white rounded-lg shadow-sm px-10">
+  <div class="bg-white rounded-lg shadow-sm px-15">
     <p-table
+      [tableStyle]="{ 'min-width': '60rem !important' }"
       [value]="filteredProducts"
       [paginator]="true"
       [rows]="10"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
-      [rowsPerPageOptions]="[10, 25, 50]"
+      currentPageReportTemplate="{first} out of  {totalRecords}"
+      [rowsPerPageOptions]="[5, 25, 50]"
       [loading]="loading"
       styleClass="p-datatable-striped"
       [globalFilterFields]="['name', 'description']"

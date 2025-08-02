@@ -45,13 +45,14 @@
   </div>
 
   <!-- Categories Table -->
-  <div class="bg-white rounded-lg shadow-sm px-10">
+  <div class="bg-white flex justify-center rounded-lg shadow-sm mb-4 px-15">
     <p-table
+      [tableStyle]="{ 'min-width': '60rem' }"
       [value]="filteredCategories"
       [paginator]="true"
       [rows]="10"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} categories"
+      currentPageReportTemplate="{first} out of {last}"
       [rowsPerPageOptions]="[10, 25, 50]"
       [loading]="loading"
       styleClass="p-datatable-striped"
@@ -62,9 +63,7 @@
           <th pSortableColumn="name">
             Category Name <p-sortIcon field="name"></p-sortIcon>
           </th>
-          <th pSortableColumn="description">
-            Description <p-sortIcon field="description"></p-sortIcon>
-          </th>
+
           <th>Product Count</th>
           <th style="width: 120px">Actions</th>
         </tr>
@@ -74,33 +73,19 @@
         <tr>
           <td>
             <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold"
-              >
-                {{ category.name.charAt(0).toUpperCase() }}
-              </div>
               <div>
                 <p class="font-medium text-gray-900">{{ category.name }}</p>
-                <p class="text-sm text-gray-500">ID: {{ category.id }}</p>
               </div>
             </div>
           </td>
-          <td>
-            <p
-              class="text-gray-800 max-w-md truncate"
-              [title]="category.description"
-            >
-              {{ category.description || 'No description available' }}
-            </p>
-          </td>
+
           <td>
             <div class="flex items-center gap-2">
               <span class="font-medium"
                 >{{ getProductCount(category.id) }}</span
               >
               <p-badge
-                [value]="getProductCount(category.id).toString()"
-                severity="info"
+                [severity]="getStockSeverity(category.productCount)"
               ></p-badge>
             </div>
           </td>

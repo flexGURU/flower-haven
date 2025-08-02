@@ -72,14 +72,14 @@
                 } @if (categoryForm.get('description')?.errors?.['minlength']) {
                 <span>Description must be at least 10 characters long</span>
                 } @if (categoryForm.get('description')?.errors?.['maxlength']) {
-                <span>Description cannot exceed 500 characters</span>
+                <span>Description cannot exceed 200 characters</span>
                 }
               </small>
               } @else {
               <div></div>
               }
               <small class="text-gray-500">
-                {{ categoryForm.get('description')?.value?.length || 0 }}/500
+                {{ categoryForm.get('description')?.value?.length || 0 }}/200
                 characters
               </small>
             </div>
