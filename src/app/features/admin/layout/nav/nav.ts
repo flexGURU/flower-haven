@@ -24,7 +24,7 @@ export class NavComponent {
       {
         label: 'Product list',
         icon: 'pi pi-tags',
-        routerLink: 'catalog',
+        routerLink: 'products',
       },
     ];
   }

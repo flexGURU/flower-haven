@@ -1,0 +1,168 @@
+<div class="product-management">
+  <!-- Page Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">Product Management</h1>
+      <p class="text-gray-600">
+        Manage your flower inventory and product catalog
+      </p>
+    </div>
+    <button
+      pButton
+      type="button"
+      label="Add New Product"
+      icon="pi pi-plus"
+      routerLink="/admin/products/new"
+    ></button>
+  </div>
+
+  <!-- Filters -->
+  <div class="bg-white p-4 rounded-lg shadow-sm mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-2">Search</label>
+        <input
+          type="text"
+          pInputText
+          [(ngModel)]="searchTerm"
+          placeholder="Search products..."
+          class="w-full"
+          (input)="applyFilters()"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Category</label>
+        <p-select
+          [(ngModel)]="selectedCategory"
+          [options]="categoryOptions"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="All Categories"
+          class="w-full"
+          (onChange)="applyFilters()"
+        ></p-select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-2">Stock Status</label>
+        <p-select
+          [(ngModel)]="stockFilter"
+          [options]="stockOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="All Products"
+          class="w-full"
+          (onChange)="applyFilters()"
+        ></p-select>
+      </div>
+
+      <div class="flex items-end">
+        <button
+          pButton
+          type="button"
+          label="Clear Filters"
+          class="p-button-outlined w-full"
+          (click)="clearFilters()"
+        ></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products Table -->
+  <div class="bg-white rounded-lg shadow-sm">
+    <p-table
+      [value]="filteredProducts"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [loading]="loading"
+      styleClass="p-datatable-striped"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 80px">Image</th>
+          <th pSortableColumn="name">
+            Name <p-sortIcon field="name"></p-sortIcon>
+          </th>
+
+          <th pSortableColumn="price">
+            Price (KES) <p-sortIcon field="price"></p-sortIcon>
+          </th>
+          <th pSortableColumn="stockQuantity">
+            Stock <p-sortIcon field="stockQuantity"></p-sortIcon>
+          </th>
+          <th pSortableColumn="createdAt">
+            Created <p-sortIcon field="createdAt"></p-sortIcon>
+          </th>
+          <th style="width: 120px">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-product>
+        <tr>
+          <td>
+            <img
+              [src]="product.image"
+              [alt]="product.name"
+              class="w-12 h-12 object-cover rounded-lg"
+            />
+          </td>
+          <td>
+            <div>
+              <p class="font-medium">{{product.name}}</p>
+              <p class="text-sm text-gray-500 truncate max-w-xs">
+                {{product.description}}
+              </p>
+            </div>
+          </td>
+          <td class="font-semibold">{{product.price}}</td>
+          <td>
+            {{product.stock}}
+            <span>
+              <p-badge [severity]="getStockClass(product.stock)"></p-badge
+            ></span>
+          </td>
+
+          <td>{{product.createdAt | date:'short'}}</td>
+          <td>
+            <div class="flex gap-2">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-text p-button-sm"
+                [routerLink]="['/admin/products', product.id, 'edit']"
+                pTooltip="Edit Product"
+              ></button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger p-button-sm"
+                (click)="confirmDelete(product)"
+                pTooltip="Delete Product"
+              ></button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8" class="text-center py-8">
+            <div class="text-gray-500">
+              <i class="pi pi-box text-4xl mb-4 block"></i>
+              <p>No products found</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>

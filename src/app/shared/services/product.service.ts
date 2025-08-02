@@ -15,7 +15,7 @@ export class ProductService {
       image:
         'https://images.unsplash.com/photo-1587300003388-59208cc962cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=60',
       categoryId: '1',
-      stock: 20,
+      stock: 0,
       createdAt: new Date(),
     },
     {
