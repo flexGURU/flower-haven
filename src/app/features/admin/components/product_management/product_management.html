@@ -2,17 +2,14 @@
   <!-- Page Header -->
   <div class="flex justify-between items-center mb-6">
     <div>
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">Product Management</h1>
-      <p class="text-gray-600">
-        Manage your flower inventory and product catalog
-      </p>
+      <h1 class="text-3xl font-bold text-gray-800 m-2">Product Management</h1>
     </div>
     <button
       pButton
       type="button"
       label="Add New Product"
       icon="pi pi-plus"
-      routerLink="/admin/products/new"
+      (click)="addProduct(productStatus='add')"
     ></button>
   </div>
 
@@ -70,7 +67,7 @@
   </div>
 
   <!-- Products Table -->
-  <div class="bg-white rounded-lg shadow-sm">
+  <div class="bg-white rounded-lg shadow-sm px-10">
     <p-table
       [value]="filteredProducts"
       [paginator]="true"
@@ -134,7 +131,7 @@
                 type="button"
                 icon="pi pi-pencil"
                 class="p-button-text p-button-sm"
-                [routerLink]="['/admin/products', product.id, 'edit']"
+                (click)="editProduct(product, productStatus = 'edit')"
                 pTooltip="Edit Product"
               ></button>
               <button

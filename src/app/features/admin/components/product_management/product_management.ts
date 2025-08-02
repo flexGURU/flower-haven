@@ -12,6 +12,8 @@ import { ProductService } from '../../../../shared/services/product.service';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
+import { PaginatorModule } from 'primeng/paginator';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
   selector: 'app-product-management',
@@ -27,6 +29,8 @@ import { ButtonModule } from 'primeng/button';
     ConfirmDialog,
     CommonModule,
     ButtonModule,
+    PaginatorModule,
+    InputTextModule,
   ],
   providers: [ConfirmationService, MessageService],
 })
@@ -35,6 +39,8 @@ export class ProductManagement {
   filteredProducts: Product[] = [];
   categories: Category[] = [];
   loading = false;
+
+  productStatus = 'add';
 
   // Filters
   searchTerm = '';
@@ -93,7 +99,9 @@ export class ProductManagement {
     this.filteredProducts = [...this.products];
   }
 
-  getStockClass(quantity: number): "info" | "success" | "warn" | "danger" | "secondary" | "contrast"{
+  getStockClass(
+    quantity: number,
+  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     if (quantity === 0) return 'danger';
     if (quantity < 10) return 'warn';
     return 'success';
@@ -108,6 +116,14 @@ export class ProductManagement {
         this.deleteProduct(product.id);
       },
     });
+  }
+
+  addProduct(status: string) {
+    console.log('status', status);
+  }
+
+  editProduct(product: Product, status: string) {
+    console.log('status', status);
   }
 
   deleteProduct(productId: string) {}
