@@ -7,10 +7,76 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (name, email, address, phone_number, refresh_token, password, is_admin)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, name, email, address, phone_number, refresh_token, password, is_admin, is_active, created_at
+`
+
+type CreateUserParams struct {
+	Name         string      `json:"name"`
+	Email        string      `json:"email"`
+	Address      pgtype.Text `json:"address"`
+	PhoneNumber  string      `json:"phone_number"`
+	RefreshToken pgtype.Text `json:"refresh_token"`
+	Password     string      `json:"password"`
+	IsAdmin      bool        `json:"is_admin"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Name,
+		arg.Email,
+		arg.Address,
+		arg.PhoneNumber,
+		arg.RefreshToken,
+		arg.Password,
+		arg.IsAdmin,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.RefreshToken,
+		&i.Password,
+		&i.IsAdmin,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, name, email, address, phone_number, refresh_token, password, is_admin, is_active, created_at FROM users WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.RefreshToken,
+		&i.Password,
+		&i.IsAdmin,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, address, phone_number, refresh_token, password, is_admin, created_at FROM users WHERE id = $1
+SELECT id, name, email, address, phone_number, refresh_token, password, is_admin, is_active, created_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
@@ -25,7 +91,168 @@ func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
 		&i.RefreshToken,
 		&i.Password,
 		&i.IsAdmin,
+		&i.IsActive,
 		&i.CreatedAt,
 	)
 	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, name, email, address, phone_number, refresh_token, password, is_admin, is_active, created_at FROM users
+WHERE 
+    (
+        COALESCE($1, '') = '' 
+        OR LOWER(name) LIKE $1
+        OR LOWER(email) LIKE $1
+        OR LOWER(phone_number) LIKE $1
+    )
+    AND (
+        $2::boolean IS NULL 
+        OR is_active = $2
+    )
+    AND (
+        $3::boolean IS NULL 
+        OR is_admin = $3
+    )
+ORDER BY created_at DESC
+LIMIT $5 OFFSET $4
+`
+
+type ListUsersParams struct {
+	Search   interface{} `json:"search"`
+	IsActive pgtype.Bool `json:"is_active"`
+	IsAdmin  pgtype.Bool `json:"is_admin"`
+	Offset   int32       `json:"offset"`
+	Limit    int32       `json:"limit"`
+}
+
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsers,
+		arg.Search,
+		arg.IsActive,
+		arg.IsAdmin,
+		arg.Offset,
+		arg.Limit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Address,
+			&i.PhoneNumber,
+			&i.RefreshToken,
+			&i.Password,
+			&i.IsAdmin,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersCount = `-- name: ListUsersCount :one
+SELECT COUNT(*) AS total_users
+WHERE 
+    (
+        COALESCE($1, '') = '' 
+        OR LOWER(name) LIKE $1
+        OR LOWER(email) LIKE $1
+        OR LOWER(phone_number) LIKE $1
+    )
+    AND (
+        $2::boolean IS NULL 
+        OR is_active = $2
+    )
+    AND (
+        $3::boolean IS NULL 
+        OR is_admin = $3
+    )
+`
+
+type ListUsersCountParams struct {
+	Search   interface{} `json:"search"`
+	IsActive pgtype.Bool `json:"is_active"`
+	IsAdmin  pgtype.Bool `json:"is_admin"`
+}
+
+func (q *Queries) ListUsersCount(ctx context.Context, arg ListUsersCountParams) (int64, error) {
+	row := q.db.QueryRow(ctx, listUsersCount, arg.Search, arg.IsActive, arg.IsAdmin)
+	var total_users int64
+	err := row.Scan(&total_users)
+	return total_users, err
+}
+
+const updateUser = `-- name: UpdateUser :one
+UPDATE users
+SET name = coalesce($1, name),
+    address = coalesce($2, address),
+    phone_number = coalesce($3, phone_number),
+    password = coalesce($4, password),
+    refresh_token = coalesce($5, refresh_token),
+    is_admin = coalesce($6, is_admin),
+    is_active = coalesce($7, is_active)
+WHERE id = $8
+RETURNING id, name, email, address, phone_number, refresh_token, password, is_admin, is_active, created_at
+`
+
+type UpdateUserParams struct {
+	Name         pgtype.Text `json:"name"`
+	Address      pgtype.Text `json:"address"`
+	PhoneNumber  pgtype.Text `json:"phone_number"`
+	Password     pgtype.Text `json:"password"`
+	RefreshToken pgtype.Text `json:"refresh_token"`
+	IsAdmin      pgtype.Bool `json:"is_admin"`
+	IsActive     pgtype.Bool `json:"is_active"`
+	ID           int64       `json:"id"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUser,
+		arg.Name,
+		arg.Address,
+		arg.PhoneNumber,
+		arg.Password,
+		arg.RefreshToken,
+		arg.IsAdmin,
+		arg.IsActive,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Address,
+		&i.PhoneNumber,
+		&i.RefreshToken,
+		&i.Password,
+		&i.IsAdmin,
+		&i.IsActive,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const userExists = `-- name: UserExists :one
+SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)
+`
+
+func (q *Queries) UserExists(ctx context.Context, id int64) (bool, error) {
+	row := q.db.QueryRow(ctx, userExists, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
