@@ -50,20 +50,49 @@ func (q *Queries) DeleteUserSubscription(ctx context.Context, id int64) error {
 	return err
 }
 
+const getCountUserSubscriptionsByUserID = `-- name: GetCountUserSubscriptionsByUserID :one
+SELECT COUNT(*) AS total_user_subscriptions
+FROM user_subscriptions 
+WHERE deleted_at IS NULL AND user_id = $1
+`
+
+func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, getCountUserSubscriptionsByUserID, userID)
+	var total_user_subscriptions int64
+	err := row.Scan(&total_user_subscriptions)
+	return total_user_subscriptions, err
+}
+
 const getUserSubscriptionByID = `-- name: GetUserSubscriptionByID :one
 SELECT 
     us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
-    COALESCE(p1.user_json, '[]') AS user_data,
-    COALESCE(p2.subscription_json, '[]') AS subscription_data,
+    COALESCE(p1.user_json, '{}') AS user_data,
+    COALESCE(p2.subscription_json, '{}') AS subscription_data,
     COALESCE(p3.payment_json, '[]') AS payment_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(u.*) AS user_json
+    SELECT json_build_object(
+        'id', u.id,
+        'name', u.name,
+        'email', u.email,
+        'phone_number', u.phone_number,
+        'is_active', u.is_active,
+        'is_admin', u.is_admin,
+        'created_at', u.created_at
+    ) AS user_json
     FROM users u
     WHERE u.id = us.user_id
 ) p1 ON true
 LEFT JOIN LATERAL (
-    SELECT json_agg(s.*) AS subscription_json
+    SELECT json_build_object(
+        'id', s.id,
+        'name', s.name,
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p2 ON true
@@ -71,15 +100,10 @@ LEFT JOIN LATERAL (
     SELECT json_agg(p.*) AS payment_json
     FROM payments p
     WHERE p.user_subscription_id IS NOT NULL
-        AND p.user_subscription_id = $1
+        AND p.user_subscription_id = us.id
 ) p3 ON true
-WHERE us.id = $2
+WHERE us.id = $1
 `
-
-type GetUserSubscriptionByIDParams struct {
-	UserSubscriptionID pgtype.Int8 `json:"user_subscription_id"`
-	ID                 int64       `json:"id"`
-}
 
 type GetUserSubscriptionByIDRow struct {
 	ID               int64              `json:"id"`
@@ -96,8 +120,8 @@ type GetUserSubscriptionByIDRow struct {
 	PaymentData      []byte             `json:"payment_data"`
 }
 
-func (q *Queries) GetUserSubscriptionByID(ctx context.Context, arg GetUserSubscriptionByIDParams) (GetUserSubscriptionByIDRow, error) {
-	row := q.db.QueryRow(ctx, getUserSubscriptionByID, arg.UserSubscriptionID, arg.ID)
+func (q *Queries) GetUserSubscriptionByID(ctx context.Context, id int64) (GetUserSubscriptionByIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserSubscriptionByID, id)
 	var i GetUserSubscriptionByIDRow
 	err := row.Scan(
 		&i.ID,
@@ -119,19 +143,31 @@ func (q *Queries) GetUserSubscriptionByID(ctx context.Context, arg GetUserSubscr
 const getUserSubscriptionsByUserID = `-- name: GetUserSubscriptionsByUserID :many
 SELECT 
     us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
-    COALESCE(p1.subscription_json, '[]') AS subscription_data
+    COALESCE(p1.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', s.id,
         'name', s.name,
-        'price', s.price 
-    )) AS subscription_json
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at 
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p1 ON true
-WHERE us.user_id = $1
+WHERE us.deleted_at IS NULL AND us.user_id = $1
+ORDER BY us.created_at DESC
+LIMIT $3 OFFSET $2
 `
+
+type GetUserSubscriptionsByUserIDParams struct {
+	UserID int64 `json:"user_id"`
+	Offset int32 `json:"offset"`
+	Limit  int32 `json:"limit"`
+}
 
 type GetUserSubscriptionsByUserIDRow struct {
 	ID               int64              `json:"id"`
@@ -146,8 +182,8 @@ type GetUserSubscriptionsByUserIDRow struct {
 	SubscriptionData []byte             `json:"subscription_data"`
 }
 
-func (q *Queries) GetUserSubscriptionsByUserID(ctx context.Context, userID int64) ([]GetUserSubscriptionsByUserIDRow, error) {
-	rows, err := q.db.Query(ctx, getUserSubscriptionsByUserID, userID)
+func (q *Queries) GetUserSubscriptionsByUserID(ctx context.Context, arg GetUserSubscriptionsByUserIDParams) ([]GetUserSubscriptionsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getUserSubscriptionsByUserID, arg.UserID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -179,6 +215,7 @@ func (q *Queries) GetUserSubscriptionsByUserID(ctx context.Context, userID int64
 
 const listCountUserSubscriptions = `-- name: ListCountUserSubscriptions :one
 SELECT COUNT(*) AS total_user_subscriptions
+FROM user_subscriptions
 WHERE
     deleted_at IS NULL
     AND (
@@ -197,25 +234,32 @@ func (q *Queries) ListCountUserSubscriptions(ctx context.Context, status pgtype.
 const listUserSubscriptions = `-- name: ListUserSubscriptions :many
 SELECT 
     us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
-    COALESCE(p1.user_json, '[]') AS user_data,
-    COALESCE(p2.subscription_json, '[]') AS subscription_data
+    COALESCE(p1.user_json, '{}') AS user_data,
+    COALESCE(p2.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', u.id,
         'name', u.name,
         'email', u.email,
-        'phone_number', u.phone_number
-    )) AS user_json
+        'phone_number', u.phone_number,
+        'is_active', u.is_active,
+        'is_admin', u.is_admin,
+        'created_at', u.created_at
+    ) AS user_json
     FROM users u
     WHERE u.id = us.user_id
 ) p1 ON true
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', s.id,
         'name', s.name,
-        'price', s.price 
-    )) AS subscription_json
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p2 ON true

@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
@@ -63,8 +65,8 @@ func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *reposit
 func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id int64) (*repository.Payment, error) {
 	generatedPayment, err := pr.queries.GetPaymentByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "payment with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "payment with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching payment by id: %s", err.Error())
 	}
@@ -128,8 +130,8 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *reposit
 
 	paymentId, err := pr.queries.UpdatePayment(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "payment with id %d not found", payment.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "payment with ID %d not found", payment.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating payment: %s", err.Error())
 	}

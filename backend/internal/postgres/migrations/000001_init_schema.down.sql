@@ -5,6 +5,7 @@ ALTER TABLE "products" DROP CONSTRAINT "products_category_id_fkey";
 ALTER TABLE "order_items" DROP CONSTRAINT "order_item_order_id_fkey";
 ALTER TABLE "order_items" DROP CONSTRAINT "order_item_product_id_fkey";
 ALTER TABLE "payments" DROP CONSTRAINT "payment_order_id_fkey";
+ALTER TABLE "payments" DROP CONSTRAINT "payment_user_subscription_id_fkey";
 
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS subscriptions;

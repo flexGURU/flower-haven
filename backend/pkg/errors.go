@@ -11,6 +11,7 @@ import (
 const (
 	ALREADY_EXISTS_ERROR  = "already_exists"
 	INTERNAL_ERROR        = "internal"
+	FORBIDDEN_ERROR       = "forbidden"
 	INVALID_ERROR         = "invalid"
 	NOT_FOUND_ERROR       = "not_found"
 	NOT_IMPLEMENTED_ERROR = "not_implemented"
@@ -80,6 +81,12 @@ func ErrorToStatusCode(err error) int {
 		return http.StatusNotFound
 	case NOT_IMPLEMENTED_ERROR:
 		return http.StatusNotImplemented
+	case FORBIDDEN_ERROR:
+		return http.StatusForbidden
+	case FOREIGN_KEY_VIOLATION:
+		return http.StatusConflict
+	case UNIQUE_VIOLATION:
+		return http.StatusConflict
 	case AUTHENTICATION_ERROR:
 		return http.StatusUnauthorized
 	default:

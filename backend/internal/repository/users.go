@@ -42,6 +42,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *User) (*User, error)
 	GetUserByID(ctx context.Context, id int64) (*User, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	GetUserInternal(ctx context.Context, id int64, email string) (*User, error)
 	UpdateUser(ctx context.Context, user *UpdateUser) (*User, error)
 	ListUsers(ctx context.Context, filter *UserFilter) ([]*User, *pkg.Pagination, error)
 }

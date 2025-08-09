@@ -7,57 +7,97 @@ package generated
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (user_name, user_phone_number, payment_status, status, shipping_address)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at
+INSERT INTO orders (user_name, user_phone_number, total_amount, payment_status, status, shipping_address)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id
 `
 
 type CreateOrderParams struct {
-	UserName        string      `json:"user_name"`
-	UserPhoneNumber string      `json:"user_phone_number"`
-	PaymentStatus   bool        `json:"payment_status"`
-	Status          string      `json:"status"`
-	ShippingAddress pgtype.Text `json:"shipping_address"`
+	UserName        string         `json:"user_name"`
+	UserPhoneNumber string         `json:"user_phone_number"`
+	TotalAmount     pgtype.Numeric `json:"total_amount"`
+	PaymentStatus   bool           `json:"payment_status"`
+	Status          string         `json:"status"`
+	ShippingAddress pgtype.Text    `json:"shipping_address"`
 }
 
-func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error) {
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createOrder,
 		arg.UserName,
 		arg.UserPhoneNumber,
+		arg.TotalAmount,
 		arg.PaymentStatus,
 		arg.Status,
 		arg.ShippingAddress,
 	)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.UserName,
-		&i.UserPhoneNumber,
-		&i.TotalAmount,
-		&i.PaymentStatus,
-		&i.Status,
-		&i.ShippingAddress,
-		&i.DeletedAt,
-		&i.CreatedAt,
-	)
-	return i, err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const deleteOrder = `-- name: DeleteOrder :one
+const deleteOrder = `-- name: DeleteOrder :exec
 UPDATE orders
 SET deleted_at = now()
 WHERE id = $1
-RETURNING id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at
 `
 
-func (q *Queries) DeleteOrder(ctx context.Context, id int64) (Order, error) {
-	row := q.db.QueryRow(ctx, deleteOrder, id)
-	var i Order
+func (q *Queries) DeleteOrder(ctx context.Context, id int64) error {
+	_, err := q.db.Exec(ctx, deleteOrder, id)
+	return err
+}
+
+const getOrderByFullDataID = `-- name: GetOrderByFullDataID :one
+SELECT 
+  o.id, o.user_name, o.user_phone_number, o.total_amount, o.payment_status, o.status, o.shipping_address, o.deleted_at, o.created_at,
+  COALESCE(items.items, '[]') AS order_item_data
+FROM orders o
+LEFT JOIN LATERAL (
+  SELECT json_agg(json_build_object(
+    'id', oi.id,
+    'order_id', oi.order_id,
+    'product_id', oi.product_id,
+    'quantity', oi.quantity,
+    'amount', oi.amount,
+    'current_product_details', json_build_object(
+      'id', p.id,
+      'name', p.name,
+      'description', p.description,
+      'price', p.price,
+      'stock_quantity', p.stock_quantity,
+      'image_url', p.image_url,
+      'category_id', p.category_id,
+      'created_at', p.created_at
+    )
+  )) AS items
+  FROM order_items oi
+  JOIN products p ON p.id = oi.product_id
+  WHERE oi.order_id = o.id
+) items ON true
+WHERE o.id = $1
+`
+
+type GetOrderByFullDataIDRow struct {
+	ID              int64              `json:"id"`
+	UserName        string             `json:"user_name"`
+	UserPhoneNumber string             `json:"user_phone_number"`
+	TotalAmount     pgtype.Numeric     `json:"total_amount"`
+	PaymentStatus   bool               `json:"payment_status"`
+	Status          string             `json:"status"`
+	ShippingAddress pgtype.Text        `json:"shipping_address"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt       time.Time          `json:"created_at"`
+	OrderItemData   []byte             `json:"order_item_data"`
+}
+
+func (q *Queries) GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderByFullDataIDRow, error) {
+	row := q.db.QueryRow(ctx, getOrderByFullDataID, id)
+	var i GetOrderByFullDataIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserName,
@@ -68,6 +108,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id int64) (Order, error) {
 		&i.ShippingAddress,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.OrderItemData,
 	)
 	return i, err
 }
@@ -93,6 +134,40 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (Order, error) {
 	return i, err
 }
 
+const listCountOrder = `-- name: ListCountOrder :one
+SELECT COUNT(*) AS total_orders
+FROM orders
+WHERE
+    deleted_at IS NULL
+    AND (
+        COALESCE($1, '') = '' 
+        OR LOWER(user_name) LIKE $1
+        OR LOWER(user_phone_number) LIKE $1
+        OR LOWER(shipping_address) LIKE $1
+    )
+    AND (
+        $2::boolean IS NULL 
+        OR payment_status = $2
+    )
+    AND (
+        COALESCE($3, '') = '' 
+        OR LOWER(status) LIKE $3
+    )
+`
+
+type ListCountOrderParams struct {
+	Search        interface{} `json:"search"`
+	PaymentStatus pgtype.Bool `json:"payment_status"`
+	Status        interface{} `json:"status"`
+}
+
+func (q *Queries) ListCountOrder(ctx context.Context, arg ListCountOrderParams) (int64, error) {
+	row := q.db.QueryRow(ctx, listCountOrder, arg.Search, arg.PaymentStatus, arg.Status)
+	var total_orders int64
+	err := row.Scan(&total_orders)
+	return total_orders, err
+}
+
 const listOrder = `-- name: ListOrder :many
 SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at FROM orders
 WHERE
@@ -104,8 +179,8 @@ WHERE
         OR LOWER(shipping_address) LIKE $1
     )
     AND (
-        COALESCE($2, '') = '' 
-        OR LOWER(payment_status) LIKE $2
+        $2::boolean IS NULL 
+        OR payment_status = $2
     )
     AND (
         COALESCE($3, '') = '' 
@@ -117,7 +192,7 @@ LIMIT $5 OFFSET $4
 
 type ListOrderParams struct {
 	Search        interface{} `json:"search"`
-	PaymentStatus interface{} `json:"payment_status"`
+	PaymentStatus pgtype.Bool `json:"payment_status"`
 	Status        interface{} `json:"status"`
 	Offset        int32       `json:"offset"`
 	Limit         int32       `json:"limit"`
@@ -178,7 +253,7 @@ SET user_name = coalesce($1, user_name),
     status = coalesce($4, status),
     shipping_address = coalesce($5, shipping_address)
 WHERE id = $6
-RETURNING id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at
+RETURNING id
 `
 
 type UpdateOrderParams struct {
@@ -190,7 +265,7 @@ type UpdateOrderParams struct {
 	ID              int64       `json:"id"`
 }
 
-func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error) {
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error) {
 	row := q.db.QueryRow(ctx, updateOrder,
 		arg.UserName,
 		arg.UserPhoneNumber,
@@ -199,17 +274,7 @@ func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order
 		arg.ShippingAddress,
 		arg.ID,
 	)
-	var i Order
-	err := row.Scan(
-		&i.ID,
-		&i.UserName,
-		&i.UserPhoneNumber,
-		&i.TotalAmount,
-		&i.PaymentStatus,
-		&i.Status,
-		&i.ShippingAddress,
-		&i.DeletedAt,
-		&i.CreatedAt,
-	)
-	return i, err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }

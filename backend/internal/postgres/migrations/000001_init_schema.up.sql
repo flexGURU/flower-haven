@@ -69,7 +69,7 @@ CREATE TABLE "products" (
   "deleted_at" timestamptz NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now()),
 
-  CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "category" ("id")
+  CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories" ("id")
 );
 
 

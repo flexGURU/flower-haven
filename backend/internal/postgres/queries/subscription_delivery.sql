@@ -4,7 +4,7 @@ VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: GetSubscriptionDeliveryByUserSubscriptionID :many
-SELECT * FROM subscription_deliveries WHERE user_subscription_id = $1;
+SELECT * FROM subscription_deliveries WHERE deleted_at IS NULL AND user_subscription_id = $1;
 
 -- name: UpdateSubscriptionDelivery :one
 UPDATE subscription_deliveries

@@ -12,8 +12,8 @@ import (
 
 type Querier interface {
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
-	CreateOrder(ctx context.Context, arg CreateOrderParams) (Order, error)
-	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error)
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int64, error)
@@ -21,15 +21,17 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateUserSubscription(ctx context.Context, arg CreateUserSubscriptionParams) (int64, error)
 	DeleteCategory(ctx context.Context, id int64) error
-	DeleteOrder(ctx context.Context, id int64) (Order, error)
+	DeleteOrder(ctx context.Context, id int64) error
 	DeleteProduct(ctx context.Context, id int64) error
 	DeleteSubscription(ctx context.Context, id int64) error
 	DeleteSubscriptionDelivery(ctx context.Context, id int64) error
 	DeleteUserSubscription(ctx context.Context, id int64) error
 	GetCategoryByID(ctx context.Context, id int64) (Category, error)
+	GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error)
+	GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error)
+	GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderByFullDataIDRow, error)
 	GetOrderByID(ctx context.Context, id int64) (Order, error)
-	GetOrderItemsByOrderID(ctx context.Context, orderID int64) ([]OrderItem, error)
-	GetOrderItemsByProductID(ctx context.Context, productID int64) ([]OrderItem, error)
+	GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error)
 	GetPaymentByID(ctx context.Context, id int64) (Payment, error)
 	GetPaymentsByOrderID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetPaymentsByUserSubscriptionID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
@@ -38,10 +40,11 @@ type Querier interface {
 	GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
-	GetUserSubscriptionByID(ctx context.Context, arg GetUserSubscriptionByIDParams) (GetUserSubscriptionByIDRow, error)
-	GetUserSubscriptionsByUserID(ctx context.Context, userID int64) ([]GetUserSubscriptionsByUserIDRow, error)
+	GetUserSubscriptionByID(ctx context.Context, id int64) (GetUserSubscriptionByIDRow, error)
+	GetUserSubscriptionsByUserID(ctx context.Context, arg GetUserSubscriptionsByUserIDParams) ([]GetUserSubscriptionsByUserIDRow, error)
 	ListCategories(ctx context.Context, arg ListCategoriesParams) ([]Category, error)
 	ListCategoriesCount(ctx context.Context, search interface{}) (int64, error)
+	ListCountOrder(ctx context.Context, arg ListCountOrderParams) (int64, error)
 	ListCountPayments(ctx context.Context, arg ListCountPaymentsParams) (int64, error)
 	ListCountProducts(ctx context.Context, arg ListCountProductsParams) (int64, error)
 	ListCountSubscriptionDelivery(ctx context.Context) (int64, error)
@@ -59,7 +62,7 @@ type Querier interface {
 	ProductExists(ctx context.Context, id int64) (bool, error)
 	SubscriptionExists(ctx context.Context, id int64) (bool, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
-	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (Order, error)
+	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
 	UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (int64, error)

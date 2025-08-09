@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"strings"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
@@ -59,8 +61,8 @@ func (sr *SubscriptionRepository) CreateSubscription(ctx context.Context, subscr
 func (sr *SubscriptionRepository) GetSubscriptionByID(ctx context.Context, id int64) (*repository.Subscription, error) {
 	generatedSubscription, err := sr.queries.GetSubscriptionByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching subscription by id: %s", err.Error())
 	}
@@ -121,8 +123,8 @@ func (sr *SubscriptionRepository) UpdateSubscription(ctx context.Context, subscr
 
 	subscriptionId, err := sr.queries.UpdateSubscription(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with id %d not found", subscription.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with ID %d not found", subscription.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating subscription by id: %s", err.Error())
 	}
@@ -209,8 +211,8 @@ func (sr *SubscriptionRepository) ListSubscriptions(ctx context.Context, filter 
 
 func (sr *SubscriptionRepository) DeleteSubscription(ctx context.Context, id int64) error {
 	if err := sr.queries.DeleteSubscription(ctx, id); err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with ID %d not found", id)
 		}
 		return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting subscription by id: %s", err.Error())
 	}

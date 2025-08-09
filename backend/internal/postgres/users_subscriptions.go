@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
 	"github.com/flexGURU/flower-haven/backend/internal/repository"
@@ -16,15 +18,17 @@ type UserSubscriptionRepository struct {
 	queries *generated.Queries
 }
 
-func NewUserSubscription(queries *generated.Queries) *UserSubscriptionRepository {
+func NewUserSubscriptionRepository(queries *generated.Queries) *UserSubscriptionRepository {
 	return &UserSubscriptionRepository{queries: queries}
 }
 
 func (usr *UserSubscriptionRepository) CreateUserSubscription(ctx context.Context, subscription *repository.UserSubscription) (*repository.UserSubscription, error) {
 	params := generated.CreateUserSubscriptionParams{
-		DayOfWeek: subscription.DayOfWeek,
-		StartDate: subscription.StartDate,
-		EndDate:   subscription.EndDate,
+		UserID:         int64(subscription.UserID),
+		SubscriptionID: int64(subscription.SubscriptionID),
+		DayOfWeek:      subscription.DayOfWeek,
+		StartDate:      subscription.StartDate,
+		EndDate:        subscription.EndDate,
 	}
 
 	if exists, _ := usr.queries.UserExists(ctx, int64(subscription.UserID)); !exists {
@@ -50,16 +54,10 @@ func (usr *UserSubscriptionRepository) CreateUserSubscription(ctx context.Contex
 }
 
 func (usr *UserSubscriptionRepository) GetUserSubscriptionByID(ctx context.Context, id int64) (*repository.UserSubscription, error) {
-	userSubscription, err := usr.queries.GetUserSubscriptionByID(ctx, generated.GetUserSubscriptionByIDParams{
-		ID: id,
-		UserSubscriptionID: pgtype.Int8{
-			Valid: true,
-			Int64: id,
-		},
-	})
+	userSubscription, err := usr.queries.GetUserSubscriptionByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user_subscription with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user_subscription with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching user_subscription by id: %s", err.Error())
 	}
@@ -77,10 +75,19 @@ func (usr *UserSubscriptionRepository) GetUserSubscriptionByID(ctx context.Conte
 	}, userSubscription.UserData, userSubscription.SubscriptionData, userSubscription.PaymentData)
 }
 
-func (usr *UserSubscriptionRepository) GetUsersSubscriptionsByUserID(ctx context.Context, userId int64) ([]*repository.UserSubscription, error) {
-	userSubscriptions, err := usr.queries.GetUserSubscriptionsByUserID(ctx, userId)
+func (usr *UserSubscriptionRepository) GetUsersSubscriptionsByUserID(ctx context.Context, userId int64, filter *repository.UserSubscriptionFilter) ([]*repository.UserSubscription, *pkg.Pagination, error) {
+	userSubscriptions, err := usr.queries.GetUserSubscriptionsByUserID(ctx, generated.GetUserSubscriptionsByUserIDParams{
+		UserID: userId,
+		Limit:  int32(filter.Pagination.PageSize),
+		Offset: pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
+	})
 	if err != nil {
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing user's subscriptions with id %d: %s", userId, err.Error())
+		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing user's subscriptions with id %d: %s", userId, err.Error())
+	}
+
+	totalCount, err := usr.queries.GetCountUserSubscriptionsByUserID(ctx, userId)
+	if err != nil {
+		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error counting user's subscriptions with id %d: %s", userId, err.Error())
 	}
 
 	userSubacriptionList := make([]*repository.UserSubscription, len(userSubscriptions))
@@ -97,11 +104,11 @@ func (usr *UserSubscriptionRepository) GetUsersSubscriptionsByUserID(ctx context
 			CreatedAt:      userSub.CreatedAt,
 		}, nil, userSub.SubscriptionData, nil)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
-	return userSubacriptionList, nil
+	return userSubacriptionList, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil
 }
 
 func (usr *UserSubscriptionRepository) UpdateUserSubscription(ctx context.Context, subscription *repository.UpdateUserSubscription) (*repository.UserSubscription, error) {
@@ -140,8 +147,8 @@ func (usr *UserSubscriptionRepository) UpdateUserSubscription(ctx context.Contex
 
 	userSubscriptionId, err := usr.queries.UpdateUserSubscription(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with id %d not found", subscription.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user_subscription with ID %d not found", subscription.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating subscription by id: %s", err.Error())
 	}
@@ -190,7 +197,7 @@ func (usr *UserSubscriptionRepository) ListUserSubscriptions(ctx context.Context
 			EndDate:        userSub.EndDate,
 			DeletedAt:      userSub.DeletedAt,
 			CreatedAt:      userSub.CreatedAt,
-		}, nil, userSub.SubscriptionData, nil)
+		}, userSub.UserData, userSub.SubscriptionData, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -201,8 +208,8 @@ func (usr *UserSubscriptionRepository) ListUserSubscriptions(ctx context.Context
 
 func (usr *UserSubscriptionRepository) DeleteUserSubscription(ctx context.Context, id int64) error {
 	if err := usr.queries.DeleteUserSubscription(ctx, id); err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "user_payment with ID %d not found", id)
 		}
 		return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting subscription by id: %s", err.Error())
 	}
@@ -212,15 +219,18 @@ func (usr *UserSubscriptionRepository) DeleteUserSubscription(ctx context.Contex
 
 func generatedUserSubToRepoUserSub(genUserSub generated.UserSubscription, userData, subData, paymentData []byte) (*repository.UserSubscription, error) {
 	userSuscription := &repository.UserSubscription{
-		ID:             uint32(genUserSub.ID),
-		UserID:         uint32(genUserSub.UserID),
-		SubscriptionID: uint32(genUserSub.SubscriptionID),
-		DayOfWeek:      genUserSub.DayOfWeek,
-		Status:         genUserSub.Status,
-		StartDate:      genUserSub.StartDate,
-		EndDate:        genUserSub.EndDate,
-		CreatedAt:      genUserSub.CreatedAt,
-		DeletedAt:      nil,
+		ID:               uint32(genUserSub.ID),
+		UserID:           uint32(genUserSub.UserID),
+		SubscriptionID:   uint32(genUserSub.SubscriptionID),
+		DayOfWeek:        genUserSub.DayOfWeek,
+		Status:           genUserSub.Status,
+		StartDate:        genUserSub.StartDate,
+		EndDate:          genUserSub.EndDate,
+		CreatedAt:        genUserSub.CreatedAt,
+		DeletedAt:        nil,
+		UserData:         nil,
+		SubscriptionData: nil,
+		PaymentData:      nil,
 	}
 
 	if genUserSub.DeletedAt.Valid {
@@ -232,7 +242,7 @@ func generatedUserSubToRepoUserSub(genUserSub generated.UserSubscription, userDa
 		if err := json.Unmarshal(userData, &uData); err != nil {
 			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "failed unmarshalling user data to user_subscription: %s", err.Error())
 		}
-		userSuscription.UserData = uData
+		userSuscription.UserData = &uData
 	}
 
 	if subData != nil {
@@ -240,11 +250,11 @@ func generatedUserSubToRepoUserSub(genUserSub generated.UserSubscription, userDa
 		if err := json.Unmarshal(subData, &sData); err != nil {
 			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "failed unmarshalling subscription data to user_subscription: %s", err.Error())
 		}
-		userSuscription.SubscriptionData = sData
+		userSuscription.SubscriptionData = &sData
 	}
 
 	if paymentData != nil {
-		var pData repository.Payment
+		var pData []repository.Payment
 		if err := json.Unmarshal(paymentData, &pData); err != nil {
 			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "failed unmarshalling payment data to user_subscription: %s", err.Error())
 		}

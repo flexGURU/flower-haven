@@ -203,6 +203,7 @@ func (q *Queries) ListSubscriptions(ctx context.Context, arg ListSubscriptionsPa
 
 const listSubscriptionsCount = `-- name: ListSubscriptionsCount :one
 SELECT COUNT(*) AS total_subscriptions
+FROM subscriptions
 WHERE 
     deleted_at IS NULL
     AND (

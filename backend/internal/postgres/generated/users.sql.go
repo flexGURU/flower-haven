@@ -165,6 +165,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 
 const listUsersCount = `-- name: ListUsersCount :one
 SELECT COUNT(*) AS total_users
+FROM users
 WHERE 
     (
         COALESCE($1, '') = '' 
@@ -247,7 +248,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 }
 
 const userExists = `-- name: UserExists :one
-SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)
+SELECT EXISTS(SELECT 1 FROM users WHERE id = $1) AS exists
 `
 
 func (q *Queries) UserExists(ctx context.Context, id int64) (bool, error) {

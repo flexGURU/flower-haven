@@ -83,6 +83,7 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: ListSubscriptionsCount :one
 SELECT COUNT(*) AS total_subscriptions
+FROM subscriptions
 WHERE 
     deleted_at IS NULL
     AND (

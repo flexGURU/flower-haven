@@ -9,17 +9,33 @@ SELECT EXISTS(SELECT 1 FROM user_subscriptions WHERE id = $1) AS exists;
 -- name: GetUserSubscriptionByID :one
 SELECT 
     us.*,
-    COALESCE(p1.user_json, '[]') AS user_data,
-    COALESCE(p2.subscription_json, '[]') AS subscription_data,
+    COALESCE(p1.user_json, '{}') AS user_data,
+    COALESCE(p2.subscription_json, '{}') AS subscription_data,
     COALESCE(p3.payment_json, '[]') AS payment_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(u.*) AS user_json
+    SELECT json_build_object(
+        'id', u.id,
+        'name', u.name,
+        'email', u.email,
+        'phone_number', u.phone_number,
+        'is_active', u.is_active,
+        'is_admin', u.is_admin,
+        'created_at', u.created_at
+    ) AS user_json
     FROM users u
     WHERE u.id = us.user_id
 ) p1 ON true
 LEFT JOIN LATERAL (
-    SELECT json_agg(s.*) AS subscription_json
+    SELECT json_build_object(
+        'id', s.id,
+        'name', s.name,
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p2 ON true
@@ -27,25 +43,36 @@ LEFT JOIN LATERAL (
     SELECT json_agg(p.*) AS payment_json
     FROM payments p
     WHERE p.user_subscription_id IS NOT NULL
-        AND p.user_subscription_id = sqlc.narg('user_subscription_id')
+        AND p.user_subscription_id = us.id
 ) p3 ON true
 WHERE us.id = sqlc.arg('id');
 
 -- name: GetUserSubscriptionsByUserID :many
 SELECT 
     us.*,
-    COALESCE(p1.subscription_json, '[]') AS subscription_data
+    COALESCE(p1.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', s.id,
         'name', s.name,
-        'price', s.price 
-    )) AS subscription_json
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at 
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p1 ON true
-WHERE us.user_id = $1;
+WHERE us.deleted_at IS NULL AND us.user_id = $1
+ORDER BY us.created_at DESC
+LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+-- name: GetCountUserSubscriptionsByUserID :one
+SELECT COUNT(*) AS total_user_subscriptions
+FROM user_subscriptions 
+WHERE deleted_at IS NULL AND user_id = $1;
 
 -- name: UpdateUserSubscription :one
 UPDATE user_subscriptions
@@ -59,25 +86,32 @@ RETURNING id;
 -- name: ListUserSubscriptions :many
 SELECT 
     us.*,
-    COALESCE(p1.user_json, '[]') AS user_data,
-    COALESCE(p2.subscription_json, '[]') AS subscription_data
+    COALESCE(p1.user_json, '{}') AS user_data,
+    COALESCE(p2.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', u.id,
         'name', u.name,
         'email', u.email,
-        'phone_number', u.phone_number
-    )) AS user_json
+        'phone_number', u.phone_number,
+        'is_active', u.is_active,
+        'is_admin', u.is_admin,
+        'created_at', u.created_at
+    ) AS user_json
     FROM users u
     WHERE u.id = us.user_id
 ) p1 ON true
 LEFT JOIN LATERAL (
-    SELECT json_agg(json_build_object(
+    SELECT json_build_object(
         'id', s.id,
         'name', s.name,
-        'price', s.price 
-    )) AS subscription_json
+        'price', s.price,
+        'description', s.description,
+        'product_ids', s.product_ids,
+        'add_ons', s.add_ons,
+        'created_at', s.created_at
+    ) AS subscription_json
     FROM subscriptions s
     WHERE s.id = us.subscription_id
 ) p2 ON true
@@ -92,6 +126,7 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: ListCountUserSubscriptions :one
 SELECT COUNT(*) AS total_user_subscriptions
+FROM user_subscriptions
 WHERE
     deleted_at IS NULL
     AND (

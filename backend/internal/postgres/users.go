@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
@@ -57,6 +59,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *repository.User)
 	user.CreatedAt = generatedUser.CreatedAt
 	user.Password = nil
 	user.RefreshToken = nil
+	user.IsActive = true
 
 	return user, nil
 }
@@ -64,7 +67,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *repository.User)
 func (ur *UserRepository) GetUserByID(ctx context.Context, id int64) (*repository.User, error) {
 	generatedUser, err := ur.queries.GetUserByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching user by ID: %s", err.Error())
@@ -89,10 +92,60 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id int64) (*repositor
 	return user, nil
 }
 
+func (ur *UserRepository) GetUserInternal(ctx context.Context, id int64, email string) (*repository.User, error) {
+	if id == 0 && email == "" {
+		return nil, pkg.Errorf(pkg.INVALID_ERROR, "either id or email must be provided")
+	}
+
+	var err error
+	var generatedUser generated.User
+
+	if id != 0 {
+		generatedUser, err = ur.queries.GetUserByID(ctx, id)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with ID %d not found", id)
+			}
+			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching user by ID: %s", err.Error())
+		}
+	} else if email != "" {
+		generatedUser, err = ur.queries.GetUserByEmail(ctx, email)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with email %s not found", email)
+			}
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with ID %d not found", id)
+			}
+			return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching user by email: %s", err.Error())
+		}
+	}
+
+	user := &repository.User{
+		ID:           uint32(generatedUser.ID),
+		Name:         generatedUser.Name,
+		Email:        generatedUser.Email,
+		Address:      nil,
+		PhoneNumber:  generatedUser.PhoneNumber,
+		IsAdmin:      generatedUser.IsAdmin,
+		IsActive:     generatedUser.IsActive,
+		RefreshToken: &generatedUser.RefreshToken.String,
+		Password:     &generatedUser.Password,
+		CreatedAt:    generatedUser.CreatedAt,
+	}
+
+	if generatedUser.Address.Valid {
+		address := generatedUser.Address.String
+		user.Address = &address
+	}
+
+	return user, nil
+}
+
 func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*repository.User, error) {
 	generatedUser, err := ur.queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with email %s not found", email)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching user by email: %s", err.Error())
@@ -174,7 +227,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *repository.Updat
 
 	generatedUser, err := ur.queries.UpdateUser(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "user with ID %d not found", user.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating user: %s", err.Error())

@@ -14,7 +14,7 @@ import (
 const createOrderItem = `-- name: CreateOrderItem :one
 INSERT INTO order_items (order_id, product_id, quantity, amount)
 VALUES ($1, $2, $3, $4)
-RETURNING id, order_id, product_id, quantity, amount
+RETURNING id
 `
 
 type CreateOrderItemParams struct {
@@ -24,73 +24,83 @@ type CreateOrderItemParams struct {
 	Amount    pgtype.Numeric `json:"amount"`
 }
 
-func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (OrderItem, error) {
+func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error) {
 	row := q.db.QueryRow(ctx, createOrderItem,
 		arg.OrderID,
 		arg.ProductID,
 		arg.Quantity,
 		arg.Amount,
 	)
-	var i OrderItem
-	err := row.Scan(
-		&i.ID,
-		&i.OrderID,
-		&i.ProductID,
-		&i.Quantity,
-		&i.Amount,
-	)
-	return i, err
+	var id int64
+	err := row.Scan(&id)
+	return id, err
 }
 
-const getOrderItemsByOrderID = `-- name: GetOrderItemsByOrderID :many
-SELECT id, order_id, product_id, quantity, amount FROM order_items WHERE order_id = $1
+const getCountOrderItemsByProductID = `-- name: GetCountOrderItemsByProductID :one
+SELECT COUNT(*) AS total_order_items
+FROM order_items
+WHERE product_id = $1
 `
 
-func (q *Queries) GetOrderItemsByOrderID(ctx context.Context, orderID int64) ([]OrderItem, error) {
-	rows, err := q.db.Query(ctx, getOrderItemsByOrderID, orderID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []OrderItem{}
-	for rows.Next() {
-		var i OrderItem
-		if err := rows.Scan(
-			&i.ID,
-			&i.OrderID,
-			&i.ProductID,
-			&i.Quantity,
-			&i.Amount,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error) {
+	row := q.db.QueryRow(ctx, getCountOrderItemsByProductID, productID)
+	var total_order_items int64
+	err := row.Scan(&total_order_items)
+	return total_order_items, err
 }
 
 const getOrderItemsByProductID = `-- name: GetOrderItemsByProductID :many
-SELECT id, order_id, product_id, quantity, amount FROM order_items WHERE product_id = $1
+SELECT 
+    oi.id, oi.order_id, oi.product_id, oi.quantity, oi.amount,
+    COALESCE(p1.order_json, '{}') AS order_data
+FROM order_items oi
+LEFT JOIN LATERAL (
+    SELECT json_build_object(
+        'id', o.id,
+        'user_name', o.user_name,
+        'user_phone_number', o.user_phone_number,
+        'total_amount', o.total_amount,
+        'payment_status', o.payment_status,
+        'status', o.status
+    ) AS order_json
+    FROM orders o
+    WHERE o.id = oi.order_id
+) p1 ON true
+WHERE oi.product_id = $1
+LIMIT $3 OFFSET $2
 `
 
-func (q *Queries) GetOrderItemsByProductID(ctx context.Context, productID int64) ([]OrderItem, error) {
-	rows, err := q.db.Query(ctx, getOrderItemsByProductID, productID)
+type GetOrderItemsByProductIDParams struct {
+	ProductID int64 `json:"product_id"`
+	Offset    int32 `json:"offset"`
+	Limit     int32 `json:"limit"`
+}
+
+type GetOrderItemsByProductIDRow struct {
+	ID        int64          `json:"id"`
+	OrderID   int64          `json:"order_id"`
+	ProductID int64          `json:"product_id"`
+	Quantity  int32          `json:"quantity"`
+	Amount    pgtype.Numeric `json:"amount"`
+	OrderData []byte         `json:"order_data"`
+}
+
+func (q *Queries) GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error) {
+	rows, err := q.db.Query(ctx, getOrderItemsByProductID, arg.ProductID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []OrderItem{}
+	items := []GetOrderItemsByProductIDRow{}
 	for rows.Next() {
-		var i OrderItem
+		var i GetOrderItemsByProductIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OrderID,
 			&i.ProductID,
 			&i.Quantity,
 			&i.Amount,
+			&i.OrderData,
 		); err != nil {
 			return nil, err
 		}

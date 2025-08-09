@@ -13,11 +13,11 @@ type Product struct {
 	Description   string     `json:"description"`
 	Price         float64    `json:"price"`
 	CategoryID    uint32     `json:"category_id"`
-	CategoryData  *Category  `json:"category_data,omitempty"`
 	ImageUrl      []string   `json:"image_url"`
 	StockQuantity int64      `json:"stock_quantity"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty"`
 	CreatedAt     time.Time  `json:"created_at"`
+	CategoryData  *Category  `json:"category_data,omitempty"`
 }
 
 type UpdateProduct struct {

@@ -4,7 +4,7 @@ VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING *;
 
 -- name: UserExists :one
-SELECT EXISTS(SELECT 1 FROM users WHERE id = $1);
+SELECT EXISTS(SELECT 1 FROM users WHERE id = $1) AS exists;
 
 -- name: GetUserByID :one
 SELECT * FROM users WHERE id = $1;
@@ -46,6 +46,7 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: ListUsersCount :one
 SELECT COUNT(*) AS total_users
+FROM users
 WHERE 
     (
         COALESCE(sqlc.narg('search'), '') = '' 

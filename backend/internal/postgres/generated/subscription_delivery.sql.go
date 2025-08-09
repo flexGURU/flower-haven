@@ -50,7 +50,7 @@ func (q *Queries) DeleteSubscriptionDelivery(ctx context.Context, id int64) erro
 }
 
 const getSubscriptionDeliveryByUserSubscriptionID = `-- name: GetSubscriptionDeliveryByUserSubscriptionID :many
-SELECT id, description, user_subscription_id, delivered_on, deleted_at, created_at FROM subscription_deliveries WHERE user_subscription_id = $1
+SELECT id, description, user_subscription_id, delivered_on, deleted_at, created_at FROM subscription_deliveries WHERE deleted_at IS NULL AND user_subscription_id = $1
 `
 
 func (q *Queries) GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error) {

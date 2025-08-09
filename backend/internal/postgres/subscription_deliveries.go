@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
 	"github.com/flexGURU/flower-haven/backend/internal/repository"
@@ -54,9 +56,10 @@ func (sd *SubscriptionDeliveryRepository) CreateSubscriptionDelivery(ctx context
 func (sd *SubscriptionDeliveryRepository) GetSubscriptonDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]*repository.SubscriptionDelivery, error) {
 	generatedDeliveries, err := sd.queries.GetSubscriptionDeliveryByUserSubscriptionID(ctx, userSubscriptionID)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "no deliveries found for user subscription id %d", userSubscriptionID)
 		}
+
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching subscription deliveries: %s", err.Error())
 	}
 
@@ -67,7 +70,7 @@ func (sd *SubscriptionDeliveryRepository) GetSubscriptonDeliveryByUserSubscripti
 			Description:        &d.Description.String,
 			UserSubscriptionID: uint32(d.UserSubscriptionID),
 			DeliveredOn:        d.DeliveredOn,
-			DeletedAt:          &d.DeletedAt.Time,
+			DeletedAt:          nil,
 			CreatedAt:          d.CreatedAt,
 		}
 	}
@@ -98,8 +101,8 @@ func (sd *SubscriptionDeliveryRepository) UpdateSubscriptionDelivery(ctx context
 
 	generatedDelivery, err := sd.queries.UpdateSubscriptionDelivery(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription delivery with id %d not found", delivery.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription delivery with ID %d not found", delivery.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating subscription delivery: %s", err.Error())
 	}
@@ -135,7 +138,7 @@ func (sd *SubscriptionDeliveryRepository) ListSubscriptionDeliveries(ctx context
 			Description:        &userSub.Description.String,
 			UserSubscriptionID: uint32(userSub.UserSubscriptionID),
 			DeliveredOn:        userSub.DeliveredOn,
-			DeletedAt:          &userSub.DeletedAt.Time,
+			DeletedAt:          nil,
 			CreatedAt:          userSub.CreatedAt,
 		}
 	}
@@ -145,8 +148,8 @@ func (sd *SubscriptionDeliveryRepository) ListSubscriptionDeliveries(ctx context
 
 func (sd *SubscriptionDeliveryRepository) DeleteSubscriptionDelivery(ctx context.Context, id int64) error {
 	if err := sd.queries.DeleteSubscriptionDelivery(ctx, id); err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription delivery with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "subscription delivery with ID %d not found", id)
 		}
 		return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting subscription delivery: %s", err.Error())
 	}

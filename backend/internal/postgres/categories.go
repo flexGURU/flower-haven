@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
@@ -43,8 +45,8 @@ func (cr *CategoryRepository) CreateCategory(ctx context.Context, category *repo
 func (cr *CategoryRepository) GetCategoryByID(ctx context.Context, id int64) (*repository.Category, error) {
 	generatedCategory, err := cr.queries.GetCategoryByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching category by id: %s", err.Error())
 	}
@@ -54,8 +56,12 @@ func (cr *CategoryRepository) GetCategoryByID(ctx context.Context, id int64) (*r
 		Name:        generatedCategory.Name,
 		Description: generatedCategory.Description,
 		ImageUrl:    generatedCategory.ImageUrl,
-		DeletedAt:   &generatedCategory.DeletedAt.Time,
 		CreatedAt:   generatedCategory.CreatedAt,
+		DeletedAt:   nil,
+	}
+
+	if generatedCategory.DeletedAt.Valid {
+		category.DeletedAt = &generatedCategory.DeletedAt.Time
 	}
 
 	return category, nil
@@ -87,26 +93,32 @@ func (cr *CategoryRepository) UpdateCategory(ctx context.Context, category *repo
 
 	generatedCategory, err := cr.queries.UpdateCategory(ctx, params)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with id %d not found", category.ID)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with ID %d not found", category.ID)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating category: %s", err.Error())
 	}
 
-	return &repository.Category{
+	rslt := &repository.Category{
 		ID:          uint32(generatedCategory.ID),
 		Name:        generatedCategory.Name,
 		Description: generatedCategory.Description,
 		ImageUrl:    generatedCategory.ImageUrl,
-		DeletedAt:   &generatedCategory.DeletedAt.Time,
 		CreatedAt:   generatedCategory.CreatedAt,
-	}, nil
+		DeletedAt:   nil,
+	}
+
+	if generatedCategory.DeletedAt.Valid {
+		rslt.DeletedAt = &generatedCategory.DeletedAt.Time
+	}
+
+	return rslt, nil
 }
 
 func (cr *CategoryRepository) ListCategories(ctx context.Context, filter *repository.CategoryFilter) ([]*repository.Category, *pkg.Pagination, error) {
 	paramListCategories := generated.ListCategoriesParams{
 		Limit:  int32(filter.Pagination.PageSize),
-		Offset: int32(filter.Pagination.Page * filter.Pagination.PageSize),
+		Offset: pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
 		Search: pgtype.Text{Valid: false},
 	}
 
@@ -139,7 +151,7 @@ func (cr *CategoryRepository) ListCategories(ctx context.Context, filter *reposi
 			Name:        cat.Name,
 			Description: cat.Description,
 			ImageUrl:    cat.ImageUrl,
-			DeletedAt:   &cat.DeletedAt.Time,
+			DeletedAt:   nil,
 			CreatedAt:   cat.CreatedAt,
 		}
 	}
@@ -149,8 +161,8 @@ func (cr *CategoryRepository) ListCategories(ctx context.Context, filter *reposi
 
 func (cr *CategoryRepository) DeleteCategory(ctx context.Context, id int64) error {
 	if err := cr.queries.DeleteCategory(ctx, id); err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "category with ID %d not found", id)
 		}
 		return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting category by id: %s", err.Error())
 	}

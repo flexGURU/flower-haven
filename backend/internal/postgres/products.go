@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
@@ -46,8 +48,8 @@ func (pr *ProductRepository) CreateProduct(ctx context.Context, product *reposit
 func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*repository.Product, error) {
 	generatedProduct, err := pr.queries.GetProductByID(ctx, id)
 	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", id)
 		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching product by id: %s", err.Error())
 	}
@@ -60,9 +62,13 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*rep
 		CategoryID:    uint32(generatedProduct.CategoryID),
 		ImageUrl:      generatedProduct.ImageUrl,
 		StockQuantity: generatedProduct.StockQuantity,
-		DeletedAt:     &generatedProduct.DeletedAt.Time,
+		DeletedAt:     nil,
 		CreatedAt:     generatedProduct.CreatedAt,
 		CategoryData:  nil,
+	}
+
+	if generatedProduct.DeletedAt.Valid {
+		product.DeletedAt = &generatedProduct.DeletedAt.Time
 	}
 
 	if generatedProduct.CategoryID_2.Valid {
@@ -117,6 +123,9 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 
 	generatedProduct, err := pr.queries.UpdateProduct(ctx, params)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", product.ID)
+		}
 		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating product: %s", err.Error())
 	}
 
@@ -129,6 +138,7 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 		ImageUrl:      generatedProduct.ImageUrl,
 		StockQuantity: generatedProduct.StockQuantity,
 		CreatedAt:     generatedProduct.CreatedAt,
+		DeletedAt:     nil,
 	}
 
 	return productData, nil
@@ -212,7 +222,7 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 			CategoryID:    uint32(p.CategoryID),
 			ImageUrl:      p.ImageUrl,
 			StockQuantity: p.StockQuantity,
-			DeletedAt:     &p.DeletedAt.Time,
+			DeletedAt:     nil,
 			CreatedAt:     p.CreatedAt,
 			CategoryData:  nil,
 		}
@@ -231,8 +241,8 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 
 func (pr *ProductRepository) DeleteProduct(ctx context.Context, id int64) error {
 	if err := pr.queries.DeleteProduct(ctx, id); err != nil {
-		if pkg.PgxErrorCode(err) == pkg.NOT_FOUND_ERROR {
-			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with id %d not found", id)
+		if errors.Is(err, sql.ErrNoRows) {
+			return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", id)
 		}
 		return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting product: %s", err.Error())
 	}
