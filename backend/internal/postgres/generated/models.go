@@ -6,16 +6,104 @@ package generated
 
 import (
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Category struct {
+	ID           int64              `json:"id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
+	ImageUrl     []string           `json:"image_url"`
+	ProductCount int64              `json:"product_count"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt    time.Time          `json:"created_at"`
+}
+
+type Order struct {
+	ID              int64              `json:"id"`
+	UserName        string             `json:"user_name"`
+	UserPhoneNumber string             `json:"user_phone_number"`
+	TotalAmount     pgtype.Numeric     `json:"total_amount"`
+	PaymentStatus   bool               `json:"payment_status"`
+	Status          string             `json:"status"`
+	ShippingAddress pgtype.Text        `json:"shipping_address"`
+	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt       time.Time          `json:"created_at"`
+}
+
+type OrderItem struct {
+	ID        int64          `json:"id"`
+	OrderID   int64          `json:"order_id"`
+	ProductID int64          `json:"product_id"`
+	Quantity  int32          `json:"quantity"`
+	Amount    pgtype.Numeric `json:"amount"`
+}
+
+type Payment struct {
+	ID                 int64          `json:"id"`
+	Description        pgtype.Text    `json:"description"`
+	OrderID            pgtype.Int8    `json:"order_id"`
+	UserSubscriptionID pgtype.Int8    `json:"user_subscription_id"`
+	PaymentMethod      string         `json:"payment_method"`
+	Amount             pgtype.Numeric `json:"amount"`
+	PaidAt             time.Time      `json:"paid_at"`
+	CreatedAt          time.Time      `json:"created_at"`
+}
+
+type Product struct {
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	Price         pgtype.Numeric     `json:"price"`
+	CategoryID    int64              `json:"category_id"`
+	ImageUrl      []string           `json:"image_url"`
+	StockQuantity int64              `json:"stock_quantity"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt     time.Time          `json:"created_at"`
+}
+
+type Subscription struct {
+	ID          int64              `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	ProductIds  []int32            `json:"product_ids"`
+	AddOns      []int32            `json:"add_ons"`
+	Price       pgtype.Numeric     `json:"price"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt   time.Time          `json:"created_at"`
+}
+
+type SubscriptionDelivery struct {
+	ID                 int64              `json:"id"`
+	Description        pgtype.Text        `json:"description"`
+	UserSubscriptionID int64              `json:"user_subscription_id"`
+	DeliveredOn        time.Time          `json:"delivered_on"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt          time.Time          `json:"created_at"`
+}
+
 type User struct {
-	ID           int64     `json:"id"`
-	Name         string    `json:"name"`
-	Email        string    `json:"email"`
-	Address      string    `json:"address"`
-	PhoneNumber  string    `json:"phone_number"`
-	RefreshToken string    `json:"refresh_token"`
-	Password     string    `json:"password"`
-	IsAdmin      bool      `json:"is_admin"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           int64       `json:"id"`
+	Name         string      `json:"name"`
+	Email        string      `json:"email"`
+	Address      pgtype.Text `json:"address"`
+	PhoneNumber  string      `json:"phone_number"`
+	RefreshToken pgtype.Text `json:"refresh_token"`
+	Password     string      `json:"password"`
+	IsAdmin      bool        `json:"is_admin"`
+	IsActive     bool        `json:"is_active"`
+	CreatedAt    time.Time   `json:"created_at"`
+}
+
+type UserSubscription struct {
+	ID             int64              `json:"id"`
+	UserID         int64              `json:"user_id"`
+	SubscriptionID int64              `json:"subscription_id"`
+	DayOfWeek      int16              `json:"day_of_week"`
+	Status         bool               `json:"status"`
+	StartDate      time.Time          `json:"start_date"`
+	EndDate        time.Time          `json:"end_date"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt      time.Time          `json:"created_at"`
 }

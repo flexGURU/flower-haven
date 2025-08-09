@@ -6,10 +6,71 @@ package generated
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
+	CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error)
+	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
+	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int64, error)
+	CreateSubscriptionDelivery(ctx context.Context, arg CreateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUserSubscription(ctx context.Context, arg CreateUserSubscriptionParams) (int64, error)
+	DeleteCategory(ctx context.Context, id int64) error
+	DeleteOrder(ctx context.Context, id int64) error
+	DeleteProduct(ctx context.Context, id int64) error
+	DeleteSubscription(ctx context.Context, id int64) error
+	DeleteSubscriptionDelivery(ctx context.Context, id int64) error
+	DeleteUserSubscription(ctx context.Context, id int64) error
+	GetCategoryByID(ctx context.Context, id int64) (Category, error)
+	GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error)
+	GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error)
+	GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderByFullDataIDRow, error)
+	GetOrderByID(ctx context.Context, id int64) (Order, error)
+	GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error)
+	GetPaymentByID(ctx context.Context, id int64) (Payment, error)
+	GetPaymentsByOrderID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
+	GetPaymentsByUserSubscriptionID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
+	GetProductByID(ctx context.Context, id int64) (GetProductByIDRow, error)
+	GetSubscriptionByID(ctx context.Context, id int64) (GetSubscriptionByIDRow, error)
+	GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int64) (User, error)
+	GetUserSubscriptionByID(ctx context.Context, id int64) (GetUserSubscriptionByIDRow, error)
+	GetUserSubscriptionsByUserID(ctx context.Context, arg GetUserSubscriptionsByUserIDParams) ([]GetUserSubscriptionsByUserIDRow, error)
+	ListCategories(ctx context.Context, arg ListCategoriesParams) ([]Category, error)
+	ListCategoriesCount(ctx context.Context, search interface{}) (int64, error)
+	ListCountOrder(ctx context.Context, arg ListCountOrderParams) (int64, error)
+	ListCountPayments(ctx context.Context, arg ListCountPaymentsParams) (int64, error)
+	ListCountProducts(ctx context.Context, arg ListCountProductsParams) (int64, error)
+	ListCountSubscriptionDelivery(ctx context.Context) (int64, error)
+	ListCountUserSubscriptions(ctx context.Context, status pgtype.Bool) (int64, error)
+	ListOrder(ctx context.Context, arg ListOrderParams) ([]Order, error)
+	ListPayments(ctx context.Context, arg ListPaymentsParams) ([]Payment, error)
+	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
+	ListSubscriptionDelivery(ctx context.Context, arg ListSubscriptionDeliveryParams) ([]SubscriptionDelivery, error)
+	ListSubscriptions(ctx context.Context, arg ListSubscriptionsParams) ([]ListSubscriptionsRow, error)
+	ListSubscriptionsCount(ctx context.Context, arg ListSubscriptionsCountParams) (int64, error)
+	ListUserSubscriptions(ctx context.Context, arg ListUserSubscriptionsParams) ([]ListUserSubscriptionsRow, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	ListUsersCount(ctx context.Context, arg ListUsersCountParams) (int64, error)
+	OrderExists(ctx context.Context, id int64) (bool, error)
+	ProductExists(ctx context.Context, id int64) (bool, error)
+	SubscriptionExists(ctx context.Context, id int64) (bool, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
+	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
+	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (int64, error)
+	UpdateSubscriptionDelivery(ctx context.Context, arg UpdateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)
+	UpdateUserSubscription(ctx context.Context, arg UpdateUserSubscriptionParams) (int64, error)
+	UserExists(ctx context.Context, id int64) (bool, error)
+	UserSubscriptionExists(ctx context.Context, id int64) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -11,3 +11,5 @@ bin/
 
 # Logs
 *.log
+
+/tmp
