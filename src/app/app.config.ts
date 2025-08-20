@@ -12,8 +12,13 @@ import { AngularFireModule } from '@angular/fire/compat';
 
 import { routes } from './app.routes';
 import PurplePreset from './preset';
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
 import { firebaseConfig } from '../environments/environment';
+import { authInterceptor } from './core/interceptor/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,7 +26,7 @@ export const appConfig: ApplicationConfig = {
       AngularFireModule.initializeApp(firebaseConfig),
       AngularFirestoreModule,
     ]),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),

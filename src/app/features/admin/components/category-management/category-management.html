@@ -45,11 +45,12 @@
   </div>
 
   <!-- Categories Table -->
-  <div class="bg-white flex justify-center rounded-lg shadow-sm mb-4 px-15">
+  <div class="bg-white flex justify-center rounded-lg shadow-sm mb-4 py-2 px-15">
     <p-table
       [tableStyle]="{ 'min-width': '60rem' }"
       [value]="filteredCategories"
-      [paginator]="true"
+      showGridlines
+      [paginator]="filteredCategories.length > 10"
       [rows]="10"
       [showCurrentPageReport]="true"
       currentPageReportTemplate="{first} out of {last}"
@@ -233,7 +234,7 @@
             >
             <div class="flex items-center gap-2">
               <span class="text-lg font-semibold text-blue-600"
-                >{{ getProductCount(selectedCategory.id) }}</span
+                >{{ getProductCount('') }}</span
               >
               <span class="text-gray-600">products</span>
             </div>
@@ -244,13 +245,13 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="p-4 bg-blue-50 rounded-lg text-center">
             <div class="text-2xl font-bold text-blue-600">
-              {{ getProductCount(selectedCategory.id) }}
+              {{ getProductCount('') }}
             </div>
             <div class="text-sm text-blue-800">Total Products</div>
           </div>
           <div class="p-4 bg-green-50 rounded-lg text-center">
             <div class="text-2xl font-bold text-green-600">
-              {{ getActiveProductCount(selectedCategory.id) }}
+              {{ getActiveProductCount('') }}
             </div>
             <div class="text-sm text-green-800">Active Products</div>
           </div>
@@ -282,10 +283,7 @@
 </p-dialog>
 
 <!-- Confirmation Dialog -->
-<p-confirmDialog
-  [style]="{ width: '450px' }"
-  [baseZIndex]="10000"
-></p-confirmDialog>
+<p-confirmDialog />
 
 <!-- Toast Messages -->
 <p-toast [baseZIndex]="20000" position="top-right"></p-toast>

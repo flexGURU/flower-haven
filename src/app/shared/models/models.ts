@@ -1,18 +1,18 @@
 export interface Product {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   price: number;
   image: string;
   categoryId: string;
   stock: number;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
 export interface Category {
-  id: string;
+  id?: string;
   name: string;
   description: string;
-  image?: string;
+  image_url?: string[];
   productCount?: number;
 }

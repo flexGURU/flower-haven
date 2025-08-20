@@ -153,10 +153,10 @@
             </div>
 
             <!-- Preview Selected Image -->
-            <div *ngIf="selectedImagePreview" class="mt-4">
+            <div *ngIf="selectedImagePreview()" class="mt-4">
               <label class="block text-sm font-medium mb-2">Preview</label>
               <img
-                [src]="selectedImagePreview"
+                [src]="selectedImagePreview()"
                 alt="Selected image preview"
                 class="w-32 h-32 object-cover rounded-lg border"
               />

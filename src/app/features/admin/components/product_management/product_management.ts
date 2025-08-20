@@ -115,7 +115,7 @@ export class ProductManagement {
       header: 'Confirm Delete',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        this.deleteProduct(product.id);
+        // this.deleteProduct(product.id);
       },
     });
   }
