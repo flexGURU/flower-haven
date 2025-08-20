@@ -10,7 +10,7 @@ import (
 type Config struct {
 	DATABASE_URL            string        `mapstructure:"DATABASE_URL"`
 	MIGRATION_PATH          string        `mapstructure:"MIGRATION_PATH"`
-	FRONTEND_URL            string        `mapstructure:"FRONTEND_URL"`
+	FRONTEND_URL            []string      `mapstructure:"FRONTEND_URL"`
 	ENVIRONMENT             string        `mapstructure:"ENVIRONMENT"`
 	SERVER_ADDRESS          string        `mapstructure:"SERVER_ADDRESS"`
 	PASSWORD_COST           int           `mapstructure:"PASSWORD_COST"`
@@ -45,7 +45,7 @@ func LoadConfig(path string) (Config, error) {
 func setDefaults() {
 	viper.SetDefault("DATABASE_URL", "")
 	viper.SetDefault("MIGRATION_PATH", "")
-	viper.SetDefault("FRONTEND_URL", "")
+	viper.SetDefault("FRONTEND_URL", []string{})
 	viper.SetDefault("ENVIRONMENT", "")
 	viper.SetDefault("SERVER_ADDRESS", "")
 	viper.SetDefault("PASSWORD_COST", 0)
