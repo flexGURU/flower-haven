@@ -68,15 +68,11 @@ func authMiddleware(maker pkg.JWTMaker) gin.HandlerFunc {
 	}
 }
 
-func CORSmiddleware(frontendUrl string) gin.HandlerFunc {
-	allowedOrigins := []string{
-		frontendUrl,
-	}
-
+func CORSmiddleware(frontendUrls []string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		origin := ctx.Request.Header.Get("Origin")
 
-		for _, allowedOrigin := range allowedOrigins {
+		for _, allowedOrigin := range frontendUrls {
 			if origin == allowedOrigin {
 				ctx.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 				break
