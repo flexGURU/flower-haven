@@ -53,4 +53,5 @@ func setDefaults() {
 	viper.SetDefault("REFRESH_TOKEN_DURATION", 0)
 	viper.SetDefault("TOKEN_DURATION", 0)
 	viper.SetDefault("TOKEN_SYMMETRIC_KEY", "")
+	viper.SetDefault("TOKEN_ISSUER", "")
 }
