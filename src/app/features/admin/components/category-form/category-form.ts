@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import {
   FormGroup,
   FormBuilder,
@@ -14,6 +14,7 @@ import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
+import { ProductService } from '../../../../shared/services/product.service';
 
 @Component({
   selector: 'app-category-form',
@@ -23,7 +24,9 @@ import { TextareaModule } from 'primeng/textarea';
     ToastModule,
     FormsModule,
     ReactiveFormsModule,
-    CardModule, InputTextModule, TextareaModule,
+    CardModule,
+    InputTextModule,
+    TextareaModule,
   ],
   providers: [MessageService],
 })
@@ -32,9 +35,12 @@ export class CategoryForm {
   @Input() isEditMode: boolean = false;
   @Output() onSave = new EventEmitter<Category>();
   @Output() onCancel = new EventEmitter<void>();
+  statusMessage: string | null = null;
 
   categoryForm!: FormGroup;
   saving = false;
+
+  private productService = inject(ProductService);
 
   constructor(
     private fb: FormBuilder,
@@ -67,6 +73,7 @@ export class CategoryForm {
           Validators.maxLength(200),
         ],
       ],
+      imageUrl: ['', Validators.required],
     });
   }
 
@@ -75,73 +82,56 @@ export class CategoryForm {
       this.categoryForm.patchValue({
         name: this.categoryData.name,
         description: this.categoryData.description,
+        imageUrl: this.categoryData.image_url?.[0] || '',
       });
     }
   }
 
-  async onSubmit() {
-    if (this.categoryForm.valid) {
-      this.saving = true;
+  onSubmit() {
+    if (!this.categoryForm.valid) {
+      return;
+    }
 
-      try {
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+    const categoryData: Category = {
+      name: this.categoryForm.value.name,
+      description: this.categoryForm.value.description,
+      image_url: [this.categoryForm.value.imageUrl],
+      id: this.categoryData?.id, // Include id for update
+    };
 
-        const categoryData: Category = {
-          id: this.isEditMode ? this.categoryData!.id : '',
-          name: this.categoryForm.value.name.trim(),
-          description: this.categoryForm.value.description.trim(),
-        };
+    this.saving = true; // Show a loading indicator
+    let apiCall$;
 
-        this.onSave.emit(categoryData);
+    if (this.isEditMode) {
+      apiCall$ = this.productService.updateCategory(categoryData);
+    } else {
+      apiCall$ = this.productService.addCategory(categoryData);
+    }
 
-        // Reset form after successful save
-        if (!this.isEditMode) {
-          this.categoryForm.reset();
-        }
-      } catch (error) {
-        console.error('Error saving category:', error);
+    apiCall$.subscribe({
+      next: (response) => {
+        const message = this.isEditMode
+          ? 'Category updated successfully!'
+          : 'Category added successfully!';
+        this.onSave.emit(response.data);
+        this.categoryForm.reset();
+      },
+      error: (err) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to save category. Please try again.',
+          summary: 'Operation failed',
+          detail: err.message,
         });
-      } finally {
-        this.saving = false;
-      }
-    } else {
-      // Mark all fields as touched to show validation errors
-      Object.keys(this.categoryForm.controls).forEach((key) => {
-        this.categoryForm.get(key)?.markAsTouched();
-      });
-
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Validation Error',
-        detail: 'Please fix the form errors before submitting.',
-      });
-    }
+        console.error('API Error:', err);
+      },
+      complete: () => {
+        this.saving = false; // Hide loading indicator
+      },
+    });
   }
 
   onCancelModal() {
     this.categoryForm.reset();
     this.onCancel.emit();
-  }
-
-  // Utility method to check if field has specific error
-  hasError(fieldName: string, errorType: string): boolean {
-    const field = this.categoryForm.get(fieldName);
-    return !!(field?.errors?.[errorType] && field?.touched);
-  }
-
-  // Get field error message
-  getFieldError(fieldName: string): string {
-    const field = this.categoryForm.get(fieldName);
-    if (field?.errors && field?.touched) {
-      if (field.errors['required']) return `${fieldName} is required`;
-      if (field.errors['minlength']) return `${fieldName} is too short`;
-      if (field.errors['maxlength']) return `${fieldName} is too long`;
-    }
-    return '';
   }
 }

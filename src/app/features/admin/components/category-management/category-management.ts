@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { Category } from '../../../../shared/models/models';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
+import { ProductService } from '../../../../shared/services/product.service';
 
 @Component({
   selector: 'app-category-management',
@@ -43,13 +44,13 @@ export class CategoryManagement {
   // Filter properties
   searchTerm = '';
 
+  private productService = inject(ProductService);
   // Mock product counts (replace with actual service calls)
   productCounts: { [categoryId: string]: number } = {};
 
   constructor(
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    // Inject your category service here
   ) {}
 
   ngOnInit() {
@@ -57,40 +58,24 @@ export class CategoryManagement {
   }
 
   loadCategories() {
+    console.log();
+
     this.loading = true;
-    // Replace with actual service call
-    setTimeout(() => {
-      this.categories = [
-        {
-          id: '1',
-          name: 'Electronics',
-          description:
-            'Electronic devices, gadgets, and accessories including smartphones, laptops, and home appliances',
-        },
-        {
-          id: '2',
-          name: 'Clothing',
-          description:
-            'Fashion items, apparel, and accessories for men, women, and children',
-        },
-        {
-          id: '3',
-          name: 'Books',
-          description:
-            'Physical and digital books, magazines, and other reading materials',
-        },
-      ];
-
-      // Mock product counts
-      this.productCounts = {
-        '1': 25,
-        '2': 18,
-        '3': 12,
-      };
-
-      this.filteredCategories = [...this.categories];
-      this.loading = false;
-    }, 1000);
+    this.productService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.filteredCategories = [...this.categories];
+        this.loading = false;
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load categories. Please try again later.',
+        });
+        this.loading = false;
+      },
+    });
   }
 
   applyFilters() {
@@ -131,71 +116,46 @@ export class CategoryManagement {
   }
 
   confirmDelete(category: Category) {
-    const productCount = this.getProductCount(category.id);
-
-    if (productCount > 0) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Cannot Delete',
-        detail: `Cannot delete category "${category.name}" as it contains ${productCount} products. Please remove or reassign products first.`,
-      });
-      return;
-    }
-
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete the category "${category.name}"? This action cannot be undone.`,
-      header: 'Delete Category',
+      message: `Are you sure you want to delete the category "${category.name}"?`,
+      header: 'Confirm Deletion',
       icon: 'pi pi-exclamation-triangle',
-      acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.deleteCategory(category);
+        this.productService.deleteCategory(category.id!).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: `Category "${category.name}" has been deleted.`,
+            });
+          },
+          error: (err) => {
+            console.error('Deletion failed:', err);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to delete category.',
+            });
+          },
+        });
       },
     });
   }
 
   deleteCategory(category: Category) {
-    // Replace with actual service call
-    this.categories = this.categories.filter((c) => c.id !== category.id);
-    delete this.productCounts[category.id];
-    this.applyFilters();
-
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: `Category "${category.name}" deleted successfully`,
-    });
+    console.log('Deleting category:', category);
   }
 
   onCategorySave(categoryData: Category) {
-    if (this.isEditMode) {
-      // Update existing category
-      const index = this.categories.findIndex((c) => c.id === categoryData.id);
-      if (index !== -1) {
-        this.categories[index] = categoryData;
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `Category "${categoryData.name}" updated successfully`,
-        });
-      }
-    } else {
-      // Add new category
-      const newCategory: Category = {
-        ...categoryData,
-        id: this.generateId(), // Replace with actual ID generation
-      };
-      this.categories.push(newCategory);
-      this.productCounts[newCategory.id] = 0;
-
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Category "${categoryData.name}" created successfully`,
-      });
-    }
-
-    this.categoryForm = false;
-    this.applyFilters();
+    this.categoryForm = false; 
+    this.loadCategories();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Category "${categoryData.name}" has been ${
+        this.isEditMode ? 'updated' : 'added'
+      }.`,
+    });
   }
 
   onFormCancel() {

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
+import { AuthService } from '../../../../core/auth/auth.service';
 
 @Component({
   selector: 'app-admin-header',
@@ -8,5 +9,8 @@ import { ButtonModule } from 'primeng/button';
   imports: [CommonModule, ButtonModule],
 })
 export class AdminHeaderComponent {
-  logOut() {}
+  private authService = inject(AuthService);
+  logOut() {
+    this.authService.logout();
+  }
 }

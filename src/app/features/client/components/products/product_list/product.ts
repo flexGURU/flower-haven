@@ -105,26 +105,26 @@ export class ProductComponent {
     }
 
     // 2. Sort the filtered products
-    filteredProducts.sort((a, b) => {
-      switch (this.sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'name_desc':
-          return b.name.localeCompare(a.name);
-        case 'price':
-          return a.price - b.price;
-        case 'price_desc':
-          return b.price - a.price;
-        case 'created_desc':
-          // Assuming product has a 'createdAt' property for newest first
-          // You might need to adjust this based on your Product model
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
-        default:
-          return 0;
-      }
-    });
+    // filteredProducts.sort((a, b) => {
+    //   switch (this.sortBy) {
+    //     case 'name':
+    //       return a.name.localeCompare(b.name);
+    //     case 'name_desc':
+    //       return b.name.localeCompare(a.name);
+    //     case 'price':
+    //       return a.price - b.price;
+    //     case 'price_desc':
+    //       return b.price - a.price;
+    //     case 'created_desc':
+    //       // Assuming product has a 'createdAt' property for newest first
+    //       // You might need to adjust this based on your Product model
+    //       return (
+    //         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    //       );
+    //     default:
+    //       return 0;
+    //   }
+    // });
 
     this.totalProducts = filteredProducts.length; // Update totalProducts for paginator
 

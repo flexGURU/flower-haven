@@ -14,6 +14,6 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () =>
-      import('./features/admin/core/login/login').then((m) => m.LoginComponent),
+      import('./core/components/login/login').then((m) => m.LoginComponent),
   },
 ];
