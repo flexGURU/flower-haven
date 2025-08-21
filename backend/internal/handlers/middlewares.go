@@ -79,7 +79,7 @@ func CORSmiddleware(frontendUrls []string) gin.HandlerFunc {
 			}
 		}
 
-		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, PATCH, DELETE, OPTIONS")
 		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "false")
 		ctx.Writer.Header().Set("Access-Control-Max-Age", "86400")
