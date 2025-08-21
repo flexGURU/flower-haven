@@ -70,7 +70,7 @@ export class ProductService {
 
   updateCategory(category: Category): Observable<{ data: Category }> {
     return this.http
-      .patch<{
+      .put<{
         data: Category;
       }>(`${this.categoryApiUrl}/${category.id}`, category)
       .pipe(
@@ -89,7 +89,6 @@ export class ProductService {
       .delete<{ message: string }>(`${this.categoryApiUrl}/${id}`)
       .pipe(
         tap(() => {
-          console.log(`Category with id ${id} deleted successfully.`);
           this.fecthCategories().subscribe();
         }),
       );
