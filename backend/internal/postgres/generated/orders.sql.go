@@ -134,6 +134,43 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (Order, error) {
 	return i, err
 }
 
+const getRecentOrders = `-- name: GetRecentOrders :many
+SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at FROM orders
+WHERE deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT 7
+`
+
+func (q *Queries) GetRecentOrders(ctx context.Context) ([]Order, error) {
+	rows, err := q.db.Query(ctx, getRecentOrders)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Order{}
+	for rows.Next() {
+		var i Order
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserName,
+			&i.UserPhoneNumber,
+			&i.TotalAmount,
+			&i.PaymentStatus,
+			&i.Status,
+			&i.ShippingAddress,
+			&i.DeletedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCountOrder = `-- name: ListCountOrder :one
 SELECT COUNT(*) AS total_orders
 FROM orders
@@ -243,6 +280,19 @@ func (q *Queries) OrderExists(ctx context.Context, id int64) (bool, error) {
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const totalOrders = `-- name: TotalOrders :one
+SELECT COUNT(*) AS total_orders
+FROM orders
+WHERE deleted_at IS NULL
+`
+
+func (q *Queries) TotalOrders(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalOrders)
+	var total_orders int64
+	err := row.Scan(&total_orders)
+	return total_orders, err
 }
 
 const updateOrder = `-- name: UpdateOrder :one

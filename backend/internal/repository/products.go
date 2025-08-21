@@ -44,4 +44,6 @@ type ProductRepository interface {
 	UpdateProduct(ctx context.Context, product *UpdateProduct) (*Product, error)
 	ListProducts(ctx context.Context, filter *ProductFilter) ([]*Product, *pkg.Pagination, error)
 	DeleteProduct(ctx context.Context, id int64) error
+
+	GetDashboardData(ctx context.Context) (interface{}, error)
 }

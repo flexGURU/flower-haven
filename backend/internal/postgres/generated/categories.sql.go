@@ -7,6 +7,7 @@ package generated
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -47,6 +48,58 @@ WHERE id = $1
 func (q *Queries) DeleteCategory(ctx context.Context, id int64) error {
 	_, err := q.db.Exec(ctx, deleteCategory, id)
 	return err
+}
+
+const getCategoriesWithProductCount = `-- name: GetCategoriesWithProductCount :many
+SELECT 
+    c.id, c.name, c.description, c.image_url, c.product_count, c.deleted_at, c.created_at, 
+    COUNT(p.id) AS products_count
+FROM categories c
+LEFT JOIN products p 
+    ON p.category_id = c.id 
+   AND p.deleted_at IS NULL  
+WHERE c.deleted_at IS NULL
+GROUP BY c.id
+`
+
+type GetCategoriesWithProductCountRow struct {
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	ImageUrl      []string           `json:"image_url"`
+	ProductCount  int64              `json:"product_count"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt     time.Time          `json:"created_at"`
+	ProductsCount int64              `json:"products_count"`
+}
+
+func (q *Queries) GetCategoriesWithProductCount(ctx context.Context) ([]GetCategoriesWithProductCountRow, error) {
+	rows, err := q.db.Query(ctx, getCategoriesWithProductCount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetCategoriesWithProductCountRow{}
+	for rows.Next() {
+		var i GetCategoriesWithProductCountRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.ImageUrl,
+			&i.ProductCount,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.ProductsCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getCategoryByID = `-- name: GetCategoryByID :one

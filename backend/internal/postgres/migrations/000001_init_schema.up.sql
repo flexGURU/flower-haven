@@ -72,7 +72,6 @@ CREATE TABLE "products" (
   CONSTRAINT "products_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "categories" ("id")
 );
 
-
 CREATE TABLE "orders" (
   "id" bigserial PRIMARY KEY,
   "user_name" varchar(255) NOT NULL,

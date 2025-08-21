@@ -116,6 +116,9 @@ func (s *Server) setUpRoutes() {
 	authRoute.PUT("/payments/:id", s.updatePaymentHandler)
 	authRoute.GET("/payments", s.listPaymentsHandler)
 
+	// helpers routes
+	authRoute.GET("/dashboard", s.getDashboardDataHandler)
+
 	s.srv = &http.Server{
 		Addr:         s.config.SERVER_ADDRESS,
 		Handler:      s.router.Handler(),

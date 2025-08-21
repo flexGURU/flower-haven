@@ -6,6 +6,17 @@ RETURNING id;
 -- name: GetOrderByID :one
 SELECT * FROM orders WHERE id = $1;
 
+-- name: TotalOrders :one
+SELECT COUNT(*) AS total_orders
+FROM orders
+WHERE deleted_at IS NULL;
+
+-- name: GetRecentOrders :many
+SELECT * FROM orders
+WHERE deleted_at IS NULL
+ORDER BY created_at DESC
+LIMIT 7;
+
 -- name: GetOrderByFullDataID :one
 SELECT 
   o.*,

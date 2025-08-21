@@ -11,6 +11,7 @@ import (
 )
 
 type Querier interface {
+	ActiveSubscriptions(ctx context.Context) (int64, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
@@ -26,6 +27,7 @@ type Querier interface {
 	DeleteSubscription(ctx context.Context, id int64) error
 	DeleteSubscriptionDelivery(ctx context.Context, id int64) error
 	DeleteUserSubscription(ctx context.Context, id int64) error
+	GetCategoriesWithProductCount(ctx context.Context) ([]GetCategoriesWithProductCountRow, error)
 	GetCategoryByID(ctx context.Context, id int64) (Category, error)
 	GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error)
 	GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error)
@@ -36,6 +38,7 @@ type Querier interface {
 	GetPaymentsByOrderID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetPaymentsByUserSubscriptionID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetProductByID(ctx context.Context, id int64) (GetProductByIDRow, error)
+	GetRecentOrders(ctx context.Context) ([]Order, error)
 	GetSubscriptionByID(ctx context.Context, id int64) (GetSubscriptionByIDRow, error)
 	GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -61,6 +64,9 @@ type Querier interface {
 	OrderExists(ctx context.Context, id int64) (bool, error)
 	ProductExists(ctx context.Context, id int64) (bool, error)
 	SubscriptionExists(ctx context.Context, id int64) (bool, error)
+	TotalOrders(ctx context.Context) (int64, error)
+	TotalProducts(ctx context.Context) (int64, error)
+	TotalRevenue(ctx context.Context) (int64, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)

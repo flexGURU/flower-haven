@@ -3,6 +3,11 @@ INSERT INTO products (name, description, price, category_id, image_url, stock_qu
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
+-- name: TotalProducts :one
+SELECT COUNT(*) AS total_products
+FROM products
+WHERE deleted_at IS NULL;
+
 -- name: GetProductByID :one
 SELECT p.*, 
        c.id AS category_id,
