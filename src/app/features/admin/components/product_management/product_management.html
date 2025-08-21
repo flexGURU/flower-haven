@@ -68,122 +68,131 @@
   </div>
 
   <!-- Products Table -->
-  <div class="bg-white rounded-lg shadow-sm px-15">
-    <p-table
-      [tableStyle]="{ 'min-width': '60rem !important' }"
-      [value]="filteredProducts"
-      [paginator]="true"
-      [rows]="10"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first} out of  {totalRecords}"
-      [rowsPerPageOptions]="[5, 25, 50]"
-      [loading]="loading"
-      styleClass="p-datatable-striped"
-      [globalFilterFields]="['name', 'description']"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 80px">Image</th>
-          <th pSortableColumn="name">
-            Name <p-sortIcon field="name"></p-sortIcon>
-          </th>
-          <th pSortableColumn="price">
-            Price (KES) <p-sortIcon field="price"></p-sortIcon>
-          </th>
-          <th pSortableColumn="stockQuantity">
-            Stock <p-sortIcon field="stockQuantity"></p-sortIcon>
-          </th>
-          <th pSortableColumn="createdAt">
-            Created <p-sortIcon field="createdAt"></p-sortIcon>
-          </th>
-          <th style="width: 120px">Actions</th>
-        </tr>
-      </ng-template>
+  <div class="w-full flex justify-center">
+    <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
+      <p-table
+        [tableStyle]="{ 'min-width': '80rem' }"
+        [value]="filteredProducts"
+        [paginator]="filteredProducts.length > 10"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} out of  {totalRecords}"
+        [rowsPerPageOptions]="[5, 25, 50]"
+        [loading]="loading"
+        styleClass="p-datatable-striped"
+        [globalFilterFields]="['name', 'description']"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 80px">Image</th>
+            <th pSortableColumn="name">
+              Name <p-sortIcon field="name"></p-sortIcon>
+            </th>
+            <th pSortableColumn="price">
+              Price (KES) <p-sortIcon field="price"></p-sortIcon>
+            </th>
+            <th pSortableColumn="stockQuantity">
+              Stock <p-sortIcon field="stockQuantity"></p-sortIcon>
+            </th>
+            <th pSortableColumn="createdAt">
+              Created <p-sortIcon field="createdAt"></p-sortIcon>
+            </th>
+            <th style="width: 120px">Actions</th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-product>
-        <tr>
-          <td>
-            <img
-              [src]="product.image || 'assets/images/no-image.png'"
-              [alt]="product.name"
-              class="w-12 h-12 object-cover rounded-lg border"
-            />
-          </td>
-          <td>
-            <div>
-              <p class="font-medium text-gray-900">{{ product.name }}</p>
-              <p class="text-sm text-gray-500 truncate max-w-xs">
-                {{ product.description }}
-              </p>
-            </div>
-          </td>
-          <td class="font-semibold text-gray-900">
-            {{ product.price | currency:'KES':'symbol':'1.2-2' }}
-          </td>
-          <td>
-            <div class="flex items-center gap-2">
-              <span class="font-medium">{{ product.stock }}</span>
-              <p-badge [severity]="getStockSeverity(product.stock)"></p-badge>
-            </div>
-          </td>
-          <td class="text-gray-600">{{ product.createdAt | date:'short' }}</td>
-          <td>
-            <div class="flex gap-1">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-eye"
-                class="p-button-text p-button-sm p-button-secondary"
-                (click)="viewProduct(product)"
-                pTooltip="View Details"
-                tooltipPosition="top"
-              ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-pencil"
-                class="p-button-text p-button-sm p-button-info"
-                (click)="editProduct(product)"
-                pTooltip="Edit Product"
-                tooltipPosition="top"
-              ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-trash"
-                class="p-button-text p-button-sm p-button-danger"
-                (click)="confirmDelete(product)"
-                pTooltip="Delete Product"
-                tooltipPosition="top"
-              ></button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+        <ng-template pTemplate="body" let-product>
+          <tr>
+            <td>
+              <img
+                [src]="product.image_url"
+                [alt]="product.name"
+                class="w-12 h-12 object-cover rounded-lg border"
+              />
+            </td>
+            <td>
+              <div>
+                <p class="font-medium text-gray-900">{{ product.name }}</p>
+                <p class="text-sm text-gray-500 truncate max-w-xs">
+                  {{ product.description }}
+                </p>
+              </div>
+            </td>
+            <td class="font-semibold text-gray-900">
+              {{ product.price | currency:'KES':'symbol':'1.2-2' }}
+            </td>
 
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="6" class="text-center py-12">
-            <div class="text-gray-500">
-              <i class="pi pi-box text-5xl mb-4 block text-gray-300"></i>
-              <p class="text-lg font-medium mb-2">No products found</p>
-              <p class="text-sm">
-                Try adjusting your search criteria or add a new product
-              </p>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
+            <td>
+              <div class="flex items-center gap-2">
+                <span class="font-medium">{{ product.stock_quantity }}</span>
+                <p-badge
+                  [severity]="getStockSeverity(product.stock_quantity)"
+                ></p-badge>
+              </div>
+            </td>
+            <td class="text-gray-600">
+              {{ product.created_at | date:'medium' }}
+            </td>
+            <td>
+              <div class="flex gap-1">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="p-button-text p-button-sm p-button-secondary"
+                  (click)="viewProduct(product)"
+                  pTooltip="View Details"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-text p-button-sm p-button-info"
+                  (click)="editProduct(product)"
+                  pTooltip="Edit Product"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-text p-button-sm p-button-danger"
+                  (click)="confirmDelete(product)"
+                  pTooltip="Delete Product"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="6" class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
-            <p class="mt-2 text-gray-600">Loading products...</p>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+        @if (!loading) {
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="6" class="text-center py-12">
+              <div class="text-gray-500">
+                <i class="pi pi-box text-5xl mb-4 block text-gray-300"></i>
+                <p class="text-lg font-medium mb-2">No products found</p>
+                <p class="text-sm">
+                  Try adjusting your search criteria or add a new product
+                </p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        }
+
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td colspan="6" class="text-center py-8">
+              <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+              <p class="mt-2 text-gray-600">Loading products...</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   </div>
 </div>
 
@@ -228,7 +237,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <img
-            [src]="selectedProduct.image || 'assets/images/no-image.png'"
+            [src]="selectedProduct.image_url"
             [alt]="selectedProduct.name"
             class="w-full h-64 object-cover rounded-lg border"
           />
@@ -315,4 +324,4 @@
 ></p-confirmDialog>
 
 <!-- Toast Messages -->
-<p-toast [baseZIndex]="20000" position="top-right"></p-toast>
+<p-toast />

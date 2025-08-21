@@ -27,6 +27,7 @@ import { BadgeModule } from 'primeng/badge';
 import { TextareaModule } from 'primeng/textarea';
 import { ProductService } from '../../../../shared/services/product.service';
 import { FirebaseService } from '../../services/firebase';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-product-form',
@@ -46,6 +47,7 @@ import { FirebaseService } from '../../services/firebase';
     BadgeModule,
     TextareaModule,
   ],
+  providers: [MessageService],
 })
 export class ProductFormComponent {
   @Input() productData: Product | null = null;
@@ -56,12 +58,13 @@ export class ProductFormComponent {
   productForm!: FormGroup;
   saving = false;
   categories: Category[] = []; // Load your categories here
-  currentImageUrl: string | null = null;
+  currentImageUrl: string[] | null = null;
   selectedFiles = signal<File[]>([]);
   selectedImagePreview = signal<string[]>([]);
 
   private productService = inject(ProductService);
-private firebaseService = inject(FirebaseService)
+  private firebaseService = inject(FirebaseService);
+  private messageService = inject(MessageService);
 
   constructor(private fb: FormBuilder) {}
 
@@ -71,6 +74,7 @@ private firebaseService = inject(FirebaseService)
 
     if (this.isEditMode && this.productData) {
       this.populateForm();
+      console.log('sss', this.productData);
     }
   }
 
@@ -90,10 +94,10 @@ private firebaseService = inject(FirebaseService)
         name: this.productData.name,
         description: this.productData.description,
         price: this.productData.price,
-        categoryId: this.productData.categoryId,
-        stock: this.productData.stock,
+        categoryId: this.productData.category_id,
+        stock: this.productData.stock_quantity,
       });
-      this.currentImageUrl = this.productData.image;
+      this.currentImageUrl = this.productData.image_url;
     }
   }
 
@@ -154,20 +158,55 @@ private firebaseService = inject(FirebaseService)
         name: this.productForm.value.name,
         description: this.productForm.value.description,
         price: this.productForm.value.price,
-        image: '',
-        categoryId: this.productForm.value.categoryId,
-        stock: this.productForm.value.stock,
+        image_url: this.isEditMode ? this.productData!.image_url : [],
+        category_id: this.productForm.value.categoryId,
+        stock_quantity: this.productForm.value.stock,
         createdAt: this.isEditMode ? this.productData!.createdAt : new Date(),
       };
 
       try {
-      const imageUrl = await this.firebaseService.uploadImage(this.selectedFiles())
-      productData.image = imageUrl 
-      console.log(productData.image);
-      
+        if (this.selectedFiles().length > 0) {
+          const imageUrl = await this.firebaseService.uploadImage(
+            this.selectedFiles(),
+          );
+          productData.image_url = [imageUrl];
+        }
+
+        let apiCall$;
+
+        if (this.isEditMode) {
+          if (this.productData?.id) {
+            apiCall$ = this.productService.updateProduct(
+              productData,
+              this.productData.id,
+            );
+          }
+        } else {
+          apiCall$ = this.productService.addProduct(productData);
+        }
+
+        apiCall$?.subscribe({
+          next: (response) => {
+            const message = this.isEditMode
+              ? 'Product updated successfully!'
+              : 'Product added successfully!';
+            this.onSave.emit(response.data);
+            this.productForm.reset();
+          },
+          error: (err) => {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Operation failed',
+              detail: err.message,
+            });
+            console.error('API Error:', err);
+          },
+          complete: () => {
+            this.saving = false;
+          },
+        });
       } catch (error) {
-        console.error('Error saving product:', error);
-        // Handle error
+        console.error('Error uploading image:', error);
       } finally {
         this.saving = false;
       }

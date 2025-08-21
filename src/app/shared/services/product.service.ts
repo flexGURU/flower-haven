@@ -1,6 +1,13 @@
 import { Injectable, signal } from '@angular/core';
 import { Category, Product } from '../models/models';
-import { BehaviorSubject, catchError, Observable, tap, throwError } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  map,
+  Observable,
+  tap,
+  throwError,
+} from 'rxjs';
 import { apiUrl } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 
@@ -15,31 +22,69 @@ export class ProductService {
 
   constructor(private http: HttpClient) {
     this.fecthCategories().subscribe();
+    this.fecthProducts().subscribe();
   }
 
   products$ = this.productsSubject.asObservable();
 
-  createProduct(product: Product) {
-    const products = this.productsSubject.value;
-    this.productsSubject.next([...products, product]);
+  getProducts() {
+    return this.productsSubject.asObservable();
   }
 
-  updateProduct(id: string, product: Product) {
-    const products = this.productsSubject.value;
-    const index = products.findIndex((p) => p.id === product.id);
-    if (index !== -1) {
-      products[index] = product;
-      this.productsSubject.next([...products]);
-    }
+  fecthProducts(): Observable<{ data: Product[] }> {
+    return this.http.get<{ data: Product[] }>(this.productApiUrl).pipe(
+      tap((response) => {
+        this.productsSubject.next(response.data);
+      }),
+      catchError((error) => {
+        console.error('Error fetching products:', error);
+        return throwError(() => new Error('Failed to fetch products.'));
+      }),
+    );
   }
 
-  getProductById(id: string) {
-    return this.productsSubject.value[0];
+  addProduct(product: Product): Observable<{ data: Product }> {
+    return this.http.post<{ data: Product }>(this.productApiUrl, product).pipe(
+      tap(() => {
+        this.fecthProducts().subscribe();
+      }),
+      catchError((error) => {
+        console.error('Error creating product:', error);
+        return throwError(() => new Error('Failed to create product.'));
+      }),
+    );
   }
 
-  deleteProduct(id: string) {
-    const products = this.productsSubject.value.filter((p) => p.id !== id);
-    this.productsSubject.next(products);
+  updateProduct(product: Product, id: string): Observable<{ data: Product }> {
+    console.log("dddd", product);
+    
+    return this.http
+      .put<{ data: Product }>(`${this.productApiUrl}/${id}`, product)
+      .pipe(
+        tap(() => {
+          this.fecthProducts().subscribe();
+        }),
+        catchError((error) => {
+          console.error('Error updating product:', error);
+          return throwError(() => new Error('Failed to update product.'));
+        }),
+      );
+  }
+
+  getProductById(id: string): Observable<Product> {
+    return this.http
+      .get<{ data: Product }>(`${this.productApiUrl}/${id}`)
+      .pipe(map((response) => response.data));
+  }
+
+  deleteProduct(id: string): Observable<{ message: string }> {
+    return this.http
+      .delete<{ message: string }>(`${this.productApiUrl}/${id}`)
+      .pipe(
+        tap(() => {
+          this.fecthProducts().subscribe();
+        }),
+      );
   }
 
   getCategories() {

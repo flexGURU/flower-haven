@@ -29,7 +29,7 @@ export class ProductDetailComponent {
   reviewCount = 24;
   averageRating = 4.5;
 
-  galleryImages: any ;
+  galleryImages: any;
   galleryResponsiveOptions = [
     {
       breakpoint: '1024px',
@@ -64,7 +64,7 @@ export class ProductDetailComponent {
   constructor(
     private productService: ProductService,
     private cartService: CartService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
   ) {}
 
   ngOnInit() {
@@ -78,14 +78,16 @@ export class ProductDetailComponent {
 
   loadProduct(id: string) {
     if (id) {
-      this.product = this.productService.getProductById(id);
+      this.productService.getProductById(id).subscribe((response) => {
+        this.product = response;
+      });
       this.setupGallery();
     }
   }
 
   setupGallery() {
     if (this.product) {
-      this.galleryImages = this.product.image
+      this.galleryImages = this.product.image_url;
     }
   }
 
