@@ -3,6 +3,10 @@ INSERT INTO payments (order_id, description, user_subscription_id, amount, payme
 VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
+-- name: TotalRevenue :one
+SELECT SUM(amount) AS total_revenue
+FROM payments;
+
 -- name: GetPaymentByID :one
 SELECT * FROM payments WHERE id = $1;
 

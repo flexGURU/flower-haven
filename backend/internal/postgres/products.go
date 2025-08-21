@@ -248,3 +248,39 @@ func (pr *ProductRepository) DeleteProduct(ctx context.Context, id int64) error 
 	}
 	return nil
 }
+
+func (pr *ProductRepository) GetDashboardData(ctx context.Context) (interface{}, error) {
+	totalRevenue, err := pr.queries.TotalRevenue(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching total revenue: %s", err.Error())
+	}
+	totalProducts, err := pr.queries.TotalProducts(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching total products: %s", err.Error())
+	}
+	totalOrders, err := pr.queries.TotalOrders(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching total orders: %s", err.Error())
+	}
+	activeSubscriptions, err := pr.queries.ActiveSubscriptions(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching active subscriptions: %s", err.Error())
+	}
+	recentOrders, err := pr.queries.GetRecentOrders(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching recent orders: %s", err.Error())
+	}
+	categoriesData, err := pr.queries.GetCategoriesWithProductCount(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching categories with product count: %s", err.Error())
+	}
+
+	return map[string]interface{}{
+		"total_revenue":        totalRevenue,
+		"total_products":       totalProducts,
+		"total_orders":         totalOrders,
+		"active_subscriptions": activeSubscriptions,
+		"recent_orders":        recentOrders,
+		"categories":           categoriesData,
+	}, nil
+}

@@ -6,6 +6,18 @@ RETURNING *;
 -- name: GetCategoryByID :one
 SELECT * FROM categories WHERE id = $1;
 
+-- name: GetCategoriesWithProductCount :many
+SELECT 
+    c.*, 
+    COUNT(p.id) AS products_count
+FROM categories c
+LEFT JOIN products p 
+    ON p.category_id = c.id 
+   AND p.deleted_at IS NULL  
+WHERE c.deleted_at IS NULL
+GROUP BY c.id;
+
+
 -- name: UpdateCategory :one
 UPDATE categories
 SET name = coalesce(sqlc.narg('name'), name),

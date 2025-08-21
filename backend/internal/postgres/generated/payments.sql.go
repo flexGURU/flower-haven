@@ -189,6 +189,18 @@ func (q *Queries) ListPayments(ctx context.Context, arg ListPaymentsParams) ([]P
 	return items, nil
 }
 
+const totalRevenue = `-- name: TotalRevenue :one
+SELECT SUM(amount) AS total_revenue
+FROM payments
+`
+
+func (q *Queries) TotalRevenue(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalRevenue)
+	var total_revenue int64
+	err := row.Scan(&total_revenue)
+	return total_revenue, err
+}
+
 const updatePayment = `-- name: UpdatePayment :one
 UPDATE payments
 SET payment_method = coalesce($1, payment_method),

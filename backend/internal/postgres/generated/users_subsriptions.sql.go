@@ -12,6 +12,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const activeSubscriptions = `-- name: ActiveSubscriptions :one
+SELECT COUNT(*) AS active_subscriptions
+FROM user_subscriptions
+WHERE status = true
+  AND deleted_at IS NULL
+`
+
+func (q *Queries) ActiveSubscriptions(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, activeSubscriptions)
+	var active_subscriptions int64
+	err := row.Scan(&active_subscriptions)
+	return active_subscriptions, err
+}
+
 const createUserSubscription = `-- name: CreateUserSubscription :one
 INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week)
 VALUES ($1, $2, $3, $4, $5)

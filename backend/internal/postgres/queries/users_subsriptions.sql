@@ -6,6 +6,12 @@ RETURNING id;
 -- name: UserSubscriptionExists :one
 SELECT EXISTS(SELECT 1 FROM user_subscriptions WHERE id = $1) AS exists;
 
+-- name: ActiveSubscriptions :one
+SELECT COUNT(*) AS active_subscriptions
+FROM user_subscriptions
+WHERE status = true
+  AND deleted_at IS NULL;
+
 -- name: GetUserSubscriptionByID :one
 SELECT 
     us.*,

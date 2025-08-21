@@ -255,6 +255,19 @@ func (q *Queries) ProductExists(ctx context.Context, id int64) (bool, error) {
 	return exists, err
 }
 
+const totalProducts = `-- name: TotalProducts :one
+SELECT COUNT(*) AS total_products
+FROM products
+WHERE deleted_at IS NULL
+`
+
+func (q *Queries) TotalProducts(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalProducts)
+	var total_products int64
+	err := row.Scan(&total_products)
+	return total_products, err
+}
+
 const updateProduct = `-- name: UpdateProduct :one
 UPDATE products
 SET name = coalesce($1, name),
