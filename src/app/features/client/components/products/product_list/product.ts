@@ -95,13 +95,13 @@ export class ProductComponent {
     // Filter by Categories
     if (this.selectedCategories.length > 0) {
       filteredProducts = filteredProducts.filter(
-        (p) => this.selectedCategories.includes(p.categoryId), // Assuming product has categoryId
+        (p) => this.selectedCategories.includes(p.category_id), // Assuming product has categoryId
       );
     }
 
     // Filter by In Stock Only
     if (this.inStockOnly) {
-      filteredProducts = filteredProducts.filter((p) => p.stock > 0);
+      filteredProducts = filteredProducts.filter((p) => p.stock_quantity > 0);
     }
 
     // 2. Sort the filtered products

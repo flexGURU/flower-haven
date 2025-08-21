@@ -1,11 +1,11 @@
 export const firebaseConfig = {
-  apiKey: 'AIzaSyAbMydCzWBRMCc0S9ZHD-6-O4IbM-L7EkI',
-  authDomain: 'floral-haven-97e6a.firebaseapp.com',
-  projectId: 'floral-haven-97e6a',
-  storageBucket: 'floral-haven-97e6a.firebasestorage.app',
-  messagingSenderId: '252662323921',
-  appId: '1:252662323921:web:21529706a2ea1d21a383f0',
-  measurementId: 'G-9S6749E9Z6',
+  apiKey: 'AIzaSyBiuKpR2pe5zrKcuhHwH4Aau4n6T9IfUhg',
+  authDomain: 'copper-freedom-388209.firebaseapp.com',
+  projectId: 'copper-freedom-388209',
+  storageBucket: 'copper-freedom-388209.appspot.com',
+  messagingSenderId: '276744140541',
+  appId: '1:276744140541:web:0c063fc302739fb88ef094',
+  measurementId: 'G-FQSG2SFQSF',
 };
 
 export const apiUrl = 'https://flower-haven-production.up.railway.app/api/v1';

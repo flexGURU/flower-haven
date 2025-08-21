@@ -38,7 +38,7 @@ export class HomeComponent {
   loadFeaturedProducts() {
     this.productService.products$.subscribe((products) => {
       this.featuredProducts = products
-        .filter((product) => product.stock > 0)
+        .filter((product) => product.stock_quantity > 0)
         .slice(0, 6); // Show first 6 available products
     });
   }

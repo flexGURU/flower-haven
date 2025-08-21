@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BadgeModule } from 'primeng/badge';
@@ -26,7 +26,7 @@ import { DialogModule } from 'primeng/dialog';
     FormsModule,
     TableModule,
     BadgeModule,
-DialogModule,
+    DialogModule,
     ToastModule,
     ConfirmDialog,
     CommonModule,
@@ -41,7 +41,7 @@ export class ProductManagement {
   products: Product[] = [];
   filteredProducts: Product[] = [];
   categories: Category[] = [];
-  loading = false;
+  loading = true;
   productForm = false;
 
   // Filters
@@ -57,10 +57,11 @@ export class ProductManagement {
   ];
 
   constructor(
-    private productService: ProductService,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
   ) {}
+
+  private productService = inject(ProductService);
 
   ngOnInit() {
     this.loadProducts();
@@ -69,15 +70,20 @@ export class ProductManagement {
 
   loadProducts() {
     this.loading = true;
-    this.productService.products$.subscribe({
+    this.productService.getProducts().subscribe({
       next: (products) => {
         this.products = products;
-        this.filteredProducts = [...products];
+        this.filteredProducts = [...this.products];
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading products:', error);
         this.loading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load products.',
+        });
       },
     });
   }
@@ -92,7 +98,15 @@ export class ProductManagement {
     });
   }
 
-  applyFilters() {}
+  applyFilters() {
+    this.filteredProducts = this.products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        product.description
+          .toLowerCase()
+          .includes(this.searchTerm.toLowerCase()),
+    );
+  }
 
   clearFilters() {
     this.searchTerm = '';
@@ -111,11 +125,27 @@ export class ProductManagement {
 
   confirmDelete(product: Product) {
     this.confirmationService.confirm({
-      message: `Are you sure you want to delete "${product.name}"?`,
-      header: 'Confirm Delete',
+      message: `Are you sure you want to delete the product "${product.name}"?`,
+      header: 'Confirm Deletion',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
-        // this.deleteProduct(product.id);
+        this.productService.deleteProduct(product.id!).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: `Category "${product.name}" has been deleted.`,
+            });
+          },
+          error: (err) => {
+            console.error('Deletion failed:', err);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to delete product.',
+            });
+          },
+        });
       },
     });
   }
@@ -123,8 +153,6 @@ export class ProductManagement {
   addProduct(status: string) {
     console.log('status', status);
   }
-
-  
 
   showProductDetails = false;
   isEditMode = false;
@@ -155,7 +183,13 @@ export class ProductManagement {
   onProductSave(productData: any) {
     // Handle save logic
     this.productForm = false;
-    // Refresh your products list
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Product "${productData.name}" has been ${
+        this.isEditMode ? 'updated' : 'added'
+      }.`,
+    });
   }
 
   onFormCancel() {
@@ -173,7 +207,9 @@ export class ProductManagement {
     return 'In Stock';
   }
 
-  getStockSeverity(stock: number): "info" | "success" | "warn" | "danger" | "secondary" | "contrast" {
+  getStockSeverity(
+    stock: number,
+  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
     if (stock === 0) return 'danger';
     if (stock <= 10) return 'warn';
     return 'success';
