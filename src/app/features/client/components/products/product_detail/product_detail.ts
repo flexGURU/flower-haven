@@ -10,6 +10,8 @@ import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { CartService } from '../../cart/cart.service';
 import { Image } from 'primeng/image';
+import { ProductAddonsComponent } from '../product-addons/product-addons';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-product-detail',
@@ -20,7 +22,11 @@ import { Image } from 'primeng/image';
     FormsModule,
     TabViewModule,
     RatingModule,
-    InputNumberModule,Image
+    InputNumberModule,
+    Image,
+    InputNumberModule,
+    ProductAddonsComponent,
+    DialogModule,
   ],
 })
 export class ProductDetailComponent {
@@ -29,6 +35,7 @@ export class ProductDetailComponent {
   rating = 4.5;
   reviewCount = 24;
   averageRating = 4.5;
+  addonsVisible = false;
 
   galleryImages: any;
   galleryResponsiveOptions = [
@@ -80,5 +87,8 @@ export class ProductDetailComponent {
     if (this.product) {
       this.cartService.addToCart(this.product, this.quantity);
     }
+  }
+  openAddonsDialog() {
+    this.addonsVisible = true;
   }
 }
