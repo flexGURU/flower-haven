@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { CartService } from '../../cart/cart.service';
+import { Image } from 'primeng/image';
 
 @Component({
   selector: 'app-product-detail',
@@ -19,7 +20,7 @@ import { CartService } from '../../cart/cart.service';
     FormsModule,
     TabViewModule,
     RatingModule,
-    InputNumberModule,
+    InputNumberModule,Image
   ],
 })
 export class ProductDetailComponent {
@@ -42,22 +43,6 @@ export class ProductDetailComponent {
     {
       breakpoint: '560px',
       numVisible: 1,
-    },
-  ];
-
-  sampleReviews = [
-    {
-      name: 'Sarah M.',
-      rating: 5,
-      date: '2 days ago',
-      comment:
-        'Absolutely beautiful flowers! They lasted much longer than expected.',
-    },
-    {
-      name: 'John D.',
-      rating: 4,
-      date: '1 week ago',
-      comment: 'Great quality and fast delivery. Will order again.',
     },
   ];
 
