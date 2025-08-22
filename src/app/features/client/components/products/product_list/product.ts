@@ -63,9 +63,9 @@ export class ProductComponent {
 
   ngOnInit() {
     this.loadCategories();
-    this.productService.products$.subscribe((products) => {
-      this.allProducts = products; // Get all products once
-      this.applyFilters(); // Apply filters and pagination initially
+    this.productService.getProducts().subscribe((products) => {
+      this.allProducts = products;
+      this.applyFilters();
     });
 
     // Listen for route changes
@@ -161,8 +161,8 @@ export class ProductComponent {
   }
 
   addToCart(product: Product) {
-    console.log("pp");
-    
+    console.log('pp');
+
     this.cartService.addToCart(product);
     this.messageService.add({
       severity: 'success',

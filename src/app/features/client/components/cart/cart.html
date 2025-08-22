@@ -34,7 +34,7 @@
             <!-- Product Image -->
             <div class="w-20 h-20 flex-shrink-0">
               <img
-                [src]="item.product.image"
+                [src]="item.product.image_url"
                 [alt]="item.product.name"
                 class="w-full h-full object-cover rounded-lg"
               />
@@ -71,7 +71,7 @@
               <p-inputNumber
                 [(ngModel)]="item.quantity"
                 [min]="1"
-                [max]="item.product.stock"
+                [max]="item.product.stock_quantity"
                 (onInput)="updateQuantity(item.product.name, item.quantity)"
                 class="w-16 text-center"
               ></p-inputNumber>
@@ -83,7 +83,7 @@
                 icon="pi pi-plus"
                 class="p-button-sm"
                 (click)="updateQuantity(item.product.name, item.quantity + 1)"
-                [disabled]="item.quantity >= item.product.stock"
+                [disabled]="item.quantity >= item.product.stock_quantity"
               ></button>
             </div>
 
