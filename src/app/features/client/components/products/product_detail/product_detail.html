@@ -16,8 +16,8 @@
       </ol>
     </nav>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-      <div class="product-images">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 justify-center">
+      <div class="flex justify-center">
         <p-image
           src="{{product.image_url}}"
           alt="Image"
@@ -56,7 +56,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex flex-col gap-4 mb-6">
           <div class="flex items-center">
             <label class="text-sm font-medium mr-3">Quantity:</label>
             <p-inputNumber
@@ -66,6 +66,7 @@
               [disabled]="!product.stock_quantity"
               class="w-20"
               [showButtons]="true"
+              buttonLayout="horizontal"
             ></p-inputNumber>
           </div>
 
@@ -74,7 +75,7 @@
             type="button"
             label="Add to Cart"
             icon="pi pi-shopping-cart"
-            class="p-button-lg flex-1"
+            class="p-button-lg flex-1 w-3/4"
             [disabled]="!product.stock_quantity || quantity > product.stock_quantity"
             (click)="addToCart()"
           ></button>
@@ -82,8 +83,10 @@
           <button
             pButton
             type="button"
-            icon="pi pi-heart"
-            class="p-button-outlined p-button-lg"
+            label="Add Add-ons"
+            icon="pi pi-plus"
+            class="p-button-secondary p-button-lg flex-1 w-3/4"
+            (click)="openAddonsDialog()"
           ></button>
         </div>
 
@@ -109,4 +112,16 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
     </div>
   </div>
+</div>
+<div>
+  <p-dialog
+    header="Add-ons"
+    [(visible)]="addonsVisible"
+    [modal]="true"
+    [style]="{ width: '70vw' }"
+    [closable]="true"
+    [dismissableMask]="true"
+  >
+    <app-product-addons />
+  </p-dialog>
 </div>

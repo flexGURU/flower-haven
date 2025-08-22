@@ -1,0 +1,81 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div
+    class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+  >
+    <div class="divide-y divide-gray-100">
+      <div
+        *ngFor="let addon of addons"
+        class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4 flex-1">
+            <div class="flex-shrink-0">
+              <div
+                class="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 border border-gray-200"
+              >
+                <img
+                  [src]="addon.image_url || 'https://via.placeholder.com/56x56?text=No+Image'"
+                  [alt]="addon.name"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <h3 class="font-semibold text-gray-900 text-base">
+                {{addon.name}}
+              </h3>
+              <p class="text-sm text-gray-500 mt-1">{{addon.description}}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-8">
+            <div class="text-right">
+              <span class="text-lg font-semibold text-gray-900">
+                KES{{addon.price | number:'1.2-2'}}
+              </span>
+            </div>
+
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium text-gray-900"
+                  >{{addon.stock_quantity}}</span
+                >
+                <div
+                  [ngClass]="{
+                  'bg-green-500': addon.stock_quantity > 10,
+                  'bg-yellow-500': addon.stock_quantity > 0 && addon.stock_quantity <= 10,
+                  'bg-red-500': addon.stock_quantity === 0
+                }"
+                  class="w-2 h-2 rounded-full"
+                ></div>
+              </div>
+              <p-inputNumber
+                [min]="1"
+                [max]="addon.stock_quantity"
+                [disabled]="addon.stock_quantity === 0"
+                class="w-2"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+              ></p-inputNumber>
+            </div>
+
+            <div class="flex-shrink-0">
+              <button pButton (click)="addAddonToCart(addon)" class="">
+                {{addon.stock_quantity > 0 ? 'Add to Cart' : 'Out of Stock'}}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!addons || addons.length === 0" class="text-center py-12">
+    <div class="text-gray-400 text-6xl mb-4">📦</div>
+    <h3 class="text-xl font-semibold text-gray-600 mb-2">
+      No addons available
+    </h3>
+    <p class="text-gray-500">Check back later for new items!</p>
+  </div>
+</div>
