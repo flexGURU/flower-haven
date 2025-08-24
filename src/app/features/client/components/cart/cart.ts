@@ -3,11 +3,13 @@ import { CartService } from './cart.service';
 import { Cart } from './cart.model';
 import { CardModule } from 'primeng/card';
 import { RouterLink } from '@angular/router';
-import { InputNumber } from 'primeng/inputnumber';
+import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
+import { Dialog, DialogModule } from "primeng/dialog";
+import { CheckoutComponent } from "../checkout/checkout.component";
 
 @Component({
   selector: 'app-cart',
@@ -16,11 +18,13 @@ import { ButtonModule } from 'primeng/button';
     CardModule,
     DividerModule,
     RouterLink,
-    InputNumber,
+    InputNumberModule,
     FormsModule,
     CommonModule,
     ButtonModule,
-  ],
+    DialogModule,
+    CheckoutComponent
+],
 })
 export class CartComponent {
   cart: Cart = {
@@ -29,6 +33,7 @@ export class CartComponent {
     itemCount: 0,
   };
   promoCode = '';
+  checkout = false;
 
   constructor(private cartService: CartService) {}
 
@@ -43,6 +48,8 @@ export class CartComponent {
   }
 
   removeItem(productId: string) {
+    console.log(productId);
+
     this.cartService.removeFromCart(productId);
   }
 
@@ -52,10 +59,5 @@ export class CartComponent {
 
   getTotalItems(): number {
     return this.cart.items.reduce((total, item) => total + item.quantity, 0);
-  }
-
-  applyPromoCode() {
-    // Implement promo code logic
-    console.log('Applying promo code:', this.promoCode);
   }
 }
