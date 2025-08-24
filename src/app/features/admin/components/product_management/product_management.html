@@ -198,6 +198,7 @@
 
 <!-- Product Form Dialog/Popup -->
 <p-dialog
+  maskStyleClass="backdrop-blur-sm"
   [(visible)]="productForm"
   [header]="isEditMode ? 'Edit Product' : 'Add New Product'"
   [modal]="true"
@@ -223,6 +224,7 @@
 
 <!-- Product Details Dialog -->
 <p-dialog
+  maskStyleClass="backdrop-blur-sm"
   [(visible)]="showProductDetails"
   header="Product Details"
   [modal]="true"
