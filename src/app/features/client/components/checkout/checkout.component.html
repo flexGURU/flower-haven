@@ -1,0 +1,106 @@
+<div>
+  <div class="space-y-6">
+    <div class="space-y-2">
+      <label for="location" class="block text-sm font-semibold text-gray-700">
+        Location <span class="text-red-500">*</span>
+      </label>
+      <input
+        type="text"
+        pInputText
+        id="location"
+        [(ngModel)]="location"
+        placeholder="e.g., Nairobi"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+      />
+    </div>
+
+    <div class="space-y-2">
+      <label for="address" class="block text-sm font-semibold text-gray-700">
+        Full Address <span class="text-red-500">*</span>
+      </label>
+      <input
+        id="address"
+        type="text"
+        pInputText
+        [(ngModel)]="address"
+        placeholder="e.g., 123 Main Street, Apt 4B"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+      />
+    </div>
+
+    <div class="space-y-2">
+      <label
+        for="deliveryDate"
+        class="block text-sm font-semibold text-gray-700"
+      >
+        Expected Delivery Date <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <p-datepicker
+          inputId="over_label"
+          showIcon
+          [(ngModel)]="rangeDates"
+          selectionMode="range"
+          [readonlyInput]="true"
+          styleClass="w-full"
+          appendTo="body"
+          [showButtonBar]="true"
+        />
+      </div>
+    </div>
+
+    <!-- Time Slot Field -->
+    <div class="space-y-2">
+      <label for="timeSlot" class="block text-sm font-semibold text-gray-700">
+        Time Slot <span class="text-red-500">*</span>
+      </label>
+      <p-select
+        id="timeSlot"
+        [options]="timeSlots"
+        [(ngModel)]="selectedTimeSlot"
+        placeholder="Select a time slot"
+        optionLabel="label"
+        styleClass="w-full custom-selep-select"
+        panelStyleClass="custom-selep-select-panel"
+        appendTo="body"
+      ></p-select>
+    </div>
+  </div>
+
+  <!-- Action Button -->
+  <div class="mt-8 pt-6 border-t border-gray-200">
+    <button
+      pButton
+      type="button"
+      (click)="submitOrder()"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm"
+    >
+      <span class="flex items-center justify-center">
+        <svg
+          class="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          ></path>
+        </svg>
+        Confirm Order
+      </span>
+    </button>
+  </div>
+
+  <!-- Order Summary Link -->
+  <div class="mt-4 text-center">
+    <button
+      type="button"
+      class="text-sm text-gray-500 hover:text-gray-700 underline"
+    >
+      Review order summary
+    </button>
+  </div>
+</div>

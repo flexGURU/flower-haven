@@ -161,14 +161,6 @@ export class ProductComponent {
   }
 
   addToCart(product: Product) {
-    console.log('pp');
-
     this.cartService.addToCart(product);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Info',
-      detail: `${product.name} added to cart`,
-      life: 3000,
-    });
   }
 }
