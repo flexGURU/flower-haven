@@ -162,5 +162,10 @@ export class ProductComponent {
 
   addToCart(product: Product) {
     this.cartService.addToCart(product);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Info',
+      detail: `${product.name} added to cart`,
+    });
   }
 }
