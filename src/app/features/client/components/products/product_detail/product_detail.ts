@@ -20,6 +20,7 @@ import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { CartItem } from '../../cart/cart.model';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-product-detail',
@@ -127,6 +128,7 @@ export class ProductDetailComponent {
 
   private productService = inject(ProductService);
   private cartService = inject(CartService);
+  private messageService = inject(MessageService);
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
@@ -167,7 +169,11 @@ export class ProductDetailComponent {
       };
 
       this.cartService.addToCart(cartItem.product, cartItem.quantity);
-      // You can extend the cart service to handle the additional options
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Info',
+        detail: `${cartItem.product.name} added to cart`,
+      });
     }
   }
 
@@ -211,11 +217,21 @@ export class ProductDetailComponent {
   onAddonAddedToCart(product: Product) {
     if (product) {
       this.cartService.addToCart(product);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Info',
+        detail: `${product.name} added to cart`,
+      });
     }
   }
   onAddonRemovedFromCart(product: Product) {
     if (product.id) {
       this.cartService.removeFromCart(product.id);
+      this.messageService.add({
+        severity: 'info',
+        summary: 'Info',
+        detail: `${product.name} removed from cart`,
+      });
     }
   }
 }

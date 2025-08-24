@@ -2,11 +2,9 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import { Product } from '../../../../shared/models/models';
 import { CartItem, Cart } from './cart.model';
 import { BehaviorSubject } from 'rxjs';
-import { MessageService } from 'primeng/api';
 
 @Injectable({
   providedIn: 'root',
-  
 })
 export class CartService {
   private cartSubject = new BehaviorSubject<Cart>({
@@ -14,8 +12,6 @@ export class CartService {
     total: 0,
     itemCount: 0,
   });
-
-  private messageService = inject(MessageService);
 
   public cart$ = this.cartSubject.asObservable();
 
@@ -36,12 +32,6 @@ export class CartService {
     }
 
     this.updateCart(currentCart);
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Info',
-      detail: `${product.name} added to cart`,
-      life: 3000,
-    });
   }
 
   removeFromCart(productId: string): void {
