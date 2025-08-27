@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CartService } from './cart.service';
 import { Cart } from './cart.model';
 import { CardModule } from 'primeng/card';
@@ -8,8 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
-import { Dialog, DialogModule } from "primeng/dialog";
-import { CheckoutComponent } from "../checkout/checkout.component";
+import { Dialog, DialogModule } from 'primeng/dialog';
+import { CheckoutComponent } from '../checkout/checkout.component';
 
 @Component({
   selector: 'app-cart',
@@ -23,8 +23,8 @@ import { CheckoutComponent } from "../checkout/checkout.component";
     CommonModule,
     ButtonModule,
     DialogModule,
-    CheckoutComponent
-],
+    CheckoutComponent,
+  ],
 })
 export class CartComponent {
   cart: Cart = {
@@ -34,12 +34,16 @@ export class CartComponent {
   };
   promoCode = '';
   checkout = false;
+  total: number = 0;
+
+
 
   constructor(private cartService: CartService) {}
 
   ngOnInit() {
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
+      this.total = cart.total
     });
   }
 
@@ -59,5 +63,10 @@ export class CartComponent {
 
   getTotalItems(): number {
     return this.cart.items.reduce((total, item) => total + item.quantity, 0);
+  }
+
+  checkOut() {
+    this.checkout = true
+
   }
 }

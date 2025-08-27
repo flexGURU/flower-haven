@@ -126,7 +126,7 @@
               type="button"
               label="Proceed to Checkout"
               class="w-full p-button-lg"
-              (click)="checkout=true"
+              (click)="checkOut()"
             ></button>
           </div>
         </p-card>
@@ -138,7 +138,7 @@
 <p-dialog
   [(visible)]="checkout"
   maskStyleClass="backdrop-blur-sm"
-  [style]="{ width: '40vw' }"
+  [style]="{ width: '90vw', maxWidth: '600px' }"
 >
-  <app-checkout />
+  <app-checkout [sumOrderDetails]="cart" />
 </p-dialog>
