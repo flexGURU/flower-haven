@@ -99,9 +99,7 @@ export class CheckoutComponent {
 
     const encodedMessage = encodeURIComponent(message);
 
-    window.open(
-      `https://wa.me/${this.phoneNumber}?text=${encodedMessage}`,
-      '_blank',
-    );
+    // ✅ Directly open WhatsApp app if available
+    window.location.href = `https://wa.me/${this.phoneNumber}?text=${encodedMessage}`;
   }
 }
