@@ -282,7 +282,7 @@ func (s *Server) login(ctx *gin.Context) {
 	// 	true,
 	// )
 
-	_, err = s.repo.UserRepository.UpdateUser(ctx, &repository.UpdateUser{
+	updatedUser, err := s.repo.UserRepository.UpdateUser(ctx, &repository.UpdateUser{
 		ID:           user.ID,
 		RefreshToken: &refreshToken,
 	})
@@ -295,6 +295,7 @@ func (s *Server) login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
+		"user":          updatedUser,
 	})
 }
 
