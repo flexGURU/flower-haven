@@ -13,12 +13,12 @@
               [(ngModel)]="priceRange"
               [range]="true"
               [min]="0"
-              [max]="500"
+              [max]="500000"
               (onSlideEnd)="applyFilters()"
             ></p-slider>
             <div class="flex justify-between text-sm text-gray-600 mt-2">
-              <span>\${{priceRange[0]}}</span>
-              <span>\${{priceRange[1]}}</span>
+              <span>KES {{priceRange[0]}}</span>
+              <span>KES {{priceRange[1]}}</span>
             </div>
           </div>
 
@@ -90,13 +90,14 @@
               class="h-full hover:shadow-lg transition-shadow duration-300"
             >
               <ng-template pTemplate="header">
-                <div class="relative">
+                <div class="relative w-full h-64">
                   <img
                     [src]="product.image_url"
                     [alt]="product.name"
-                    class="w-full h-48 object-cover cursor-pointer"
+                    class="w-full h-full object-cover cursor-pointer rounded-t-lg"
                     [routerLink]="['/products', product.id]"
                   />
+
                   <div class="absolute top-2 right-2">
                     <button
                       pButton
@@ -126,16 +127,8 @@
                 </p>
                 <div class="flex justify-between items-center">
                   <span class="text-2xl font-bold text-pink-600"
-                    >\${{product.price}}</span
+                    >KES {{product.price}}</span
                   >
-                  <button
-                    pButton
-                    type="button"
-                    label="Add to Cart"
-                    class="p-button-sm"
-                    [disabled]="!product.stock_quantity"
-                    (click)="addToCart(product)"
-                  ></button>
                 </div>
               </div>
             </p-card>

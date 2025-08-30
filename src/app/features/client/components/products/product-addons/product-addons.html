@@ -1,7 +1,9 @@
-<div class="product-addons">
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <div *ngFor="let addon of addons" class="addon-item">
-      <p-card>
+<div class="">
+  <div
+    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
+  >
+    <div *ngFor="let addon of addons" class="addon-item h-full">
+      <p-card class="h-full flex flex-col">
         <ng-template pTemplate="header">
           <img
             [src]="addon.image_url"
@@ -9,20 +11,24 @@
             class="w-full h-48 object-contain mx-auto"
           />
         </ng-template>
-        <div class="text-center">
-          <h3 class="font-semibold text-lg mb-2">{{ addon.name }}</h3>
-          <p class="text-gray-600 mb-3">{{ addon.description }}</p>
-          <p class="text-pink-600 font-bold text-xl mb-3">
-            KES {{ addon.price }}
-          </p>
-          <p-checkbox
-            [(ngModel)]="addon.selected"
-            [binary]="true"
-            label="addon.selected ? 'Added' : 'Add to order'"
-            (onChange)="onAddonToggle(addon)"
-            class="w-full"
-          >
-          </p-checkbox>
+        <div class="text-center flex-1 flex flex-col justify-between">
+          <div>
+            <h3 class="font-semibold text-lg mb-2">{{ addon.name }}</h3>
+            <!-- <p class="text-gray-600 mb-3">{{ addon.description }}</p> -->
+          </div>
+          <div>
+            <p class="text-pink-600 font-bold text-xl mb-3">
+              KES {{ addon.price }}
+            </p>
+            <p-checkbox
+              [(ngModel)]="addon.selected"
+              [binary]="true"
+              label="addon.selected ? 'Added' : 'Add to order'"
+              (onChange)="onAddonToggle(addon)"
+              class="w-full"
+            >
+            </p-checkbox>
+          </div>
         </div>
       </p-card>
     </div>

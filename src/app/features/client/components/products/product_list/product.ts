@@ -43,7 +43,7 @@ export class ProductComponent {
   pageTitle = 'All Products';
 
   // Filters
-  priceRange = [0, 500];
+  priceRange = [0, 500000];
   selectedCategories: string[] = [];
   inStockOnly = false;
   sortBy = 'name';
