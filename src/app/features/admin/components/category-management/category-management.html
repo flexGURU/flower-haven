@@ -1,4 +1,4 @@
-<div class="category-management">
+<div class="">
   <!-- Page Header -->
   <div class="flex justify-between items-center mb-6">
     <div>
@@ -45,9 +45,7 @@
   </div>
 
   <!-- Categories Table -->
-  <div
-    class="bg-white flex justify-center rounded-lg shadow-sm mb-4 py-2 px-15"
-  >
+  <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
     <p-table
       [tableStyle]="{ 'min-width': '60rem' }"
       [value]="filteredCategories"
@@ -63,11 +61,12 @@
     >
       <ng-template pTemplate="header">
         <tr>
+          <th>Image</th>
+
           <th pSortableColumn="name">
             Category Name <p-sortIcon field="name"></p-sortIcon>
           </th>
 
-          <th>Product Count</th>
           <th style="width: 120px">Actions</th>
         </tr>
       </ng-template>
@@ -75,21 +74,19 @@
       <ng-template pTemplate="body" let-category>
         <tr>
           <td>
+            <div class="flex items-center gap-2">
+              <img
+                [src]="category.image_url[0]"
+                class="w-12 h-12 object-cover rounded-lg border"
+                alt=""
+              />
+            </div>
+          </td>
+          <td>
             <div class="flex items-center gap-3">
               <div>
                 <p class="font-medium text-gray-900">{{ category.name }}</p>
               </div>
-            </div>
-          </td>
-
-          <td>
-            <div class="flex items-center gap-2">
-              <span class="font-medium"
-                >{{ getProductCount(category.id) }}</span
-              >
-              <p-badge
-                [severity]="getStockSeverity(category.productCount)"
-              ></p-badge>
             </div>
           </td>
           <td>
@@ -196,20 +193,12 @@
     <div class="category-details">
       <div class="space-y-6">
         <!-- Category Header -->
-        <div
-          class="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg"
-        >
-          <div
-            class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl"
-          >
-            {{ selectedCategory.name.charAt(0).toUpperCase() }}
-          </div>
-          <div>
-            <h3 class="text-xl font-bold text-gray-900">
-              {{ selectedCategory.name }}
-            </h3>
-            <p class="text-sm text-gray-600">ID: {{ selectedCategory.id }}</p>
-          </div>
+        <div>
+          <img
+            class="w-32 h-32 object-cover rounded-lg border"
+            [src]="selectedCategory.image_url"
+            alt=""
+          />
         </div>
 
         <!-- Category Information -->
@@ -252,12 +241,6 @@
               {{ getProductCount('') }}
             </div>
             <div class="text-sm text-blue-800">Total Products</div>
-          </div>
-          <div class="p-4 bg-green-50 rounded-lg text-center">
-            <div class="text-2xl font-bold text-green-600">
-              {{ getActiveProductCount('') }}
-            </div>
-            <div class="text-sm text-green-800">Active Products</div>
           </div>
         </div>
       </div>

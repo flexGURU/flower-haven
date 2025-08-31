@@ -1,4 +1,11 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  inject,
+  Input,
+  Output,
+  signal,
+} from '@angular/core';
 import {
   FormGroup,
   FormBuilder,
@@ -36,6 +43,7 @@ export class CategoryForm {
   @Output() onSave = new EventEmitter<Category>();
   @Output() onCancel = new EventEmitter<void>();
   statusMessage: string | null = null;
+  imageUrl = signal('');
 
   categoryForm!: FormGroup;
   saving = false;
@@ -79,6 +87,7 @@ export class CategoryForm {
 
   populateForm() {
     if (this.categoryData) {
+      this.imageUrl.set(this.categoryData.image_url?.[0] || '');
       this.categoryForm.patchValue({
         name: this.categoryData.name,
         description: this.categoryData.description,

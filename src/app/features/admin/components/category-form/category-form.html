@@ -6,7 +6,8 @@
         {{ isEditMode ? 'Edit Category' : 'Add New Category' }}
       </h2>
       <p class="text-gray-600 mt-1">
-        {{ isEditMode ? 'Update category information' : 'Create a new category for your products' }}
+        {{ isEditMode ? 'Update category information' : 'Create a new category
+        for your products' }}
       </p>
     </div>
   </div>
@@ -15,9 +16,7 @@
     <div class="space-y-6">
       <!-- Category Information Card -->
       <p-card>
-        <ng-template pTemplate="header">
-      
-        </ng-template>
+        <ng-template pTemplate="header"> </ng-template>
 
         <div class="space-y-6">
           <!-- Category Name -->
@@ -86,17 +85,28 @@
               type="text"
               pInputText
               formControlName="imageUrl"
-              placeholder="Enter image URL (optional)"
+              placeholder="Enter image URL"
               class="w-full"
-              />
+              [value]="imageUrl()"
+            />
 
-              @if (categoryForm.get('imageUrl')?.invalid &&
-              categoryForm.get('imageUrl')?.touched) {
-                 <div class="text-red-500">
-                  @if (categoryForm.get('imageUrl')?.errors?.['required']) {
-                <small>Image Url is required</small>
-                } 
-              </div>}
+            @if (categoryForm.get('imageUrl')?.invalid &&
+            categoryForm.get('imageUrl')?.touched) {
+            <div class="text-red-500">
+              @if (categoryForm.get('imageUrl')?.errors?.['required']) {
+              <small>Image Url is required</small>
+              }
+            </div>
+            }
+          </div>
+
+          <div>
+            <span>Preview</span>
+            <img
+              class="w-32 h-32 object-cover rounded-lg border"
+              [src]="imageUrl()"
+              alt=""
+            />
           </div>
         </div>
       </p-card>

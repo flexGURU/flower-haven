@@ -33,7 +33,7 @@ import { ProductService } from '../../../../shared/services/product.service';
 export class CategoryManagement {
   categories: Category[] = [];
   filteredCategories: Category[] = [];
-  loading = false;
+  loading = true;
 
   // Form dialog properties
   categoryForm = false;
@@ -45,7 +45,6 @@ export class CategoryManagement {
   searchTerm = '';
 
   private productService = inject(ProductService);
-  // Mock product counts (replace with actual service calls)
   productCounts: { [categoryId: string]: number } = {};
 
   constructor(
@@ -58,11 +57,12 @@ export class CategoryManagement {
   }
 
   loadCategories() {
-    console.log();
-
     this.loading = true;
+
     this.productService.getCategories().subscribe({
       next: (categories) => {
+        console.log("cat", categories);
+        
         this.categories = categories;
         this.filteredCategories = [...this.categories];
         this.loading = false;
@@ -128,6 +128,7 @@ export class CategoryManagement {
               summary: 'Success',
               detail: `Category "${category.name}" has been deleted.`,
             });
+            this.loadCategories();
           },
           error: (err) => {
             console.error('Deletion failed:', err);
@@ -147,7 +148,7 @@ export class CategoryManagement {
   }
 
   onCategorySave(categoryData: Category) {
-    this.categoryForm = false; 
+    this.categoryForm = false;
     this.loadCategories();
     this.messageService.add({
       severity: 'success',
@@ -163,7 +164,6 @@ export class CategoryManagement {
   }
 
   onFormClose() {
-    // this.selectedCategory = null;
     this.isEditMode = false;
   }
 
@@ -172,13 +172,13 @@ export class CategoryManagement {
   }
 
   getActiveProductCount(categoryId: string): number {
-    // Replace with actual service call to get active product count
     return Math.floor(this.getProductCount(categoryId) * 0.8);
   }
 
   private generateId(): string {
     return Date.now().toString();
   }
+
   getStockSeverity(
     stock: number,
   ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {

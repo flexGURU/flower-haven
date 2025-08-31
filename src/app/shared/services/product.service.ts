@@ -153,8 +153,6 @@ export class ProductService {
   fetchAddOns(): Observable<Product[]> {
     return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
       tap((response) => {
-        console.log('rrr', response);
-
         const addons = response.data.filter(
           (product) => product.category_data?.name === 'Add-Ons',
         );
