@@ -19,16 +19,28 @@ export class ProductService {
   private readonly productApiUrl = `${apiUrl}/products`;
   private productsSubject = new BehaviorSubject<Product[]>([]);
   private categorySubject = new BehaviorSubject<Category[]>([]);
+  private addOnsSubject = new BehaviorSubject<Product[]>([]);
+  private messageCardSubject = new BehaviorSubject<Product[]>([]);
 
   constructor(private http: HttpClient) {
     this.fecthCategories().subscribe();
     this.fecthProducts().subscribe();
+    this.fetchAddOns().subscribe();
+    this.fetchMessageCards().subscribe();
   }
 
   products$ = this.productsSubject.asObservable();
 
   getProducts() {
     return this.productsSubject.asObservable();
+  }
+
+  getAddOns() {
+    return this.addOnsSubject.asObservable();
+  }
+
+  getMessageCards() {
+    return this.messageCardSubject.asObservable();
   }
 
   fecthProducts(): Observable<{ data: Product[] }> {
@@ -56,8 +68,8 @@ export class ProductService {
   }
 
   updateProduct(product: Product, id: string): Observable<{ data: Product }> {
-    console.log("dddd", product);
-    
+    console.log('dddd', product);
+
     return this.http
       .put<{ data: Product }>(`${this.productApiUrl}/${id}`, product)
       .pipe(
@@ -137,5 +149,33 @@ export class ProductService {
           this.fecthCategories().subscribe();
         }),
       );
+  }
+  fetchAddOns(): Observable<Product[]> {
+    return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
+      tap((response) => {
+        console.log('rrr', response);
+
+        const addons = response.data.filter(
+          (product) => product.category_data?.name === 'Add-Ons',
+        );
+        this.addOnsSubject.next(addons);
+      }),
+      map((response) =>
+        response.data.filter(
+          (product) => product.category_data?.name === 'Add-Ons',
+        ),
+      ),
+    );
+  }
+
+  fetchMessageCards(): Observable<{ data: Product[] }> {
+    return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
+      tap((response) => {
+        const messageCards = response.data.filter(
+          (product) => product.category_data?.name === 'Message Cards',
+        );
+        this.messageCardSubject.next(messageCards);
+      }),
+    );
   }
 }

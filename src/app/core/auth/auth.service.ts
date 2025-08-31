@@ -1,28 +1,14 @@
 import { Injectable } from '@angular/core';
 import { apiUrl } from '../../../environments/environment.development';
-import { Observable, tap } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-
-interface UserResponse {
-  auth: {
-    access_token: string;
-    refresh_token: string;
-  };
-  data: {
-    id: number;
-    name: string;
-    email: string;
-    phone_number: string;
-    is_admin: boolean;
-    is_active: boolean;
-    created_at: string;
-  };
-}
+import { User } from '../../shared/models/models';
 
 interface LoginResponse {
   access_token: string;
   refresh_token: string;
+  user: User;
 }
 
 @Injectable({
@@ -31,6 +17,7 @@ interface LoginResponse {
 export class AuthService {
   private readonly apiUrl = apiUrl;
   private static readonly accessToken = 'JWT_ACCESS_KEY';
+  private static readonly userRole = 'USER_ROLE';
 
   constructor(
     private http: HttpClient,
@@ -42,6 +29,14 @@ export class AuthService {
 
   private set jwt(value: string) {
     sessionStorage.setItem(AuthService.accessToken, value);
+  }
+
+  private set role(value: string) {
+    sessionStorage.setItem(AuthService.userRole, value);
+  }
+
+  get role(): string {
+    return sessionStorage.getItem(AuthService.userRole) ?? '';
   }
 
   login(email: string, password: string): Observable<LoginResponse> {
@@ -58,8 +53,24 @@ export class AuthService {
     return !!this.jwt;
   }
 
+  isAdmin(): boolean {
+    if (this.role) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   logout(): void {
     sessionStorage.removeItem(AuthService.accessToken);
     this.router.navigate(['/admin/login']);
   }
+
+  signup = (user: User): Observable<User> => {
+    return this.http.post<{ data: User }>(`${apiUrl}/users`, user).pipe(
+      map((response) => {
+        return response.data;
+      }),
+    );
+  };
 }

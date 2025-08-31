@@ -7,6 +7,7 @@ export interface Product {
   category_id: string;
   stock_quantity: number;
   createdAt?: Date;
+  category_data?: Category;
 }
 
 export interface Category {
@@ -16,3 +17,20 @@ export interface Category {
   image_url?: string[];
   productCount?: number;
 }
+
+export interface User {
+  name: string;
+  email: string;
+  phone_number: string;
+  password: string;
+  is_admin: string;
+}
+
+export const initialProd: Product = {
+  name: '',
+  description: '',
+  price: 10,
+  image_url: [],
+  category_id: '',
+  stock_quantity: 0,
+};

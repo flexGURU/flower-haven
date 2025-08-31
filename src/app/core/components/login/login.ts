@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -10,19 +10,30 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { AuthService } from '../../auth/auth.service';
 import { MessageService } from 'primeng/api';
-import { Toast } from 'primeng/toast';
+import { Toast, ToastModule } from 'primeng/toast';
+import { PasswordModule } from 'primeng/password';
+import { Message } from 'primeng/message';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.html',
-  imports: [ButtonModule, ReactiveFormsModule, InputTextModule, Toast],
+  imports: [
+    ButtonModule,
+    ReactiveFormsModule,
+    InputTextModule,
+    PasswordModule,
+    ToastModule,
+    Message,
+  ],
   providers: [MessageService],
 })
 export class LoginComponent {
   loginForm: FormGroup;
   private authService = inject(AuthService);
-  private messageService = inject(MessageService);
   returnUrl: string | null = null;
+  loading = signal(false);
+  severity = signal('');
+  message = signal('');
 
   constructor(
     private fb: FormBuilder,
@@ -30,8 +41,11 @@ export class LoginComponent {
     private route: ActivatedRoute,
   ) {
     this.loginForm = this.fb.group({
-      email: ['admin1@admin.com', [Validators.required, Validators.email]],
-      password: ['admin', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', Validators.required],
+    });
+    effect(() => {
+      console.log(this.loading());
     });
   }
 
@@ -51,17 +65,21 @@ export class LoginComponent {
 
   login() {
     if (this.loginForm.valid) {
+      this.loading.set(true);
       const { email, password } = this.loginForm.value;
       this.authService.login(email, password).subscribe({
         next: () => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Login Successful',
-          });
-
+          this.severity.set('success');
+          this.message.set('Success');
+          this.loading.set(false);
           if (this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);
           }
+        },
+        error: () => {
+          this.loading.set(false);
+          this.severity.set('error');
+          this.message.set('Invalid password or email');
         },
       });
     }
