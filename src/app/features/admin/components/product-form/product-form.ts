@@ -74,7 +74,6 @@ export class ProductFormComponent {
 
     if (this.isEditMode && this.productData) {
       this.populateForm();
-      console.log('sss', this.productData);
     }
   }
 

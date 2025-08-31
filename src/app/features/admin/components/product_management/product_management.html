@@ -28,7 +28,6 @@
           (input)="applyFilters()"
         />
       </div>
-
       <div>
         <label class="block text-sm font-medium mb-2">Category</label>
         <p-select
@@ -73,11 +72,11 @@
       <p-table
         [tableStyle]="{ 'min-width': '80rem' }"
         [value]="filteredProducts"
-        [paginator]="filteredProducts.length > 10"
+        [paginator]="filteredProducts.length >10"
         [rows]="10"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="{first} out of  {totalRecords}"
-        [rowsPerPageOptions]="[5, 25, 50]"
+        [rowsPerPageOptions]="[10, 25, 50]"
         [loading]="loading"
         styleClass="p-datatable-striped"
         [globalFilterFields]="['name', 'description']"
@@ -231,7 +230,7 @@
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
-  [style]="{ width: '90vw', maxWidth: '600px' }"
+  [style]="{ width: '90vw', maxWidth: '900px' }"
   [baseZIndex]="10000"
 >
   <ng-template pTemplate="content">

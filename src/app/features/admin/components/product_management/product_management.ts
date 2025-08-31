@@ -59,7 +59,9 @@ export class ProductManagement {
   constructor(
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-  ) {}
+  ) {
+    console.log(this.selectedCategory);
+  }
 
   private productService = inject(ProductService);
 
@@ -72,6 +74,8 @@ export class ProductManagement {
     this.loading = true;
     this.productService.getProducts().subscribe({
       next: (products) => {
+        console.log('pp', products);
+
         this.products = products;
         this.filteredProducts = [...this.products];
         this.loading = false;
@@ -99,15 +103,29 @@ export class ProductManagement {
   }
 
   applyFilters() {
-    this.filteredProducts = this.products.filter(
-      (product) =>
+    this.filteredProducts = this.products.filter((product) => {
+      const matchesSearch =
         product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         product.description
           .toLowerCase()
-          .includes(this.searchTerm.toLowerCase()),
-    );
-  }
+          .includes(this.searchTerm.toLowerCase());
 
+      const matchesCategory =
+        !this.selectedCategory || product.category_id === this.selectedCategory;
+
+      let matchesStock = true;
+      if (this.stockFilter === 'inStock') {
+        matchesStock = product.stock_quantity > 10;
+      } else if (this.stockFilter === 'lowStock') {
+        matchesStock =
+          product.stock_quantity > 0 && product.stock_quantity <= 10;
+      } else if (this.stockFilter === 'outOfStock') {
+        matchesStock = product.stock_quantity === 0;
+      }
+
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+  }
   clearFilters() {
     this.searchTerm = '';
     this.selectedCategory = '';
