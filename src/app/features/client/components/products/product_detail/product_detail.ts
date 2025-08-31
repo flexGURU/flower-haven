@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { GalleriaModule } from 'primeng/galleria';
@@ -6,7 +6,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TabViewModule } from 'primeng/tabview';
 import { RatingModule } from 'primeng/rating';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Product } from '../../../../../shared/models/models';
+import { initialProd, Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { CartService } from '../../cart/cart.service';
 import { Image } from 'primeng/image';
@@ -50,6 +50,7 @@ export class ProductDetailComponent {
   reviewCount = 24;
   averageRating = 4.5;
   addonsVisible = false;
+  messageCards: Product[] = [];
 
   selectedStemSize: any = null;
   stemSizes = [
@@ -61,49 +62,11 @@ export class ProductDetailComponent {
     { label: '72 Stems', value: 72, price: 2500 },
   ];
 
-  includeMessageCard = false;
-  selectedMessageCard: any = null;
-  messageCards = [
-    { label: 'Birthday Card', value: 'birthday', price: 100 },
-    { label: 'Anniversary Card', value: 'anniversary', price: 100 },
-    { label: 'Thank You Card', value: 'thankyou', price: 100 },
-    { label: 'Love Card', value: 'love', price: 100 },
-    { label: 'Get Well Soon Card', value: 'getwell', price: 100 },
-  ];
+  includeMessageCard = signal(false);
+  selectedMessageCard = signal<Product | null>(null);
 
   giftMessage = '';
   purchaseType = 'onetime';
-
-  addons = [
-    {
-      id: 1,
-      name: 'Premium Red Wine',
-      price: 2500,
-      image: '/red-wine-bottle.png',
-      selected: false,
-    },
-    {
-      id: 2,
-      name: 'Chocolate Box',
-      price: 800,
-      image: '/assorted-chocolates-gift-box.png',
-      selected: false,
-    },
-    {
-      id: 3,
-      name: 'Teddy Bear',
-      price: 1200,
-      image: '/cozy-teddy-bear.png',
-      selected: false,
-    },
-    {
-      id: 4,
-      name: 'Champagne',
-      price: 3500,
-      image: '/champagne-bottle.png',
-      selected: false,
-    },
-  ];
 
   galleryImages: any;
   galleryResponsiveOptions = [
@@ -124,7 +87,11 @@ export class ProductDetailComponent {
   constructor(
     private route: ActivatedRoute,
     private router: Router, // Added router for navigation
-  ) {}
+  ) {
+    effect(() => {
+      this.addMessageCardToCart();
+    });
+  }
 
   private productService = inject(ProductService);
   private cartService = inject(CartService);
@@ -138,7 +105,10 @@ export class ProductDetailComponent {
       }
     });
 
-    this.selectedStemSize = this.stemSizes[1]; // Default to 24 stems
+    this.selectedStemSize = this.stemSizes[0];
+    this.productService.getMessageCards().subscribe((response) => {
+      this.messageCards = response;
+    });
   }
 
   loadProduct(id: string) {
@@ -162,9 +132,10 @@ export class ProductDetailComponent {
         product: this.product,
         quantity: this.quantity,
         stemSize: this.selectedStemSize,
-        messageCard: this.includeMessageCard ? this.selectedMessageCard : null,
+        messageCard: this.includeMessageCard()
+          ? this.selectedMessageCard
+          : null,
         giftMessage: this.giftMessage,
-        addons: this.addons.filter((addon) => addon.selected),
         purchaseType: this.purchaseType,
       };
 
@@ -186,14 +157,9 @@ export class ProductDetailComponent {
       total += this.selectedStemSize.price;
     }
 
-    if (this.includeMessageCard && this.selectedMessageCard) {
-      total += this.selectedMessageCard.price;
+    if (this.includeMessageCard() && this.selectedMessageCard()) {
+      total += this.selectedMessageCard()?.price ?? 0;
     }
-
-    const addonTotal = this.addons
-      .filter((addon) => addon.selected)
-      .reduce((sum, addon) => sum + addon.price, 0);
-    total += addonTotal;
 
     return total;
   }
@@ -211,7 +177,19 @@ export class ProductDetailComponent {
   }
 
   isFlowerProduct(): boolean {
-    return true;
+    if (this.product?.category_data?.name === 'Flowers') {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  addMessageCardToCart() {
+    const card = this.selectedMessageCard();
+    if (card) {
+      this.cartService.addToCart(card);
+      console.log('added', card);
+    }
   }
 
   onAddonAddedToCart(product: Product) {

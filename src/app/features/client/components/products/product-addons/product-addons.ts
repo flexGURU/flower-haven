@@ -37,7 +37,7 @@ export class ProductAddonsComponent {
   private cartService = inject(CartService);
 
   ngOnInit() {
-    this.productService.getProducts().subscribe((products) => {
+    this.productService.getAddOns().subscribe((products) => {
       this.addons = products.map((product) => ({
         ...product,
         selected: false,
