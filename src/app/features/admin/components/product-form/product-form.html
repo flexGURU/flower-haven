@@ -114,71 +114,86 @@
         </p-card>
 
         <!-- Product Image -->
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="p-4 border-b">
-              <h3 class="text-lg font-semibold">Product Image</h3>
-            </div>
-          </ng-template>
-
-          <div class="space-y-4 mt-2">
-            <!-- Current Image Preview -->
-            <div *ngIf="currentImageUrl" class="mb-4">
-              <label class="block text-sm font-medium mb-2"
-                >Current Image</label
-              >
-              <div class="relative inline-block">
-                <img
-                  [src]="currentImageUrl"
-                  alt="Current product image"
-                  class="w-32 h-32 object-cover rounded-lg border"
-                />
-                <button
-                  type="button"
-                  class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                  (click)="removeCurrentImage()"
-                  pTooltip="Remove image"
-                >
-                  ×
-                </button>
+        <div class="mt-4">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b">
+                <h3 class="text-lg font-semibold">Product Image</h3>
               </div>
-            </div>
+            </ng-template>
 
-            <!-- Image Upload -->
-            <div class="">
-              <label class="block text-sm font-medium mb-2"
-                >Upload New Image</label
-              >
-              <p-fileUpload
-                mode="basic"
-                accept="image/*"
-                [maxFileSize]="5000000"
-                (onSelect)="onImageSelect($event)"
-                chooseLabel="Choose Image"
-                [auto]="false"
-                class="w-full"
-              ></p-fileUpload>
-              <small class="text-gray-500 block mt-2">
-                Upload a single image (max 5MB). Supported formats: JPG, PNG,
-                GIF
-              </small>
-            </div>
+            <div class="space-y-4 mt-2">
+              <!-- Current Image Preview -->
+              <div *ngIf="currentImageUrl" class="mb-4">
+                <label class="block text-sm font-medium mb-2"
+                  >Current Image</label
+                >
+                <div class="relative inline-block">
+                  <img
+                    [src]="currentImageUrl"
+                    alt="Current product image"
+                    class="w-32 h-32 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                    (click)="removeCurrentImage()"
+                    pTooltip="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
 
-            <!-- Preview Selected Image -->
-            <div *ngIf="selectedImagePreview()" class="mt-4">
-              <label class="block text-sm font-medium mb-2">Preview</label>
-              <img
-                [src]="selectedImagePreview()"
-                alt="Selected image preview"
-                class="w-32 h-32 object-cover rounded-lg border"
-              />
+              <!-- Image Upload -->
+              <div class="">
+                <label class="block text-sm font-medium mb-2"
+                  >Upload New Image</label
+                >
+                <p-fileUpload
+                  #fileUpload
+                  mode="basic"
+                  accept="image/*"
+                  [maxFileSize]="5000000"
+                  (onSelect)="onImageSelect($event)"
+                  chooseLabel="Choose Image"
+                  [auto]="false"
+                  class="w-full"
+                ></p-fileUpload>
+                <small class="text-gray-500 block mt-2">
+                  Upload a single image (max 5MB). Supported formats: JPG, PNG,
+                  GIF
+                </small>
+              </div>
+
+              <!-- Preview Selected Image -->
+              @if(selectedImagePreview().length > 0) {
+              <div class="mt-4">
+                <label class="block text-sm font-medium mb-2">Preview</label>
+                <div class="relative inline-block">
+                  <img
+                    [src]="selectedImagePreview()"
+                    alt="Selected image preview"
+                    class="relative w-32 h-32 object-cover rounded-lg border"
+                  />
+                  <button
+                    type="button"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                    (click)="removeImagePreview()"
+                    pTooltip="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+              }
             </div>
-          </div>
-        </p-card>
+          </p-card>
+        </div>
       </div>
 
       <!-- Sidebar -->
-      <div class="space-y-6">
+      <div class="mb-2 space-y-6">
         <!-- Stock Information -->
         <p-card>
           <ng-template pTemplate="header">
@@ -197,7 +212,6 @@
                 [min]="0"
                 [step]="1"
                 placeholder="0"
-                class="w-1/2"
                 [class.ng-invalid]="productForm.get('stock')?.invalid && productForm.get('stock')?.touched"
               ></p-inputNumber>
               <small
@@ -224,7 +238,7 @@
             type="submit"
             [label]="isEditMode ? 'Update Product' : 'Create Product'"
             icon="pi pi-check"
-            class="w-full p-button-lg"
+            class="w-full p-button-lg mt-2"
             [loading]="saving"
             [disabled]="productForm.invalid"
           ></button>

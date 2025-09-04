@@ -1,10 +1,12 @@
 import {
   Component,
+  effect,
   EventEmitter,
   inject,
   Input,
   Output,
   signal,
+  ViewChild,
 } from '@angular/core';
 import {
   FormGroup,
@@ -22,6 +24,10 @@ import { CommonModule } from '@angular/common';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { ProductService } from '../../../../shared/services/product.service';
+import { FileUpload } from 'primeng/fileupload';
+import { FirebaseService } from '../../services/firebase';
+import { ProgressSpinner } from 'primeng/progressspinner';
+import { Message } from 'primeng/message';
 
 @Component({
   selector: 'app-category-form',
@@ -34,32 +40,73 @@ import { ProductService } from '../../../../shared/services/product.service';
     CardModule,
     InputTextModule,
     TextareaModule,
+    FileUpload,
+    ProgressSpinner,
+    Message,
   ],
   providers: [MessageService],
 })
 export class CategoryForm {
+  @ViewChild('fileUpload') fileUpload: any;
+
   @Input() categoryData: Category | null = null;
   @Input() isEditMode: boolean = false;
   @Output() onSave = new EventEmitter<Category>();
   @Output() onCancel = new EventEmitter<void>();
   statusMessage: string | null = null;
   imageUrl = signal('');
-
+  selectedFiles = signal<File[]>([]);
+  selectedImagePreview = signal<string[]>([]);
   categoryForm!: FormGroup;
   saving = false;
+  currentImageUrl: string[] | null = null;
+  uploadInProgress = signal(false);
+  imageUploadStatus = signal<'success' | 'error' | ''>('');
 
   private productService = inject(ProductService);
+  private firebaseService = inject(FirebaseService);
 
   constructor(
     private fb: FormBuilder,
     private messageService: MessageService,
-  ) {}
+  ) {
+    effect(() => {
+      if (this.selectedFiles().length > 0) {
+        this.uploadImage(this.selectedFiles()).then((url) => {
+          if (url) {
+            this.imageUrl.set(url);
+            this.categoryForm.patchValue({ imageUrl: url });
+          }
+        });
+      }
+    });
+  }
 
   ngOnInit() {
     this.initializeForm();
 
     if (this.isEditMode && this.categoryData) {
       this.populateForm();
+    }
+  }
+
+  async uploadImage(file: File[]): Promise<string | null> {
+    try {
+      this.uploadInProgress.set(true);
+      const imageUrl = await this.firebaseService.uploadImage(file);
+      this.uploadInProgress.set(false);
+      this.imageUploadStatus.set('success');
+      return imageUrl;
+    } catch (error) {
+      this.uploadInProgress.set(false);
+      this.imageUploadStatus.set('error');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Image Upload Failed',
+        detail: 'There was an error uploading the image. Please try again.',
+      });
+      console.error('Image upload failed:', error);
+      return null;
     }
   }
 
@@ -93,10 +140,11 @@ export class CategoryForm {
         description: this.categoryData.description,
         imageUrl: this.categoryData.image_url?.[0] || '',
       });
+      this.currentImageUrl = this.categoryData.image_url || null;
     }
   }
 
-  onSubmit() {
+  async onSubmit() {
     if (!this.categoryForm.valid) {
       return;
     }
@@ -142,5 +190,34 @@ export class CategoryForm {
   onCancelModal() {
     this.categoryForm.reset();
     this.onCancel.emit();
+  }
+
+  onImageSelect(event: any) {
+    if (event.files && event.files.length) {
+      const newFiles: File[] = [...event.files]; // convert FileList to array
+
+      this.selectedFiles.update((files) => [...files, ...newFiles]);
+
+      for (let file of newFiles) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.selectedImagePreview.update((previews) => [
+            ...previews,
+            reader.result as string,
+          ]);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  }
+
+  removeCurrentImage() {
+    this.currentImageUrl = null;
+  }
+
+  removeImagePreview() {
+    this.selectedImagePreview.set([]);
+    this.selectedFiles.set([]);
+    this.fileUpload.clear();
   }
 }
