@@ -61,7 +61,6 @@ export class CategoryManagement {
 
     this.productService.getCategories().subscribe({
       next: (categories) => {
-        console.log("cat", categories);
         
         this.categories = categories;
         this.filteredCategories = [...this.categories];
@@ -144,7 +143,6 @@ export class CategoryManagement {
   }
 
   deleteCategory(category: Category) {
-    console.log('Deleting category:', category);
   }
 
   onCategorySave(categoryData: Category) {

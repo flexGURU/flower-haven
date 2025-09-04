@@ -1,11 +1,14 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  effect,
   EventEmitter,
   inject,
   Input,
   Output,
   signal,
+  ViewChild,
+  viewChild,
 } from '@angular/core';
 import {
   FormGroup,
@@ -50,6 +53,7 @@ import { MessageService } from 'primeng/api';
   providers: [MessageService],
 })
 export class ProductFormComponent {
+  @ViewChild('fileUpload') fileUpload: any;
   @Input() productData: Product | null = null;
   @Input() isEditMode: boolean = false;
   @Output() onSave = new EventEmitter<Product>();
@@ -66,7 +70,9 @@ export class ProductFormComponent {
   private firebaseService = inject(FirebaseService);
   private messageService = inject(MessageService);
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder) {
+    effect(() => {});
+  }
 
   ngOnInit() {
     this.initializeForm();
@@ -127,6 +133,12 @@ export class ProductFormComponent {
 
   removeCurrentImage() {
     this.currentImageUrl = null;
+  }
+
+  removeImagePreview() {
+    this.selectedImagePreview.set([]);
+    this.selectedFiles.set([]);
+    this.fileUpload.clear();
   }
 
   getStockStatus(): string {

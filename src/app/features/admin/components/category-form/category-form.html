@@ -79,35 +79,84 @@
             </div>
           </div>
 
-          <div>
-            <label for="">Image Url</label>
-            <input
-              type="text"
-              pInputText
-              formControlName="imageUrl"
-              placeholder="Enter image URL"
+          @if(currentImageUrl){
+          <div class="mb-4">
+            <label class="block text-sm font-medium mb-2">Current Image</label>
+            <div class="relative inline-block">
+              <img
+                [src]="currentImageUrl"
+                alt="Current product image"
+                class="w-32 h-32 object-cover rounded-lg border"
+              />
+              <button
+                type="button"
+                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                (click)="removeCurrentImage()"
+                pTooltip="Remove image"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+          }
+
+          <div class="">
+            <p-fileUpload
+              #fileUpload
+              mode="basic"
+              accept="image/*"
+              [maxFileSize]="5000000"
+              (onSelect)="onImageSelect($event)"
+              chooseLabel="Choose Image"
+              [auto]="false"
               class="w-full"
-              [value]="imageUrl()"
+            ></p-fileUpload>
+          </div>
+
+          @if(selectedImagePreview().length > 0 ) {
+          <!-- Preview Selected Image -->
+          <!-- Preview Selected Image -->
+          <label class="block text-sm font-medium mb-2">Preview</label>
+          <div class="relative inline-block">
+            <img
+              [src]="selectedImagePreview()"
+              alt="Selected image preview"
+              class="relative w-32 h-32 object-cover rounded-lg border"
             />
 
-            @if (categoryForm.get('imageUrl')?.invalid &&
-            categoryForm.get('imageUrl')?.touched) {
-            <div class="text-red-500">
-              @if (categoryForm.get('imageUrl')?.errors?.['required']) {
-              <small>Image Url is required</small>
-              }
+            <!-- Overlay Spinner -->
+            @if (uploadInProgress()) {
+            <div
+              class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 rounded-lg"
+            >
+              <p-progress-spinner
+                strokeWidth="6"
+                fill="transparent"
+                [style]="{ width: '40px', height: '40px' }"
+              ></p-progress-spinner>
+              <span class="mt-2 text-white text-xs">Uploading...</span>
             </div>
+            }
+
+            <!-- Remove Button -->
+            <button
+              type="button"
+              class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+              (click)="removeImagePreview()"
+              pTooltip="Remove image"
+            >
+              ×
+            </button>
+          </div>
+
+          <!-- Status Message -->
+          <div class="mt-2">
+            @if (imageUploadStatus() === 'error') {
+            <p-message severity="error" text="Image Upload Failed"></p-message>
             }
           </div>
 
-          <div>
-            <span>Preview</span>
-            <img
-              class="w-32 h-32 object-cover rounded-lg border"
-              [src]="imageUrl()"
-              alt=""
-            />
-          </div>
+          }
         </div>
       </p-card>
 

@@ -8,8 +8,14 @@ export interface Product {
   stock_quantity: number;
   createdAt?: Date;
   category_data?: Category;
+  stems?: stems[];
 }
 
+interface stems {
+  label: string;
+  value: string;
+  price: number;
+}
 export interface Category {
   id?: string;
   name: string;
