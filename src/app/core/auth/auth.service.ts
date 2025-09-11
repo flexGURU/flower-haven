@@ -17,12 +17,15 @@ interface LoginResponse {
 export class AuthService {
   private readonly apiUrl = apiUrl;
   private static readonly accessToken = 'JWT_ACCESS_KEY';
+  private static readonly refreshToken = 'JWT_REFRESH_KEY';
   private static readonly userRole = 'USER_ROLE';
 
   constructor(
     private http: HttpClient,
     private router: Router,
   ) {}
+
+  // Access Token
   get jwt(): string {
     return sessionStorage.getItem(AuthService.accessToken) ?? '';
   }
@@ -31,6 +34,16 @@ export class AuthService {
     sessionStorage.setItem(AuthService.accessToken, value);
   }
 
+  // Refresh Token
+  get refresh(): string {
+    return sessionStorage.getItem(AuthService.refreshToken) ?? '';
+  }
+
+  private set refresh(value: string) {
+    sessionStorage.setItem(AuthService.refreshToken, value);
+  }
+
+  // Role
   private set role(value: string) {
     sessionStorage.setItem(AuthService.userRole, value);
   }
@@ -45,7 +58,23 @@ export class AuthService {
       .pipe(
         tap((resp) => {
           this.jwt = resp.access_token;
+          this.refresh = resp.refresh_token; // store refresh
         }),
+      );
+  }
+
+  refreshAccessToken(): Observable<string> {
+    return this.http
+      .post<{ access_token: string }>(`${this.apiUrl}/user/refresh-token`, {
+        refresh_token: this.refresh,
+      })
+      .pipe(
+        tap((resp) => {
+          console.log("eeee", resp);
+          
+          this.jwt = resp.access_token;
+        }),
+        map((resp) => resp.access_token),
       );
   }
 
@@ -54,23 +83,20 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
-    if (this.role) {
-      return true;
-    } else {
-      return false;
-    }
+    return !!this.role && this.role === 'admin';
   }
 
   logout(): void {
     sessionStorage.removeItem(AuthService.accessToken);
+    sessionStorage.removeItem(AuthService.refreshToken);
+    sessionStorage.removeItem(AuthService.userRole);
+
     this.router.navigate(['/admin/login']);
   }
 
-  signup = (user: User): Observable<User> => {
-    return this.http.post<{ data: User }>(`${apiUrl}/users`, user).pipe(
-      map((response) => {
-        return response.data;
-      }),
-    );
-  };
+  signup(user: User): Observable<User> {
+    return this.http
+      .post<{ data: User }>(`${apiUrl}/users`, user)
+      .pipe(map((response) => response.data));
+  }
 }

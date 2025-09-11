@@ -14,6 +14,9 @@ import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { productQuery } from '../../../../../shared/services/product.query';
+import { ProgressSpinner } from 'primeng/progressspinner';
+import { MessageModule } from 'primeng/message';
 
 @Component({
   selector: 'app-product',
@@ -30,6 +33,8 @@ import { MessageService } from 'primeng/api';
     ButtonModule,
     RouterLink,
     ToastModule,
+    ProgressSpinner,
+    MessageModule,
   ],
   providers: [MessageService],
 })
@@ -41,6 +46,9 @@ export class ProductComponent {
   currentPage = 1;
   pageSize = 12; // Initial page size
   pageTitle = 'All Products';
+
+  newProducts: Product[] = [];
+  productQueryData = productQuery();
 
   // Filters
   priceRange = [0, 500000];
@@ -63,7 +71,7 @@ export class ProductComponent {
 
   ngOnInit() {
     this.loadCategories();
-    this.productService.getProducts().subscribe((products) => {
+    this.productService.fetchProducts().subscribe((products) => {
       this.allProducts = products;
       this.applyFilters();
     });
@@ -150,14 +158,14 @@ export class ProductComponent {
     this.selectedCategories = [];
     this.inStockOnly = false;
     this.sortBy = 'name';
-    this.currentPage = 1; // Reset current page when clearing filters
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   onPageChange(event: any) {
     this.currentPage = event.page + 1;
-    this.pageSize = event.rows; // Update pageSize if rowsPerPageOptions is used
-    this.applyFilters(); // Re-apply filters which will also paginate
+    this.pageSize = event.rows;
+    this.applyFilters();
   }
 
   addToCart(product: Product) {

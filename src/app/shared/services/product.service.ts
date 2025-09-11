@@ -24,7 +24,7 @@ export class ProductService {
 
   constructor(private http: HttpClient) {
     this.fecthCategories().subscribe();
-    this.fecthProducts().subscribe();
+    this.fetchProducts().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
   }
@@ -43,11 +43,9 @@ export class ProductService {
     return this.messageCardSubject.asObservable();
   }
 
-  fecthProducts(): Observable<{ data: Product[] }> {
+  fetchProducts(): Observable<Product[]> {
     return this.http.get<{ data: Product[] }>(this.productApiUrl).pipe(
-      tap((response) => {
-        this.productsSubject.next(response.data);
-      }),
+      map((response) => response.data),
       catchError((error) => {
         console.error('Error fetching products:', error);
         return throwError(() => new Error('Failed to fetch products.'));
@@ -58,7 +56,7 @@ export class ProductService {
   addProduct(product: Product): Observable<{ data: Product }> {
     return this.http.post<{ data: Product }>(this.productApiUrl, product).pipe(
       tap(() => {
-        this.fecthProducts().subscribe();
+        this.fetchProducts().subscribe();
       }),
       catchError((error) => {
         console.error('Error creating product:', error);
@@ -74,7 +72,7 @@ export class ProductService {
       .put<{ data: Product }>(`${this.productApiUrl}/${id}`, product)
       .pipe(
         tap(() => {
-          this.fecthProducts().subscribe();
+          this.fetchProducts().subscribe();
         }),
         catchError((error) => {
           console.error('Error updating product:', error);
@@ -94,7 +92,7 @@ export class ProductService {
       .delete<{ message: string }>(`${this.productApiUrl}/${id}`)
       .pipe(
         tap(() => {
-          this.fecthProducts().subscribe();
+          this.fetchProducts().subscribe();
         }),
       );
   }
