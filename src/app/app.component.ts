@@ -11,5 +11,5 @@ import { Toast } from "primeng/toast";
   providers: [MessageService]
 })
 export class AppComponent {
-  title = 'flower-haven';
+  title = 'floral-haven';
 }

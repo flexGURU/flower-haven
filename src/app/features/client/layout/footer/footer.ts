@@ -10,4 +10,7 @@ import { Component } from '@angular/core';
 export class FoooterComponent {
   newsletterEmail = '';
   subscribeNewsletter() {}
+
+
+  date = new Date();
 }

@@ -10,7 +10,7 @@
       label="Add New Product"
       icon="pi pi-plus"
       class="p-button-primary"
-      (click)="showProductForm()"
+      (click)="applyFilters()"
     ></button>
   </div>
 
@@ -75,10 +75,7 @@
   } @if(productQueryData.isError()){
   <p-message severity="error">Failed to Fetch Products</p-message>
 
-  }
-
-  <!-- Products Table -->
-  @if (productQueryData.data()) {
+  } @if (productQueryData.data()) {
   <div class="w-full flex justify-center">
     <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
       <p-table

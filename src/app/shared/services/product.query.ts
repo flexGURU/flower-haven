@@ -5,13 +5,12 @@ import { lastValueFrom } from 'rxjs';
 
 export const productQuery = () => {
   const productService = inject(ProductService);
-  const PRODUCTSERVICEQUERYKEY = ['products'];
 
   const query = injectQuery(() => ({
-    queryKey: PRODUCTSERVICEQUERYKEY,
+    queryKey: ['products', productService.productBaseApiUrl()],
     queryFn: () => lastValueFrom(productService.fetchProducts()),
     staleTime: 300 * 1000,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
   }));
 
   return query;

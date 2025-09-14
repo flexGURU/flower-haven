@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, effect, Injectable, signal } from '@angular/core';
 import { Category, Product } from '../models/models';
 import {
   BehaviorSubject,
@@ -17,22 +17,46 @@ import { HttpClient } from '@angular/common/http';
 export class ProductService {
   private readonly categoryApiUrl = `${apiUrl}/categories`;
   private readonly productApiUrl = `${apiUrl}/products`;
-  private productsSubject = new BehaviorSubject<Product[]>([]);
   private categorySubject = new BehaviorSubject<Category[]>([]);
   private addOnsSubject = new BehaviorSubject<Product[]>([]);
   private messageCardSubject = new BehaviorSubject<Product[]>([]);
 
+  page = signal(1);
+  limit = signal(10);
+  search = signal('');
+  priceFrom = signal(0);
+  priceTo = signal(0);
+  categoryId = signal<string[] | []>([]);
+
+  initialProductFilters = {
+    page: this.page(),
+    limit: this.limit(),
+    search: this.search(),
+    priceFrom: this.priceFrom(),
+    priceTo: this.priceTo(),
+    categoryId: this.categoryId(),
+  };
+
+  productBaseApiUrl = computed(() => {
+    const params = new URLSearchParams();
+
+    if (this.page()) params.set('page', this.page().toString());
+    if (this.limit()) params.set('limit', this.limit().toString());
+    if (this.search()) params.set('search', this.search());
+    if (this.priceFrom())
+      params.set('price_from', this.priceFrom()!.toString());
+    if (this.priceTo()) params.set('price_to', this.priceTo()!.toString());
+    if (this.categoryId()) {
+      this.categoryId()!.forEach((id) => params.append('category_id', id));
+    }
+
+    return `${this.productApiUrl}?${params.toString()}`;
+  });
+
   constructor(private http: HttpClient) {
     this.fecthCategories().subscribe();
-    this.fetchProducts().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
-  }
-
-  products$ = this.productsSubject.asObservable();
-
-  getProducts() {
-    return this.productsSubject.asObservable();
   }
 
   getAddOns() {
@@ -44,7 +68,7 @@ export class ProductService {
   }
 
   fetchProducts(): Observable<Product[]> {
-    return this.http.get<{ data: Product[] }>(this.productApiUrl).pipe(
+    return this.http.get<{ data: Product[] }>(this.productBaseApiUrl()).pipe(
       map((response) => response.data),
       catchError((error) => {
         console.error('Error fetching products:', error);
@@ -66,8 +90,6 @@ export class ProductService {
   }
 
   updateProduct(product: Product, id: string): Observable<{ data: Product }> {
-    console.log('dddd', product);
-
     return this.http
       .put<{ data: Product }>(`${this.productApiUrl}/${id}`, product)
       .pipe(

@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { GalleriaModule } from 'primeng/galleria';
@@ -21,6 +21,8 @@ import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { CartItem } from '../../cart/cart.model';
 import { MessageService } from 'primeng/api';
+import { Breadcrumb, BreadcrumbModule } from 'primeng/breadcrumb';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-product-detail',
@@ -41,16 +43,25 @@ import { MessageService } from 'primeng/api';
     TextareaModule,
     RadioButtonModule,
     CardModule,
+    BreadcrumbModule,
+    ProgressSpinnerModule,
   ],
 })
 export class ProductDetailComponent {
-  product: Product | null = null;
+  product = signal<Product>(initialProd);
   quantity = 1;
   rating = 4.5;
   reviewCount = 24;
   averageRating = 4.5;
   addonsVisible = false;
   messageCards: Product[] = [];
+  loading = signal(false);
+
+  home = { icon: 'pi pi-home', routerLink: '/' };
+
+  items = signal([
+    { label: 'Products', icon: 'pi pi-fw pi-list', routerLink: '/products' },
+  ]);
 
   selectedStemSize: any = null;
   stemSizes = [
@@ -90,6 +101,19 @@ export class ProductDetailComponent {
   ) {
     effect(() => {
       this.addMessageCardToCart();
+
+      this.items.set([
+        {
+          label: 'Products',
+          icon: 'pi pi-fw pi-list',
+          routerLink: '/products',
+        },
+        {
+          label: this.product().name,
+          icon: 'pi pi-fw pi-tag',
+          routerLink: `/product/${this.product().id}`,
+        },
+      ]);
     });
   }
 
@@ -99,9 +123,12 @@ export class ProductDetailComponent {
 
   ngOnInit() {
     this.route.params.subscribe((params) => {
+      this.loading.set(true);
+
       const productId = params['id'];
       if (productId) {
         this.loadProduct(productId);
+        this.loading.set(false);
       }
     });
 
@@ -114,7 +141,7 @@ export class ProductDetailComponent {
   loadProduct(id: string) {
     if (id) {
       this.productService.getProductById(id).subscribe((response) => {
-        this.product = response;
+        this.product.set(response);
       });
       this.setupGallery();
     }
@@ -122,14 +149,14 @@ export class ProductDetailComponent {
 
   setupGallery() {
     if (this.product) {
-      this.galleryImages = this.product.image_url;
+      this.galleryImages = this.product().image_url;
     }
   }
 
   addToCart() {
-    if (this.product) {
+    if (this.product()) {
       const cartItem = {
-        product: this.product,
+        product: this.product(),
         quantity: this.quantity,
         stemSize: this.selectedStemSize,
         messageCard: this.includeMessageCard()
@@ -151,7 +178,7 @@ export class ProductDetailComponent {
   getTotalPrice(): number {
     if (!this.product) return 0;
 
-    let total = this.product.price * this.quantity;
+    let total = this.product().price * this.quantity;
 
     if (this.selectedStemSize) {
       total += this.selectedStemSize.price;
@@ -177,7 +204,7 @@ export class ProductDetailComponent {
   }
 
   isFlowerProduct(): boolean {
-    if (this.product?.category_data?.name === 'Flowers') {
+    if (this.product()?.category_data?.name === 'Flowers') {
       return true;
     } else {
       return false;
@@ -188,7 +215,6 @@ export class ProductDetailComponent {
     const card = this.selectedMessageCard();
     if (card) {
       this.cartService.addToCart(card);
-      console.log('added', card);
     }
   }
 

@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BadgeModule } from 'primeng/badge';
@@ -50,9 +50,9 @@ export class ProductManagement {
   productQueryData = productQuery();
 
   // Filters
-  searchTerm = '';
-  selectedCategory = '';
-  stockFilter = '';
+  searchTerm = signal('');
+  selectedCategory = signal('');
+  stockFilter = signal('');
 
   categoryOptions: any[] = [];
   stockOptions = [
@@ -61,17 +61,16 @@ export class ProductManagement {
     { label: 'Low Stock', value: 'lowStock' },
   ];
 
+  #productService = inject(ProductService);
   constructor(
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
   ) {
-
-    effect(()=> {
+    effect(() => {
       const products = this.productQueryData.data() ?? [];
       this.products = products;
       this.filteredProducts = [...products];
-      this.applyFilters();
-    })
+    });
   }
 
   private productService = inject(ProductService);
@@ -90,38 +89,43 @@ export class ProductManagement {
     });
   }
 
+  searchProducts() {
+    this.#productService.search.set(this.searchTerm());
+  }
+
+  searchByCategory() {
+    if (this.selectedCategory()) {
+      this.#productService.categoryId.set([this.selectedCategory()]);
+    } else {
+      this.#productService.categoryId.set([]);
+    }
+  }
+
+  searchByStock() {
+    const stock = this.stockFilter();
+
+    this.filteredProducts =
+      this.productQueryData.data()?.filter((product) => {
+        if (stock === 'inStock') return product.stock_quantity > 10;
+        if (stock === 'lowStock')
+          return product.stock_quantity > 0 && product.stock_quantity <= 10;
+        if (stock === 'outOfStock') return product.stock_quantity === 0;
+        return true;
+      }) ?? [];
+  }
+
   applyFilters() {
-    this.filteredProducts = (this.productQueryData.data() ?? []).filter(
-      (product) => {
-        const matchesSearch =
-          product.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-          product.description
-            .toLowerCase()
-            .includes(this.searchTerm.toLowerCase());
-
-        const matchesCategory =
-          !this.selectedCategory ||
-          product.category_id === this.selectedCategory;
-
-        let matchesStock = true;
-        if (this.stockFilter === 'inStock') {
-          matchesStock = product.stock_quantity > 10;
-        } else if (this.stockFilter === 'lowStock') {
-          matchesStock =
-            product.stock_quantity > 0 && product.stock_quantity <= 10;
-        } else if (this.stockFilter === 'outOfStock') {
-          matchesStock = product.stock_quantity === 0;
-        }
-
-        return matchesSearch && matchesCategory && matchesStock;
-      },
-    );
+    this.searchProducts();
+    this.searchByCategory();
+    this.searchByStock();
   }
   clearFilters() {
-    this.searchTerm = '';
-    this.selectedCategory = '';
-    this.stockFilter = '';
+    this.searchTerm.set('');
+    this.selectedCategory.set('');
+    this.stockFilter.set('');
     this.filteredProducts = [...this.products];
+    this.#productService.search.set('');
+    this.#productService.categoryId.set([]);
   }
 
   getStockClass(
@@ -157,10 +161,6 @@ export class ProductManagement {
         });
       },
     });
-  }
-
-  addProduct(status: string) {
-    console.log('status', status);
   }
 
   showProductDetails = false;

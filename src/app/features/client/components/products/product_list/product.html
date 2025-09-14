@@ -2,7 +2,7 @@
   <div class="container mx-auto px-4">
     <div class="flex flex-col lg:flex-row gap-8">
       <!-- Filters Sidebar -->
-      <div class="lg:w-1/4">
+      <div class="lg:w-1/4 mt-16">
         <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
           <h3 class="text-lg font-semibold mb-4">Filters</h3>
 
@@ -12,13 +12,12 @@
             <p-slider
               [(ngModel)]="priceRange"
               [range]="true"
-              [min]="0"
-              [max]="500000"
-              (onSlideEnd)="applyFilters()"
+              [min]="initialPriceFrom"
+              [max]="initialPriceTo"
             ></p-slider>
             <div class="flex justify-between text-sm text-gray-600 mt-2">
-              <span>KES {{priceRange[0]}}</span>
-              <span>KES {{priceRange[1]}}</span>
+              <span>KES {{priceRange()[0]}}</span>
+              <span>KES {{priceRange()[1]}}</span>
             </div>
           </div>
 
@@ -33,7 +32,6 @@
                 <p-checkbox
                   [(ngModel)]="selectedCategories"
                   [value]="category.id"
-                  (onChange)="applyFilters()"
                 ></p-checkbox>
                 <label class="ml-2 text-sm">{{category.name}}</label>
               </div>
@@ -41,16 +39,6 @@
           </div>
 
           <!-- Availability -->
-          <div class="mb-6">
-            <div class="flex items-center">
-              <p-checkbox
-                [(ngModel)]="inStockOnly"
-                [binary]="true"
-                (onChange)="applyFilters()"
-              ></p-checkbox>
-              <label class="ml-2 text-sm">In Stock Only</label>
-            </div>
-          </div>
 
           <button
             pButton
@@ -68,18 +56,6 @@
         <div class="flex justify-between items-center mb-6">
           <div>
             <h1 class="text-2xl font-bold text-gray-800">{{pageTitle}}</h1>
-          </div>
-
-          <div class="flex items-center gap-4">
-            <label class="text-sm font-medium">Sort by:</label>
-            <p-select
-              [(ngModel)]="sortBy"
-              [options]="sortOptions"
-              optionLabel="label"
-              optionValue="value"
-              (onChange)="applyFilters()"
-              class="w-48"
-            ></p-select>
           </div>
         </div>
 
@@ -105,7 +81,7 @@
                     [src]="product.image_url"
                     [alt]="product.name"
                     class="w-full h-full object-cover cursor-pointer rounded-t-lg"
-                    [routerLink]="['/products', product.id]"
+                    [routerLink]="['/product', product.id]"
                   />
 
                   <div class="absolute top-2 right-2">
@@ -128,7 +104,7 @@
               <div class="p-4">
                 <h3
                   class="font-semibold text-lg mb-2 cursor-pointer hover:text-pink-600"
-                  [routerLink]="['/products', product.id]"
+                  [routerLink]="['/product', product.id]"
                 >
                   {{product.name}}
                 </h3>
@@ -146,6 +122,18 @@
           }
         </div>
 
+        } @if (productQueryData.data()?.length === 0) {
+        <p-message severity="info"
+          >No Products Found.
+          <button
+            pButton
+            type="button"
+            icon="pi pi-refresh"
+            label="Refresh"
+            class="p-button-text p-ml-2"
+            (click)="refreshProducts()"
+          ></button>
+        </p-message>
         }
 
         <p-paginator
