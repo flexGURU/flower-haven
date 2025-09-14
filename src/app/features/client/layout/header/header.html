@@ -1,7 +1,6 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
   <div class="container mx-auto px-4 md:py-4">
     <div class="flex items-center justify-between flex-wrap">
-      <!-- Logo and Brand -->
       <div class="flex items-center space-x-2">
         <a
           routerLink="/"
@@ -40,43 +39,9 @@
           >
             🔍
           </button>
-          <!-- 
-          @if (products.isLoading()) {
-          <div>
-            <p-progress-spinner
-              strokeWidth="1"
-              fill="transparent"
-              animationDuration=".5s"
-              [style]="{ width: '50px', height: '50px' }"
-            />
-          </div>
-          }  -->
-
-          @if (products.data()?.length=== 0) {
-          <p-message severity="info">No Products Found. </p-message>
-          } @if(searchQuery()){
-          <div
-            class="absolute top-full left-0 mt-2 bg-white text-gray-800 shadow-lg rounded-md py-2 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
-          >
-            @for (product of products.data(); track product.id) {
-            <a
-              [routerLink]="['/product', product.id]"
-              class="flex items-center gap-2 px-4 py-2 hover:bg-pink-50 hover:text-pink-600"
-            >
-              <img
-                [src]="product.image_url"
-                alt="{{ product.name }}"
-                class="w-8 h-8 object-cover rounded-full"
-              />
-              <span>{{ product.name }}</span>
-            </a>
-            }
-          </div>
-          }
         </div>
       </div>
 
-      <!-- Icons (right) -->
       <div class="flex items-center space-x-3 mt-3 sm:mt-0">
         <div class="relative inline-block">
           <button
@@ -101,7 +66,6 @@
     </div>
   </div>
 
-  <!-- Nav Section -->
   <nav class="bg-pink-600 text-white">
     <div class="container mx-auto px-4">
       <div

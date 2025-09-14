@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Category, Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
@@ -18,6 +18,7 @@ import { productQuery } from '../../../../../shared/services/product.query';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 
+
 @Component({
   selector: 'app-product',
   templateUrl: './product.html',
@@ -35,7 +36,7 @@ import { MessageModule } from 'primeng/message';
     ToastModule,
     ProgressSpinner,
     MessageModule,
-  ],
+    ],
   providers: [MessageService],
 })
 export class ProductComponent {
@@ -46,14 +47,14 @@ export class ProductComponent {
   currentPage = 1;
   pageSize = 12;
   pageTitle = 'All Products';
-  initialPriceTo = 500000;
-  initialPriceFrom = 0;
+  initialPriceTo = signal(50000);
+  initialPriceFrom = signal(50);
 
   newProducts: Product[] = [];
   productQueryData = productQuery();
 
   // Filters
-  priceRange = signal([this.initialPriceFrom, this.initialPriceTo]);
+  priceRange = signal([this.initialPriceFrom(), this.initialPriceTo()]);
   selectedCategories = signal<string[]>([]);
   inStockOnly = false;
   sortBy = 'name';
@@ -69,23 +70,7 @@ export class ProductComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private messageService = inject(MessageService);
-  constructor(private route: ActivatedRoute) {
-    effect(() => {
-      if (this.selectedCategories().length > 0) {
-        this.productService.categoryId.update((previous) => [
-          ...previous,
-          ...this.selectedCategories(),
-        ]);
-      } else {
-        this.productService.categoryId.set([]);
-      }
-      this.productService.priceFrom.set(this.priceRange()[0]);
-      this.productService.priceTo.set(this.priceRange()[1]);
-      this.productService.page.set(this.currentPage);
-      this.productService.limit.set(this.pageSize);
-    });
-  }
-
+  constructor() {}
   ngOnInit() {
     this.loadCategories();
     this.productService.fetchProducts().subscribe((products) => {
@@ -99,16 +84,35 @@ export class ProductComponent {
     });
   }
 
+  prices = computed(() => {
+    return [this.priceRange()[0], this.priceRange()[1]];
+  });
+
+  applyFilters() {
+    if (this.selectedCategories().length > 0) {
+      this.productService.categoryId.update((previous) => [
+        ...previous,
+        ...this.selectedCategories(),
+      ]);
+    } else {
+      this.productService.categoryId.set([]);
+    }
+    this.productService.priceFrom.set(this.prices()[0]);
+    this.productService.priceTo.set(this.prices()[1]);
+    this.productService.page.set(this.currentPage);
+    this.productService.limit.set(this.pageSize);
+    console.log('prices', this.prices());
+  }
   clearFilters() {
     this.productService.page.set(1);
     this.productService.limit.set(10);
     this.productService.categoryId.set([]);
-    this.productService.priceFrom.set(this.initialPriceFrom);
-    this.productService.priceTo.set(this.initialPriceTo);
+    this.productService.priceFrom.set(this.initialPriceFrom());
+    this.productService.priceTo.set(this.initialPriceTo());
     this.productService.search.set('');
-    this.initialPriceFrom = 0;
-    this.initialPriceTo = 500000;
-    this.priceRange.set([this.initialPriceFrom, this.initialPriceTo]);
+    this.initialPriceFrom.set(0);
+    this.initialPriceTo.set(500000);
+    this.priceRange.set([this.initialPriceFrom(), this.initialPriceTo()]);
   }
 
   refreshProducts() {

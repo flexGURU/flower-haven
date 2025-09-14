@@ -24,7 +24,7 @@ export class ProductService {
   page = signal(1);
   limit = signal(10);
   search = signal('');
-  priceFrom = signal(0);
+  priceFrom = signal<number | null>(null);
   priceTo = signal(0);
   categoryId = signal<string[] | []>([]);
 
@@ -57,6 +57,9 @@ export class ProductService {
     this.fecthCategories().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
+    effect(() => {
+      console.log('productBaseApiUrl', this.productBaseApiUrl());
+    });
   }
 
   getAddOns() {

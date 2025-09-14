@@ -24,7 +24,7 @@ export class CategoryComponent {
   }
 
   loadProductsByCategory(categoryId: string) {
-    this.#productService.categoryId.update((previous) => [...previous, categoryId]);
+    this.#productService.categoryId.set([categoryId]);
 
     return this.#router.navigate(['/products']);
   }

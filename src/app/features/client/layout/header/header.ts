@@ -46,7 +46,6 @@ export class HeaderComponent {
   }
 
   test() {
-    console.log('searchQuery', this.searchQuery());
     this.#productsService.search.set(this.searchQuery());
   }
 
