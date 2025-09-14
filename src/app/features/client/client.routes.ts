@@ -1,4 +1,3 @@
-import { Component } from '@angular/core';
 import { Routes } from '@angular/router';
 import { ClientLayout } from './layout/client.layout';
 import { HomeLayoutComponent } from './components/home/layout/layout';
@@ -13,8 +12,22 @@ export const clientRoutes: Routes = [
     children: [
       { path: '', component: HomeLayoutComponent },
       { path: 'products', component: ProductComponent },
-      { path: 'products/:id', component: ProductDetailComponent },
+      { path: 'product/:id', component: ProductDetailComponent },
       { path: 'cart', component: CartComponent },
+      {
+        path: 'contact',
+        loadComponent: () =>
+          import('./components/contact/contact.component').then(
+            (m) => m.ContactComponent,
+          ),
+      },
+       {
+        path: 'about',
+        loadComponent: () =>
+          import('./components/about/about.component').then(
+            (m) => m.AboutComponent,
+          ),
+      },
     ],
   },
 ];

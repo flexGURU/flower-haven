@@ -1,263 +1,251 @@
-<div class="product-detail-page py-8" *ngIf="product">
+<div class="py-8" *ngIf="product()">
+  @if(loading()){
+  <div class="card flex justify-center">
+    <p-progress-spinner strokeWidth="6" fill="transparent" />
+  </div>
+  } @if(!loading()){
   <div class="container mx-auto px-4">
-    <!-- Breadcrumb Navigation -->
-    <nav class="mb-8">
-      <ol class="flex items-center space-x-2 text-sm">
-        <li>
-          <a routerLink="/" class="text-pink-600 hover:underline">Home</a>
-        </li>
-        <li class="text-gray-400">/</li>
-        <li>
-          <a routerLink="/products" class="text-pink-600 hover:underline"
-            >Products</a
-          >
-        </li>
-        <li class="text-gray-400">/</li>
-        <li class="text-gray-600">{{product.name}}</li>
-      </ol>
-    </nav>
-
-    <!-- Main Product Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-      <!-- Product Image -->
-      <div class="flex justify-center">
+    <div class="mt-16 card flex text-pink-600">
+      <p-breadcrumb [model]="items()" [home]="home" />
+    </div>
+    <div
+      class="flex flex-col lg:flex-row justify-center lg:items-start lg:gap-8"
+    >
+      <div class="lg:w-1/2 lg:sticky lg:top-20 flex justify-center p-4">
         <p-image
-          src="{{product.image_url}}"
-          alt="{{product.name}}"
-          width="400"
+          src="{{product().image_url}}"
+          alt="{{product().name}}"
           [preview]="true"
-          class="rounded-lg shadow-lg"
+          class="rounded-lg shadow-lg max-w-full h-auto"
         />
       </div>
 
-      <!-- Product Details -->
-      <div class="product-info space-y-6">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-800 mb-2">
-            {{product.name}}
-          </h1>
-          <p class="text-gray-600 mb-4">{{product.description}}</p>
-        </div>
-
-        <!-- Price Display -->
-        <div class="price">
-          <span class="text-4xl font-bold text-pink-600"
-            >KES {{getTotalPrice()}}</span
-          >
-          <span
-            *ngIf="getTotalPrice() !== product.price"
-            class="text-lg text-gray-500 line-through ml-2"
-          >
-            KES {{product.price}}
-          </span>
-        </div>
-
-        <!-- Stock Status -->
-        <div class="stock-status">
-          <div
-            *ngIf="product.stock_quantity"
-            class="flex items-center text-green-600"
-          >
-            <i class="pi pi-check-circle mr-2"></i>
-            <span>In stock ({{product.stock_quantity}} available)</span>
+      <div class="lg:w-1/2 p-4">
+        <div class="product()-info space-y-6">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+              {{product().name}}
+            </h1>
+            <p class="text-gray-600 mb-4">{{product().description}}</p>
           </div>
-          <div
-            *ngIf="!product.stock_quantity"
-            class="flex items-center text-red-600"
-          >
-            <i class="pi pi-times-circle mr-2"></i>
-            <span>Out of stock</span>
-          </div>
-        </div>
 
-        <!-- Stem Size Selection (for flowers only) -->
-        <div *ngIf="isFlowerProduct()" class="stem-selection">
-          <label class="block text-sm font-medium text-gray-700 mb-3"
-            >Size:</label
-          >
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              *ngFor="let size of stemSizes"
-              type="button"
-              class="p-2 text-sm border rounded-md transition-colors"
-              [class.border-pink-500]="selectedStemSize?.value === size.value"
-              [class.bg-pink-50]="selectedStemSize?.value === size.value"
-              [class.text-pink-700]="selectedStemSize?.value === size.value"
-              [class.border-gray-300]="selectedStemSize?.value !== size.value"
-              (click)="selectedStemSize = size"
+          <div class="price">
+            <span class="text-4xl font-bold text-pink-600"
+              >KES {{getTotalPrice()}}</span
             >
-              {{size.label}}
-              <div *ngIf="size.price > 0" class="text-xs text-gray-500">
-                +KES {{size.price}}
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Message Card Selection -->
-        <div class="message-card-section">
-          <div class="flex items-center mb-3">
-            <p-checkbox
-              [(ngModel)]="includeMessageCard"
-              [binary]="true"
-              inputId="messageCard"
-              class="mr-2"
-            ></p-checkbox>
-            <label for="messageCard" class="text-sm font-medium text-gray-700">
-              Do you want to add message card? (Personalized message card)
-            </label>
+            <span
+              *ngIf="getTotalPrice() !== product().price"
+              class="text-lg text-gray-500 line-through ml-2"
+            >
+              KES {{product().price}}
+            </span>
           </div>
 
-          <div *ngIf="includeMessageCard()" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Select Message Card:</label
-              >
-              <p-select
-                [(ngModel)]="selectedMessageCard"
-                [options]="messageCards"
-                optionLabel="name"
-                placeholder="Choose a message card"
-                class="w-full"
-              ></p-select>
+          <div class="stock-status">
+            <div
+              *ngIf="product().stock_quantity"
+              class="flex items-center text-green-600"
+            >
+              <i class="pi pi-check-circle mr-2"></i>
+              <span>In stock ({{product().stock_quantity}} available)</span>
             </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2"
-                >Gift Message:</label
-              >
-              <textarea
-                pTextarea
-                [(ngModel)]="giftMessage"
-                rows="4"
-                placeholder="Type your message here..."
-                class="w-full"
-                [maxlength]="200"
-              ></textarea>
-              <div class="text-xs text-gray-500 mt-1">
-                {{giftMessage.length}}/200 characters
-              </div>
+            <div
+              *ngIf="!product().stock_quantity"
+              class="flex items-center text-red-600"
+            >
+              <i class="pi pi-times-circle mr-2"></i>
+              <span>Out of stock</span>
             </div>
           </div>
-        </div>
 
-        <!-- Purchase Type Selection -->
-        <div class="purchase-type-section">
-          <label class="block text-sm font-medium text-gray-700 mb-3"
-            >Purchase Options:</label
-          >
-          <div class="space-y-3">
-            <div class="flex items-center">
-              <p-radioButton
-                name="purchaseType"
-                value="onetime"
-                [(ngModel)]="purchaseType"
-                inputId="onetime"
+          <div *ngIf="isFlowerProduct()" class="stem-selection">
+            <label class="block text-sm font-medium text-gray-700 mb-3"
+              >Size:</label
+            >
+            <div class="grid grid-cols-3 gap-2">
+              <button
+                *ngFor="let size of stemSizes"
+                type="button"
+                class="p-2 text-sm border rounded-md transition-colors"
+                [class.border-pink-500]="selectedStemSize?.value === size.value"
+                [class.bg-pink-50]="selectedStemSize?.value === size.value"
+                [class.text-pink-700]="selectedStemSize?.value === size.value"
+                [class.border-gray-300]="selectedStemSize?.value !== size.value"
+                (click)="selectedStemSize = size"
+              >
+                {{size.label}}
+                <div *ngIf="size.price > 0" class="text-xs text-gray-500">
+                  +KES {{size.price}}
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="message-card-section">
+            <div class="flex items-center mb-3">
+              <p-checkbox
+                [(ngModel)]="includeMessageCard"
+                [binary]="true"
+                inputId="messageCard"
                 class="mr-2"
-              ></p-radioButton>
-              <label for="onetime" class="text-sm text-gray-700"
-                >One-time purchase</label
+              ></p-checkbox>
+              <label
+                for="messageCard"
+                class="text-sm font-medium text-gray-700"
               >
-            </div>
-            <div class="flex items-center">
-              <p-radioButton
-                name="purchaseType"
-                value="subscription"
-                [(ngModel)]="purchaseType"
-                inputId="subscription"
-                class="mr-2"
-              ></p-radioButton>
-              <label for="subscription" class="text-sm text-gray-700">
-                Subscribe and deliver every month
-                <span class="text-xs text-pink-600 block"
-                  >Save 15% on recurring orders</span
-                >
+                Do you want to add a message card? (Personalized message card)
               </label>
             </div>
+
+            <div *ngIf="includeMessageCard()" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Select Message Card:</label
+                >
+                <p-select
+                  [(ngModel)]="selectedMessageCard"
+                  [options]="messageCards"
+                  optionLabel="name"
+                  placeholder="Choose a message card"
+                  class="w-full"
+                ></p-select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2"
+                  >Gift Message:</label
+                >
+                <textarea
+                  pTextarea
+                  [(ngModel)]="giftMessage"
+                  rows="4"
+                  placeholder="Type your message here..."
+                  class="w-full"
+                  [maxlength]="200"
+                ></textarea>
+                <div class="text-xs text-gray-500 mt-1">
+                  {{giftMessage.length}}/200 characters
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Quantity and Add to Cart -->
-        <div class="quantity-cart-section space-y-4">
-          <div class="flex items-center space-x-4">
-            <label class="text-sm font-medium text-gray-700">Quantity:</label>
-            <p-inputNumber
-              [(ngModel)]="quantity"
-              [min]="1"
-              [max]="product.stock_quantity"
-              [disabled]="!product.stock_quantity"
-              [showButtons]="true"
-              buttonLayout="horizontal"
-              class="w-32"
-            ></p-inputNumber>
-          </div>
-
-          <button
-            pButton
-            type="button"
-            label="ADD TO CART"
-            icon="pi pi-shopping-cart"
-            class="p-button-lg w-full"
-            [disabled]="!product.stock_quantity || quantity > product.stock_quantity"
-            (click)="addToCart(); purchaseType === 'subscription' && handleSubscription()"
-          ></button>
-        </div>
-        <div class="addons-section mt-12">
-          <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center"></h2>
-          <p-button
-            variant="outlined"
-            label="Make It Better with  Add-Ons"
-            icon="pi pi-arrow-right"
-            class="p-button-lg w-full"
-            [disabled]="!product.stock_quantity || quantity > product.stock_quantity"
-            (click)="addonsVisible=true"
-          ></p-button>
-
-          <div>
-            <p-dialog
-              maskStyleClass="backdrop-blur-sm"
-              header="Add-ons"
-              [(visible)]="addonsVisible"
-              [modal]="true"
-              [style]="{ width: '150vw', maxWidth: '900px' }"
-              [closable]="true"
-              [dismissableMask]="true"
+          <div class="purchase-type-section">
+            <label class="block text-sm font-medium text-gray-700 mb-3"
+              >Purchase Options:</label
             >
-              <app-product-addons
-                (addonAddedToCart)="onAddonAddedToCart($event)"
-                (addonRemovedFromCart)="onAddonRemovedFromCart($event)"
-              >
-              </app-product-addons>
-            </p-dialog>
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <p-radioButton
+                  name="purchaseType"
+                  value="onetime"
+                  [(ngModel)]="purchaseType"
+                  inputId="onetime"
+                  class="mr-2"
+                ></p-radioButton>
+                <label for="onetime" class="text-sm text-gray-700"
+                  >One-time purchase</label
+                >
+              </div>
+              <div class="flex items-center">
+                <p-radioButton
+                  name="purchaseType"
+                  value="subscription"
+                  [(ngModel)]="purchaseType"
+                  inputId="subscription"
+                  class="mr-2"
+                ></p-radioButton>
+                <label for="subscription" class="text-sm text-gray-700">
+                  Subscribe and deliver every month
+                  <span class="text-xs text-pink-600 block"
+                    >Save 10% on recurring orders</span
+                  >
+                </label>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Features -->
-        <div class="features grid grid-cols-1 gap-3">
-          <div class="flex items-center">
-            <i class="pi pi-shield text-pink-600 mr-2"></i>
-            <span class="text-sm text-gray-600">Fresh Guarantee</span>
+          <div class="quantity-cart-section space-y-4">
+            <div class="flex items-center space-x-4">
+              <label class="text-sm font-medium text-gray-700">Quantity:</label>
+              <p-inputNumber
+                [(ngModel)]="quantity"
+                [min]="1"
+                [max]="product().stock_quantity"
+                [disabled]="!product().stock_quantity"
+                [showButtons]="true"
+                buttonLayout="horizontal"
+                class="w-32"
+              ></p-inputNumber>
+            </div>
+
+            <div class="addons-section mt-12">
+              <h2
+                class="text-2xl font-bold text-gray-800 mb-6 text-center"
+              ></h2>
+              <p-button
+                variant="outlined"
+                label="Make It Better with Add-Ons"
+                icon="pi pi-arrow-right"
+                class="p-button-lg w-full"
+                [disabled]="!product().stock_quantity || quantity > product().stock_quantity"
+                (click)="addonsVisible=true"
+              ></p-button>
+
+              <div>
+                <p-dialog
+                  maskStyleClass="backdrop-blur-sm"
+                  header="Add-ons"
+                  [(visible)]="addonsVisible"
+                  [modal]="true"
+                  [style]="{ width: '150vw', maxWidth: '900px' }"
+                  [closable]="true"
+                  [dismissableMask]="true"
+                >
+                  <app-product-addons
+                    (addonAddedToCart)="onAddonAddedToCart($event)"
+                    (addonRemovedFromCart)="onAddonRemovedFromCart($event)"
+                  >
+                  </app-product-addons>
+                </p-dialog>
+              </div>
+            </div>
+
+            <button
+              pButton
+              type="button"
+              label="ADD TO CART"
+              icon="pi pi-shopping-cart"
+              class="p-button-lg w-full"
+              [disabled]="!product().stock_quantity || quantity > product().stock_quantity"
+              (click)="addToCart(); purchaseType === 'subscription' && handleSubscription()"
+            ></button>
           </div>
-          <div class="flex items-center">
-            <i class="pi pi-clock text-pink-600 mr-2"></i>
-            <span class="text-sm text-gray-600">Same Day Delivery</span>
-          </div>
-          <div class="flex items-center">
-            <i class="pi pi-phone text-pink-600 mr-2"></i>
-            <span class="text-sm text-gray-600">24/7 Support</span>
+
+          <div class="features grid grid-cols-1 gap-3">
+            <div class="flex items-center">
+              <i class="pi pi-shield text-pink-600 mr-2"></i>
+              <span class="text-sm text-gray-600">Fresh Guarantee</span>
+            </div>
+            <div class="flex items-center">
+              <i class="pi pi-clock text-pink-600 mr-2"></i>
+              <span class="text-sm text-gray-600">Same Day Delivery</span>
+            </div>
+            <div class="flex items-center">
+              <i class="pi pi-phone text-pink-600 mr-2"></i>
+              <span class="text-sm text-gray-600">24/7 Support</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Related Products -->
+    <!-- 
     <div class="mt-12">
       <h2 class="text-2xl font-bold text-gray-800 mb-6">
-        RECOMMENDED PRODUCTS
+        RECOMMENDED PRODUCT()S
       </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Related products will be populated here -->
-      </div>
-    </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div> -->
   </div>
+  }
 </div>

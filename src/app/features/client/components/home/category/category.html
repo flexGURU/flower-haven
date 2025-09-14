@@ -5,26 +5,26 @@
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    @for (category of categories; track category.id) {
     <div
-      *ngFor="let category of categories"
       class="category-card group cursor-pointer"
-      [routerLink]="['/category', category.id]"
+      (click)="loadProductsByCategory(category.id!)"
     >
       <div
         class="relative overflow-hidden rounded-lg shadow-md group-hover:shadow-xl transition-shadow duration-300"
       >
-      
         <img
           [src]="category.image_url"
           [alt]="category.name"
           class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         <div
-          class="absolute inset-0 bg-opacity-40 flex items-center justify-center"
+          class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3"
         >
-          <h3 class="text-slate-800 text-sm rounded-2xl bg-pink-600 p-1 font-semibold">{{ category.name }}</h3>
+          <h3 class="text-white text-lg font-semibold">{{ category.name }}</h3>
         </div>
       </div>
     </div>
+    }
   </div>
 </div>

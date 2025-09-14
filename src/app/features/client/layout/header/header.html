@@ -1,5 +1,5 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
-  <div class="container mx-auto px-4 py-4">
+  <div class="container mx-auto px-4 md:py-4">
     <div class="flex items-center justify-between flex-wrap">
       <!-- Logo and Brand -->
       <div class="flex items-center space-x-2">
@@ -16,7 +16,6 @@
         </a>
       </div>
 
-      <!-- Mobile Menu Button -->
       <button
         class="block sm:hidden text-gray-700 focus:outline-none"
         (click)="isMobileMenuOpen = !isMobileMenuOpen"
@@ -24,13 +23,13 @@
         <i class="pi pi-bars text-2xl"></i>
       </button>
 
-      <!-- Search (centered on larger screens) -->
       <div class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-3 sm:my-0">
-        <div class="relative">
+        <div class="relative group w-full">
           <input
             type="text"
-            pInputText
+            (input)="test()"
             [(ngModel)]="searchQuery"
+            pInputText
             (keyup.enter)="onSearch()"
             placeholder="Search flowers, gifts..."
             class="w-full pl-4 pr-12 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
@@ -41,19 +40,44 @@
           >
             🔍
           </button>
+          <!-- 
+          @if (products.isLoading()) {
+          <div>
+            <p-progress-spinner
+              strokeWidth="1"
+              fill="transparent"
+              animationDuration=".5s"
+              [style]="{ width: '50px', height: '50px' }"
+            />
+          </div>
+          }  -->
+
+          @if (products.data()?.length=== 0) {
+          <p-message severity="info">No Products Found. </p-message>
+          } @if(searchQuery()){
+          <div
+            class="absolute top-full left-0 mt-2 bg-white text-gray-800 shadow-lg rounded-md py-2 w-full opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
+          >
+            @for (product of products.data(); track product.id) {
+            <a
+              [routerLink]="['/product', product.id]"
+              class="flex items-center gap-2 px-4 py-2 hover:bg-pink-50 hover:text-pink-600"
+            >
+              <img
+                [src]="product.image_url"
+                alt="{{ product.name }}"
+                class="w-8 h-8 object-cover rounded-full"
+              />
+              <span>{{ product.name }}</span>
+            </a>
+            }
+          </div>
+          }
         </div>
       </div>
 
       <!-- Icons (right) -->
       <div class="flex items-center space-x-3 mt-3 sm:mt-0">
-        <button
-          pButton
-          type="button"
-          icon="pi pi-user"
-          class="p-button-text p-button-rounded"
-          label="Account"
-        ></button>
-
         <div class="relative inline-block">
           <button
             pButton
@@ -99,7 +123,7 @@
             <i class="pi pi-chevron-down ml-1"></i>
           </button>
           <div
-            class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 min-w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
+            class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
           >
             <a
               *ngFor="let category of categories"
@@ -111,18 +135,6 @@
           </div>
         </div>
 
-        <a
-          routerLink="/subscriptions"
-          class="hover:text-pink-200 transition-colors"
-          routerLinkActive="text-pink-200"
-          >Subscriptions</a
-        >
-        <a
-          routerLink="/gifts"
-          class="hover:text-pink-200 transition-colors"
-          routerLinkActive="text-pink-200"
-          >Gifts</a
-        >
         <a
           routerLink="/about"
           class="hover:text-pink-200 transition-colors"

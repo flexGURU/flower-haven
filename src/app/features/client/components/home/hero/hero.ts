@@ -1,12 +1,10 @@
-import { Component } from "@angular/core";
-import { ButtonModule } from "primeng/button";
+import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
-    selector: 'app-hero',
-    templateUrl :'./hero.html'
-    ,imports: [ButtonModule]
+  selector: 'app-hero',
+  templateUrl: './hero.html',
+  imports: [RouterLink, ButtonModule],
 })
-
-export class HeroComponent {
-
-}
+export class HeroComponent {}

@@ -20,12 +20,18 @@ import {
 import { firebaseConfig } from '../environments/environment';
 import { authInterceptor } from './core/interceptor/auth.interceptor';
 
+import {
+  provideTanStackQuery,
+  QueryClient,
+} from '@tanstack/angular-query-experimental';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     importProvidersFrom([
       AngularFireModule.initializeApp(firebaseConfig),
       AngularFirestoreModule,
     ]),
+    provideTanStackQuery(new QueryClient()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true }),
