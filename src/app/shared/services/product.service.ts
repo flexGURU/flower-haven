@@ -57,9 +57,6 @@ export class ProductService {
     this.fecthCategories().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
-    effect(() => {
-      console.log('productBaseApiUrl', this.productBaseApiUrl());
-    });
   }
 
   getAddOns() {
