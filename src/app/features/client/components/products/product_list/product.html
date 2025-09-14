@@ -10,10 +10,12 @@
           <div class="mb-6">
             <label class="block text-sm font-medium mb-2">Price Range</label>
             <p-slider
+            class="cursor-pointer"
               [(ngModel)]="priceRange"
               [range]="true"
-              [min]="initialPriceFrom"
-              [max]="initialPriceTo"
+              [min]="initialPriceFrom()"
+              [max]="initialPriceTo()"
+              (onChange)="applyFilters()"
             ></p-slider>
             <div class="flex justify-between text-sm text-gray-600 mt-2">
               <span>KES {{priceRange()[0]}}</span>
@@ -32,6 +34,7 @@
                 <p-checkbox
                   [(ngModel)]="selectedCategories"
                   [value]="category.id"
+                  (onChange)="applyFilters()"
                 ></p-checkbox>
                 <label class="ml-2 text-sm">{{category.name}}</label>
               </div>
