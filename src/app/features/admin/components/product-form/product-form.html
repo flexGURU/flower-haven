@@ -239,7 +239,7 @@
             [label]="isEditMode ? 'Update Product' : 'Create Product'"
             icon="pi pi-check"
             class="w-full p-button-lg mt-2"
-            [loading]="saving"
+            [loading]="saving()"
             [disabled]="productForm.invalid"
           ></button>
 

@@ -149,6 +149,7 @@ export class ProductManagement {
               summary: 'Success',
               detail: `Category "${product.name}" has been deleted.`,
             });
+            this.productQueryData.refetch();
           },
           error: (err) => {
             console.error('Deletion failed:', err);
@@ -199,6 +200,7 @@ export class ProductManagement {
         this.isEditMode ? 'updated' : 'added'
       }.`,
     });
+    this.productQueryData.refetch();
   }
 
   onFormCancel() {

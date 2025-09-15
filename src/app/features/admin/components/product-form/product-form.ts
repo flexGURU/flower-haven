@@ -60,7 +60,7 @@ export class ProductFormComponent {
   @Output() onCancelForm = new EventEmitter<void>();
 
   productForm!: FormGroup;
-  saving = false;
+  saving = signal(false);
   categories: Category[] = []; // Load your categories here
   currentImageUrl: string[] | null = null;
   selectedFiles = signal<File[]>([]);
@@ -162,67 +162,65 @@ export class ProductFormComponent {
   }
 
   async onSubmit() {
-    if (this.productForm.valid) {
-      this.saving = true;
+  if (this.productForm.valid) {
+    this.saving.set(true);
 
-      const productData: Product = {
-        name: this.productForm.value.name,
-        description: this.productForm.value.description,
-        price: this.productForm.value.price,
-        image_url: this.isEditMode ? this.productData!.image_url : [],
-        category_id: this.productForm.value.categoryId,
-        stock_quantity: this.productForm.value.stock,
-        createdAt: this.isEditMode ? this.productData!.createdAt : new Date(),
-      };
+    const productData: Product = {
+      name: this.productForm.value.name,
+      description: this.productForm.value.description,
+      price: this.productForm.value.price,
+      image_url: this.isEditMode ? this.productData!.image_url : [],
+      category_id: this.productForm.value.categoryId,
+      stock_quantity: this.productForm.value.stock,
+      createdAt: this.isEditMode ? this.productData!.createdAt : new Date(),
+    };
 
-      try {
-        if (this.selectedFiles().length > 0) {
-          const imageUrl = await this.firebaseService.uploadImage(
-            this.selectedFiles(),
-          );
-          productData.image_url = [imageUrl];
-        }
-
-        let apiCall$;
-
-        if (this.isEditMode) {
-          if (this.productData?.id) {
-            apiCall$ = this.productService.updateProduct(
-              productData,
-              this.productData.id,
-            );
-          }
-        } else {
-          apiCall$ = this.productService.addProduct(productData);
-        }
-
-        apiCall$?.subscribe({
-          next: (response) => {
-            const message = this.isEditMode
-              ? 'Product updated successfully!'
-              : 'Product added successfully!';
-            this.onSave.emit(response.data);
-            this.productForm.reset();
-          },
-          error: (err) => {
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Operation failed',
-              detail: err.message,
-            });
-            console.error('API Error:', err);
-          },
-          complete: () => {
-            this.saving = false;
-          },
-        });
-      } catch (error) {
-        console.error('Error uploading image:', error);
-      } finally {
-        this.saving = false;
+    try {
+      if (this.selectedFiles().length > 0) {
+        const imageUrl = await this.firebaseService.uploadImage(
+          this.selectedFiles(),
+        );
+        productData.image_url = [imageUrl];
       }
+
+      let apiCall$;
+
+      if (this.isEditMode) {
+        if (this.productData?.id) {
+          apiCall$ = this.productService.updateProduct(
+            productData,
+            this.productData.id,
+          );
+        }
+      } else {
+        apiCall$ = this.productService.addProduct(productData);
+      }
+
+      apiCall$?.subscribe({
+        next: (response) => {
+          this.saving.set(false); // Set to false on success
+          const message = this.isEditMode
+            ? 'Product updated successfully!'
+            : 'Product added successfully!';
+          this.onSave.emit(response.data);
+          this.productForm.reset();
+        },
+        error: (err) => {
+          this.saving.set(false); // Set to false on error
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Operation failed',
+            detail: err.message,
+          });
+          console.error('API Error:', err);
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      this.saving.set(false); // Set to false if image upload fails
     }
   }
+}
 
   async uploadImage(file: File): Promise<string> {
     // Implement your image upload logic here

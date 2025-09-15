@@ -44,9 +44,6 @@ export class LoginComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
     });
-    effect(() => {
-      console.log(this.loading());
-    });
   }
 
   ngOnInit() {
