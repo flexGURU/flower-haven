@@ -17,6 +17,7 @@ type Querier interface {
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateProductStem(ctx context.Context, arg CreateProductStemParams) (ProductStem, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int64, error)
 	CreateSubscriptionDelivery(ctx context.Context, arg CreateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -24,6 +25,7 @@ type Querier interface {
 	DeleteCategory(ctx context.Context, id int64) error
 	DeleteOrder(ctx context.Context, id int64) error
 	DeleteProduct(ctx context.Context, id int64) error
+	DeleteProductStemsByProductID(ctx context.Context, productID int64) error
 	DeleteSubscription(ctx context.Context, id int64) error
 	DeleteSubscriptionDelivery(ctx context.Context, id int64) error
 	DeleteUserSubscription(ctx context.Context, id int64) error
@@ -38,6 +40,8 @@ type Querier interface {
 	GetPaymentsByOrderID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetPaymentsByUserSubscriptionID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetProductByID(ctx context.Context, id int64) (GetProductByIDRow, error)
+	GetProductStemByID(ctx context.Context, id int64) (ProductStem, error)
+	GetProductStemsByProductID(ctx context.Context, productID int64) ([]ProductStem, error)
 	GetRecentOrders(ctx context.Context) ([]Order, error)
 	GetSubscriptionByID(ctx context.Context, id int64) (GetSubscriptionByIDRow, error)
 	GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error)
@@ -71,6 +75,7 @@ type Querier interface {
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductStem(ctx context.Context, arg UpdateProductStemParams) (ProductStem, error)
 	UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (int64, error)
 	UpdateSubscriptionDelivery(ctx context.Context, arg UpdateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)

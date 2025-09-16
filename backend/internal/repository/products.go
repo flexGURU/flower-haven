@@ -13,21 +13,47 @@ type Product struct {
 	Description   string     `json:"description"`
 	Price         float64    `json:"price"`
 	CategoryID    uint32     `json:"category_id"`
+	HasStems      bool       `json:"has_stems"`
+	IsMessageCard bool       `json:"is_message_card"`
+	IsFlowers     bool       `json:"is_flowers"`
+	IsAddOn       bool       `json:"is_add_on"`
 	ImageUrl      []string   `json:"image_url"`
 	StockQuantity int64      `json:"stock_quantity"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty"`
 	CreatedAt     time.Time  `json:"created_at"`
 	CategoryData  *Category  `json:"category_data,omitempty"`
+
+	// extended fields
+	Stems []ProductStem `json:"stems,omitempty"`
 }
 
 type UpdateProduct struct {
 	ID            uint32    `json:"id"`
 	Name          *string   `json:"name"`
 	Description   *string   `json:"description"`
+	HasStems      *bool     `json:"has_stems"`
+	IsMessageCard *bool     `json:"is_message_card"`
+	IsFlowers     *bool     `json:"is_flowers"`
+	IsAddOn       *bool     `json:"is_add_on"`
 	Price         *float64  `json:"price"`
 	CategoryID    *uint32   `json:"category_id"`
 	ImageURL      *[]string `json:"image_url"`
 	StockQuantity *int64    `json:"stock_quantity"`
+
+	// extended fields
+	Stems []UpdateProductStem `json:"stems,omitempty"`
+}
+
+type ProductStem struct {
+	ID        uint32  `json:"id"`
+	ProductID uint32  `json:"product_id"`
+	StemCount uint32  `json:"stem_count"`
+	Price     float64 `json:"price"`
+}
+
+type UpdateProductStem struct {
+	StemCount *uint32  `json:"stem_count"`
+	Price     *float64 `json:"price"`
 }
 
 type ProductFilter struct {

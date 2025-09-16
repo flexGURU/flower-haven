@@ -61,6 +61,17 @@ type Product struct {
 	StockQuantity int64              `json:"stock_quantity"`
 	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt     time.Time          `json:"created_at"`
+	HasStems      bool               `json:"has_stems"`
+	IsMessageCard bool               `json:"is_message_card"`
+	IsFlowers     bool               `json:"is_flowers"`
+	IsAddOn       bool               `json:"is_add_on"`
+}
+
+type ProductStem struct {
+	ID        int64          `json:"id"`
+	ProductID int64          `json:"product_id"`
+	StemCount int64          `json:"stem_count"`
+	Price     pgtype.Numeric `json:"price"`
 }
 
 type Subscription struct {

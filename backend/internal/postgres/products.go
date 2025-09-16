@@ -16,33 +16,61 @@ var _ repository.ProductRepository = (*ProductRepository)(nil)
 
 type ProductRepository struct {
 	queries *generated.Queries
+	db      *Store
 }
 
-func NewProductRepository(queries *generated.Queries) *ProductRepository {
-	return &ProductRepository{queries: queries}
+func NewProductRepository(db *Store) *ProductRepository {
+	return &ProductRepository{
+		db:      db,
+		queries: generated.New(db.pool),
+	}
 }
 
 func (pr *ProductRepository) CreateProduct(ctx context.Context, product *repository.Product) (*repository.Product, error) {
-	generatedProduct, err := pr.queries.CreateProduct(ctx, generated.CreateProductParams{
-		Name:          product.Name,
-		Description:   product.Description,
-		Price:         pkg.Float64ToPgTypeNumeric(product.Price),
-		CategoryID:    int64(product.CategoryID),
-		ImageUrl:      product.ImageUrl,
-		StockQuantity: product.StockQuantity,
-	})
-	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
-			return nil, pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+	err := pr.db.ExecTx(ctx, func(q *generated.Queries) error {
+		generatedProduct, err := q.CreateProduct(ctx, generated.CreateProductParams{
+			Name:          product.Name,
+			Description:   product.Description,
+			Price:         pkg.Float64ToPgTypeNumeric(product.Price),
+			CategoryID:    int64(product.CategoryID),
+			HasStems:      product.HasStems,
+			IsMessageCard: product.IsMessageCard,
+			IsFlowers:     product.IsFlowers,
+			IsAddOn:       product.IsAddOn,
+			ImageUrl:      product.ImageUrl,
+			StockQuantity: product.StockQuantity,
+		})
+		if err != nil {
+			if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+				return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+			}
+			return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product: %s", err.Error())
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product: %s", err.Error())
-	}
 
-	product.ID = uint32(generatedProduct.ID)
-	product.CreatedAt = generatedProduct.CreatedAt
-	product.CategoryData = nil
+		product.ID = uint32(generatedProduct.ID)
+		product.CreatedAt = generatedProduct.CreatedAt
+		product.CategoryData = nil
 
-	return product, nil
+		if product.HasStems {
+			for _, stem := range product.Stems {
+				_, err := q.CreateProductStem(ctx, generated.CreateProductStemParams{
+					ProductID: int64(product.ID),
+					StemCount: int64(stem.StemCount),
+					Price:     pkg.Float64ToPgTypeNumeric(stem.Price),
+				})
+				if err != nil {
+					if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+						return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+					}
+					return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product stem: %s", err.Error())
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return product, err
 }
 
 func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*repository.Product, error) {
@@ -61,6 +89,10 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*rep
 		Price:         pkg.PgTypeNumericToFloat64(generatedProduct.Price),
 		CategoryID:    uint32(generatedProduct.CategoryID),
 		ImageUrl:      generatedProduct.ImageUrl,
+		HasStems:      generatedProduct.HasStems,
+		IsMessageCard: generatedProduct.IsMessageCard,
+		IsFlowers:     generatedProduct.IsFlowers,
+		IsAddOn:       generatedProduct.IsAddOn,
 		StockQuantity: generatedProduct.StockQuantity,
 		DeletedAt:     nil,
 		CreatedAt:     generatedProduct.CreatedAt,
@@ -77,6 +109,26 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*rep
 			Name:        generatedProduct.CategoryName.String,
 			Description: generatedProduct.CategoryDescription.String,
 		}
+	}
+
+	if product.HasStems {
+		var stems []repository.ProductStem
+		productStems, err := pr.queries.GetProductStemsByProductID(ctx, int64(product.ID))
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error getting product stems: %s", err.Error())
+			}
+		}
+
+		for _, stem := range productStems {
+			stems = append(stems, repository.ProductStem{
+				ID:        uint32(stem.ID),
+				ProductID: uint32(stem.ProductID),
+				StemCount: uint32(stem.StemCount),
+				Price:     pkg.PgTypeNumericToFloat64(stem.Price),
+			})
+		}
+		product.Stems = stems
 	}
 
 	return product, nil
@@ -121,27 +173,45 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 		params.StockQuantity = pgtype.Int8{Int64: int64(*product.StockQuantity), Valid: true}
 	}
 
-	generatedProduct, err := pr.queries.UpdateProduct(ctx, params)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", product.ID)
+	err := pr.db.ExecTx(ctx, func(q *generated.Queries) error {
+		if product.Stems != nil {
+			// delete all existing stems and recreate them
+			if err := q.DeleteProductStemsByProductID(ctx, int64(product.ID)); err != nil {
+				return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting existing product stems: %s", err.Error())
+			}
+
+			for _, stem := range product.Stems {
+				stemProductId := product.ID
+				_, err := q.CreateProductStem(ctx, generated.CreateProductStemParams{
+					ProductID: int64(stemProductId),
+					StemCount: int64(*stem.StemCount),
+					Price:     pkg.Float64ToPgTypeNumeric(*stem.Price),
+				})
+				if err != nil {
+					if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+						return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+					}
+					return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product stem: %s", err.Error())
+				}
+			}
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating product: %s", err.Error())
+
+		_, err := pr.queries.UpdateProduct(ctx, params)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", product.ID)
+			}
+			return pkg.Errorf(pkg.INTERNAL_ERROR, "error updating product: %s", err.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	productData := &repository.Product{
-		ID:            uint32(generatedProduct.ID),
-		Name:          generatedProduct.Name,
-		Description:   generatedProduct.Description,
-		CategoryID:    uint32(generatedProduct.CategoryID),
-		Price:         pkg.PgTypeNumericToFloat64(generatedProduct.Price),
-		ImageUrl:      generatedProduct.ImageUrl,
-		StockQuantity: generatedProduct.StockQuantity,
-		CreatedAt:     generatedProduct.CreatedAt,
-		DeletedAt:     nil,
-	}
-
-	return productData, nil
+	return pr.GetProductByID(ctx, int64(product.ID))
 }
 
 func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {

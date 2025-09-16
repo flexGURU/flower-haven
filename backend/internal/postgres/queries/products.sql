@@ -1,6 +1,6 @@
 -- name: CreateProduct :one
-INSERT INTO products (name, description, price, category_id, image_url, stock_quantity)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO products (name, description, price, category_id, has_stems, is_message_card, is_add_on, is_flowers, image_url, stock_quantity)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: TotalProducts :one
@@ -15,7 +15,8 @@ SELECT p.*,
        c.description AS category_description
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
-WHERE p.id = $1;
+WHERE p.id = $1
+GROUP BY p.id, c.id, c.name, c.description;
 
 -- name: ProductExists :one
 SELECT EXISTS(SELECT 1 FROM products WHERE id = $1) AS exists;
@@ -26,6 +27,10 @@ SET name = coalesce(sqlc.narg('name'), name),
     description = coalesce(sqlc.narg('description'), description),
     price = coalesce(sqlc.narg('price'), price),
     category_id = coalesce(sqlc.narg('category_id'), category_id),
+    has_stems = coalesce(sqlc.narg('has_stems'), has_stems),
+    is_message_card = coalesce(sqlc.narg('is_message_card'), is_message_card),
+    is_flowers = coalesce(sqlc.narg('is_flowers'), is_flowers),
+    is_add_on = coalesce(sqlc.narg('is_add_on'), is_add_on),
     image_url = coalesce(sqlc.narg('image_url'), image_url),
     stock_quantity = coalesce(sqlc.narg('stock_quantity'), stock_quantity)
 WHERE id = sqlc.arg('id')
