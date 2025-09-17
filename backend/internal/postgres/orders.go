@@ -27,94 +27,104 @@ func NewOrderRepository(db *Store) *OrderRepository {
 	}
 }
 
-func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Order, orderItems map[uint32]int32) (*repository.Order, error) {
-	err := or.db.ExecTx(ctx, func(q *generated.Queries) error {
-		createOrderParams := generated.CreateOrderParams{
-			UserName:        order.UserName,
-			UserPhoneNumber: order.UserPhoneNumber,
-			PaymentStatus:   order.PaymentStatus,
-			Status:          order.Status,
-			ShippingAddress: pgtype.Text{Valid: false},
-		}
+func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Order, orderItems []repository.OrderItem) (*repository.Order, error) {
+	// err := or.db.ExecTx(ctx, func(q *generated.Queries) error {
+	// 	// create order details
+	// 	createOrderParams := generated.CreateOrderParams{
+	// 		UserName:        order.UserName,
+	// 		UserPhoneNumber: order.UserPhoneNumber,
+	// 		PaymentStatus:   order.PaymentStatus,
+	// 		Status:          order.Status,
+	// 		DeliveryDate:    order.DeliveryDate,
+	// 		TimeSlot:        order.TimeSlot,
+	// 		ByAdmin:         order.ByAdmin,
+	// 		ShippingAddress: pgtype.Text{Valid: false},
+	// 	}
 
-		if order.ShippingAddress != nil {
-			createOrderParams.ShippingAddress = pgtype.Text{
-				Valid:  true,
-				String: *order.ShippingAddress,
-			}
-		}
+	// 	if order.ShippingAddress != nil {
+	// 		createOrderParams.ShippingAddress = pgtype.Text{
+	// 			Valid:  true,
+	// 			String: *order.ShippingAddress,
+	// 		}
+	// 	}
 
-		totalAmount := 0.0
-		orderItemParams := []generated.CreateOrderItemParams{}
-		orderItemResult := []repository.OrderItem{}
-		for productId, quantity := range orderItems {
-			product, err := q.GetProductByID(ctx, int64(productId))
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", productId)
-				}
-				return pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching product by id: %s", err.Error())
-			}
+	// 	totalAmount := 0.0
+	// 	orderItemParams := []generated.CreateOrderItemParams{}
+	// 	clientSubscriptionParams := []generated.CreateUserSubscriptionParams{}
+	// 	for idx, item := range orderItems {
+	// 		product, err := q.GetProductByID(ctx, int64(item.ProductID))
+	// 		if err != nil {
+	// 			if errors.Is(err, sql.ErrNoRows) {
+	// 				return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", productId)
+	// 			}
+	// 			return pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching product by id: %s", err.Error())
+	// 		}
 
-			if product.StockQuantity < int64(quantity) {
-				return pkg.Errorf(pkg.INVALID_ERROR, "product with id %d has stock_quantity of %d and trying to make an order of stock_quantity %d. Need to add stock first", productId, product.StockQuantity, quantity)
-			}
+	// 		if item.StemID != 0 {
+	// 			// check if stem exists
+	// 			_, err := q.GetProductStemByID(ctx, int64(item.StemID))
+	// 			if err != nil {
+	// 				if errors.Is(err, sql.ErrNoRows) {
+	// 					return pkg.Errorf(pkg.NOT_FOUND_ERROR, "stem with ID %d not found", item.StemID)
+	// 				}
+	// 				return pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching stem by id: %s", err.Error())
+	// 			}
+	// 		}
 
-			amount := pkg.PgTypeNumericToFloat64(product.Price) * float64(quantity)
-			totalAmount += amount
-			orderItemParams = append(orderItemParams, generated.CreateOrderItemParams{
-				ProductID: int64(productId),
-				Quantity:  quantity,
-				Amount:    pkg.Float64ToPgTypeNumeric(amount),
-			})
+	// 		if product.StockQuantity < int64(item.Quantity) {
+	// 			return pkg.Errorf(pkg.INVALID_ERROR, "product with id %d has stock_quantity of %d and trying to make an order of stock_quantity %d. Need to add stock first", item.ProductID, product.StockQuantity, item.Quantity)
+	// 		}
 
-			_, err = q.UpdateProduct(ctx, generated.UpdateProductParams{
-				ID: int64(productId),
-				StockQuantity: pgtype.Int8{
-					Valid: true,
-					Int64: product.StockQuantity - int64(quantity),
-				},
-			})
-			if err != nil {
-				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update product with id %d quantity: %s", productId, err.Error())
-			}
+	// 		amount := pkg.PgTypeNumericToFloat64(product.Price) * float64(item.Quantity)
+	// 		totalAmount += amount
 
-			orderItemResult = append(orderItemResult, repository.OrderItem{
-				ProductID: productId,
-				Quantity:  quantity,
-				Amount:    amount,
-				CurrentProductDetails: &repository.Product{
-					ID:       uint32(product.ID),
-					Name:     product.Description,
-					Price:    pkg.PgTypeNumericToFloat64(product.Price),
-					ImageUrl: product.ImageUrl,
-				},
-				OrderData: nil,
-			})
-		}
+	// 		_, err = q.UpdateProduct(ctx, generated.UpdateProductParams{
+	// 			ID: int64(item.ProductID),
+	// 			StockQuantity: pgtype.Int8{
+	// 				Valid: true,
+	// 				Int64: product.StockQuantity - int64(item.Quantity),
+	// 			},
+	// 		})
+	// 		if err != nil {
+	// 			return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update product with id %d quantity: %s", productId, err.Error())
+	// 		}
 
-		createOrderParams.TotalAmount = pkg.Float64ToPgTypeNumeric(totalAmount)
-		orderId, err := q.CreateOrder(ctx, createOrderParams)
-		if err != nil {
-			return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order: %s", err.Error())
-		}
+	// 		// check what payment_method it is
+	// 		if item.PaymentMethod == "subscription" {
+	// 			// create subscription params by_admin to false
 
-		for idx, param := range orderItemParams {
-			param.OrderID = orderId
-			orderItemResult[idx].OrderID = uint32(orderId)
-			if _, err := q.CreateOrderItem(ctx, param); err != nil {
-				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order item: %s", err.Error())
-			}
-		}
+	// 			// create user_subscription params with frequency and day_of_week
 
-		order.ID = uint32(orderId)
-		order.TotalAmount = totalAmount
-		order.OrderItemsData = orderItemResult
+	// 			// add the orderItem params To CreateOrderItemParams
+	// 		} else {
 
-		return nil
-	})
+	// 			// orderItemParams = append(orderItemParams, generated.CreateOrderItemParams{
+	// 			// 	ProductID: int64(productId),
+	// 			// 	Quantity:  quantity,
+	// 			// 	Amount:    pkg.Float64ToPgTypeNumeric(amount),
+	// 			// })
+	// 		}
+	// 	}
 
-	return order, err
+	// 	createOrderParams.TotalAmount = pkg.Float64ToPgTypeNumeric(totalAmount)
+	// 	orderId, err := q.CreateOrder(ctx, createOrderParams)
+	// 	if err != nil {
+	// 		return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order: %s", err.Error())
+	// 	}
+
+	// 	for _, param := range orderItemParams {
+	// 		param.OrderID = orderId
+	// 		if _, err := q.CreateOrderItem(ctx, param); err != nil {
+	// 			return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order item: %s", err.Error())
+	// 		}
+	// 	}
+
+	// 	order.ID = uint32(orderId)
+
+	// 	return nil
+	// })
+
+	return or.GetOrderByID(ctx, int64(order.ID))
 }
 
 func (or *OrderRepository) GetOrderByID(ctx context.Context, id int64) (*repository.Order, error) {

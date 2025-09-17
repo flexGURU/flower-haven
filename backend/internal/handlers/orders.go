@@ -41,7 +41,7 @@ func (s *Server) createOrderHandler(ctx *gin.Context) {
 		orderItem[item.ProductID] = item.Quantity
 	}
 
-	newOrder, err := s.repo.OrderRepository.CreateOrder(ctx, order, orderItem)
+	newOrder, err := s.repo.OrderRepository.CreateOrder(ctx, order, []repository.OrderItem{})
 	if err != nil {
 		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
 		return
