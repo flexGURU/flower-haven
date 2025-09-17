@@ -12,16 +12,19 @@ import (
 )
 
 const createOrderItem = `-- name: CreateOrderItem :one
-INSERT INTO order_items (order_id, product_id, quantity, amount)
-VALUES ($1, $2, $3, $4)
+INSERT INTO order_items (order_id, product_id, quantity, amount, payment_method, frequency, stem_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
 type CreateOrderItemParams struct {
-	OrderID   int64          `json:"order_id"`
-	ProductID int64          `json:"product_id"`
-	Quantity  int32          `json:"quantity"`
-	Amount    pgtype.Numeric `json:"amount"`
+	OrderID       int64          `json:"order_id"`
+	ProductID     int64          `json:"product_id"`
+	Quantity      int32          `json:"quantity"`
+	Amount        pgtype.Numeric `json:"amount"`
+	PaymentMethod string         `json:"payment_method"`
+	Frequency     pgtype.Text    `json:"frequency"`
+	StemID        pgtype.Int8    `json:"stem_id"`
 }
 
 func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error) {
@@ -30,6 +33,9 @@ func (q *Queries) CreateOrderItem(ctx context.Context, arg CreateOrderItemParams
 		arg.ProductID,
 		arg.Quantity,
 		arg.Amount,
+		arg.PaymentMethod,
+		arg.Frequency,
+		arg.StemID,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -51,7 +57,7 @@ func (q *Queries) GetCountOrderItemsByProductID(ctx context.Context, productID i
 
 const getOrderItemsByProductID = `-- name: GetOrderItemsByProductID :many
 SELECT 
-    oi.id, oi.order_id, oi.product_id, oi.quantity, oi.amount,
+    oi.id, oi.order_id, oi.product_id, oi.quantity, oi.amount, oi.stem_id, oi.payment_method, oi.frequency,
     COALESCE(p1.order_json, '{}') AS order_data
 FROM order_items oi
 LEFT JOIN LATERAL (
@@ -77,12 +83,15 @@ type GetOrderItemsByProductIDParams struct {
 }
 
 type GetOrderItemsByProductIDRow struct {
-	ID        int64          `json:"id"`
-	OrderID   int64          `json:"order_id"`
-	ProductID int64          `json:"product_id"`
-	Quantity  int32          `json:"quantity"`
-	Amount    pgtype.Numeric `json:"amount"`
-	OrderData []byte         `json:"order_data"`
+	ID            int64          `json:"id"`
+	OrderID       int64          `json:"order_id"`
+	ProductID     int64          `json:"product_id"`
+	Quantity      int32          `json:"quantity"`
+	Amount        pgtype.Numeric `json:"amount"`
+	StemID        pgtype.Int8    `json:"stem_id"`
+	PaymentMethod string         `json:"payment_method"`
+	Frequency     pgtype.Text    `json:"frequency"`
+	OrderData     []byte         `json:"order_data"`
 }
 
 func (q *Queries) GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error) {
@@ -100,6 +109,9 @@ func (q *Queries) GetOrderItemsByProductID(ctx context.Context, arg GetOrderItem
 			&i.ProductID,
 			&i.Quantity,
 			&i.Amount,
+			&i.StemID,
+			&i.PaymentMethod,
+			&i.Frequency,
 			&i.OrderData,
 		); err != nil {
 			return nil, err

@@ -30,14 +30,20 @@ type Order struct {
 	ShippingAddress pgtype.Text        `json:"shipping_address"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt       time.Time          `json:"created_at"`
+	DeliveryDate    time.Time          `json:"delivery_date"`
+	TimeSlot        string             `json:"time_slot"`
+	ByAdmin         bool               `json:"by_admin"`
 }
 
 type OrderItem struct {
-	ID        int64          `json:"id"`
-	OrderID   int64          `json:"order_id"`
-	ProductID int64          `json:"product_id"`
-	Quantity  int32          `json:"quantity"`
-	Amount    pgtype.Numeric `json:"amount"`
+	ID            int64          `json:"id"`
+	OrderID       int64          `json:"order_id"`
+	ProductID     int64          `json:"product_id"`
+	Quantity      int32          `json:"quantity"`
+	Amount        pgtype.Numeric `json:"amount"`
+	StemID        pgtype.Int8    `json:"stem_id"`
+	PaymentMethod string         `json:"payment_method"`
+	Frequency     pgtype.Text    `json:"frequency"`
 }
 
 type Payment struct {
@@ -83,6 +89,8 @@ type Subscription struct {
 	Price       pgtype.Numeric     `json:"price"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt   time.Time          `json:"created_at"`
+	ByAdmin     bool               `json:"by_admin"`
+	StemIds     []int32            `json:"stem_ids"`
 }
 
 type SubscriptionDelivery struct {
@@ -117,4 +125,5 @@ type UserSubscription struct {
 	EndDate        time.Time          `json:"end_date"`
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt      time.Time          `json:"created_at"`
+	Frequency      string             `json:"frequency"`
 }

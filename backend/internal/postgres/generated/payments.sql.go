@@ -190,13 +190,13 @@ func (q *Queries) ListPayments(ctx context.Context, arg ListPaymentsParams) ([]P
 }
 
 const totalRevenue = `-- name: TotalRevenue :one
-SELECT SUM(amount) AS total_revenue
+SELECT COALESCE(SUM(amount), 0) AS total_revenue
 FROM payments
 `
 
-func (q *Queries) TotalRevenue(ctx context.Context) (int64, error) {
+func (q *Queries) TotalRevenue(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, totalRevenue)
-	var total_revenue int64
+	var total_revenue interface{}
 	err := row.Scan(&total_revenue)
 	return total_revenue, err
 }

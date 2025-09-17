@@ -12,6 +12,8 @@ type Subscription struct {
 	Name         string     `json:"name"`
 	Description  string     `json:"description"`
 	ProductIds   []uint32   `json:"product_ids"`
+	StemIds      []uint32   `json:"stem_ids"`
+	ByAdmin      bool       `json:"by_admin"`
 	ProductsData []Product  `json:"products_data,omitempty"`
 	AddOns       []uint32   `json:"add_ons"`
 	AddOnsData   []Product  `json:"add_ons_data,omitempty"`
@@ -25,12 +27,14 @@ type UpdateSubscription struct {
 	Name        *string   `json:"name"`
 	Description *string   `json:"description"`
 	ProductIds  *[]uint32 `json:"product_ids"`
+	StemIds     *[]uint32 `json:"stem_ids"`
 	AddOns      *[]uint32 `json:"add_ons"`
 	Price       *float64  `json:"price"`
 }
 
 type SubscriptionFilter struct {
 	Pagination *pkg.Pagination
+	ByAdmin    *bool
 	Search     *string
 	PriceFrom  *float64
 	PriceTo    *float64

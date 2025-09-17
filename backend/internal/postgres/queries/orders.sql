@@ -1,13 +1,13 @@
 -- name: CreateOrder :one
-INSERT INTO orders (user_name, user_phone_number, total_amount, payment_status, status, shipping_address)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO orders (user_name, user_phone_number, total_amount, payment_status, status, shipping_address, delivery_date, time_slot, by_admin)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING id;
 
 -- name: GetOrderByID :one
 SELECT * FROM orders WHERE id = $1;
 
 -- name: TotalOrders :one
-SELECT COUNT(*) AS total_orders
+SELECT COALESCE(COUNT(*), 0) AS total_orders
 FROM orders
 WHERE deleted_at IS NULL;
 

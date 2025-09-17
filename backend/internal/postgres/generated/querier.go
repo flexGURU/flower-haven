@@ -11,7 +11,7 @@ import (
 )
 
 type Querier interface {
-	ActiveSubscriptions(ctx context.Context) (int64, error)
+	ActiveSubscriptions(ctx context.Context) (interface{}, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
@@ -68,9 +68,9 @@ type Querier interface {
 	OrderExists(ctx context.Context, id int64) (bool, error)
 	ProductExists(ctx context.Context, id int64) (bool, error)
 	SubscriptionExists(ctx context.Context, id int64) (bool, error)
-	TotalOrders(ctx context.Context) (int64, error)
-	TotalProducts(ctx context.Context) (int64, error)
-	TotalRevenue(ctx context.Context) (int64, error)
+	TotalOrders(ctx context.Context) (interface{}, error)
+	TotalProducts(ctx context.Context) (interface{}, error)
+	TotalRevenue(ctx context.Context) (interface{}, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)

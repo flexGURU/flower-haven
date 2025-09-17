@@ -13,8 +13,8 @@ import (
 )
 
 const createSubscription = `-- name: CreateSubscription :one
-INSERT INTO subscriptions (name, description, product_ids, add_ons, price)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO subscriptions (name, description, product_ids, add_ons, price, stem_ids, by_admin)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
@@ -24,6 +24,8 @@ type CreateSubscriptionParams struct {
 	ProductIds  []int32        `json:"product_ids"`
 	AddOns      []int32        `json:"add_ons"`
 	Price       pgtype.Numeric `json:"price"`
+	StemIds     []int32        `json:"stem_ids"`
+	ByAdmin     bool           `json:"by_admin"`
 }
 
 func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int64, error) {
@@ -33,6 +35,8 @@ func (q *Queries) CreateSubscription(ctx context.Context, arg CreateSubscription
 		arg.ProductIds,
 		arg.AddOns,
 		arg.Price,
+		arg.StemIds,
+		arg.ByAdmin,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -52,7 +56,7 @@ func (q *Queries) DeleteSubscription(ctx context.Context, id int64) error {
 
 const getSubscriptionByID = `-- name: GetSubscriptionByID :one
 SELECT 
-  s.id, s.name, s.description, s.product_ids, s.add_ons, s.price, s.deleted_at, s.created_at,
+  s.id, s.name, s.description, s.product_ids, s.add_ons, s.price, s.deleted_at, s.created_at, s.by_admin, s.stem_ids,
   COALESCE(p1.products_json, '[]') AS products_data,
   COALESCE(p2.add_ons_json, '[]') AS add_ons_data
 FROM subscriptions s
@@ -78,6 +82,8 @@ type GetSubscriptionByIDRow struct {
 	Price        pgtype.Numeric     `json:"price"`
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt    time.Time          `json:"created_at"`
+	ByAdmin      bool               `json:"by_admin"`
+	StemIds      []int32            `json:"stem_ids"`
 	ProductsData []byte             `json:"products_data"`
 	AddOnsData   []byte             `json:"add_ons_data"`
 }
@@ -94,6 +100,8 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id int64) (GetSubscri
 		&i.Price,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.ByAdmin,
+		&i.StemIds,
 		&i.ProductsData,
 		&i.AddOnsData,
 	)
@@ -102,7 +110,7 @@ func (q *Queries) GetSubscriptionByID(ctx context.Context, id int64) (GetSubscri
 
 const listSubscriptions = `-- name: ListSubscriptions :many
 SELECT 
-  s.id, s.name, s.description, s.product_ids, s.add_ons, s.price, s.deleted_at, s.created_at,
+  s.id, s.name, s.description, s.product_ids, s.add_ons, s.price, s.deleted_at, s.created_at, s.by_admin, s.stem_ids,
   COALESCE(p.products, '[]') AS products_data,
   COALESCE(a.add_ons, '[]') AS add_ons_data
 FROM subscriptions s
@@ -132,19 +140,24 @@ WHERE
         OR LOWER(s.description) LIKE $1
     )
     AND (
-        $2::float IS NULL 
-        OR s.price >= $2
+        $2::boolean IS NULL 
+        OR s.by_admin = $2
     )
     AND (
         $3::float IS NULL 
-        OR s.price <= $3
+        OR s.price >= $3
+    )
+    AND (
+        $4::float IS NULL 
+        OR s.price <= $4
     )
 ORDER BY s.created_at DESC
-LIMIT $5 OFFSET $4
+LIMIT $6 OFFSET $5
 `
 
 type ListSubscriptionsParams struct {
 	Search    interface{}   `json:"search"`
+	ByAdmin   pgtype.Bool   `json:"by_admin"`
 	PriceFrom pgtype.Float8 `json:"price_from"`
 	PriceTo   pgtype.Float8 `json:"price_to"`
 	Offset    int32         `json:"offset"`
@@ -160,6 +173,8 @@ type ListSubscriptionsRow struct {
 	Price        pgtype.Numeric     `json:"price"`
 	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt    time.Time          `json:"created_at"`
+	ByAdmin      bool               `json:"by_admin"`
+	StemIds      []int32            `json:"stem_ids"`
 	ProductsData []byte             `json:"products_data"`
 	AddOnsData   []byte             `json:"add_ons_data"`
 }
@@ -167,6 +182,7 @@ type ListSubscriptionsRow struct {
 func (q *Queries) ListSubscriptions(ctx context.Context, arg ListSubscriptionsParams) ([]ListSubscriptionsRow, error) {
 	rows, err := q.db.Query(ctx, listSubscriptions,
 		arg.Search,
+		arg.ByAdmin,
 		arg.PriceFrom,
 		arg.PriceTo,
 		arg.Offset,
@@ -188,6 +204,8 @@ func (q *Queries) ListSubscriptions(ctx context.Context, arg ListSubscriptionsPa
 			&i.Price,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ByAdmin,
+			&i.StemIds,
 			&i.ProductsData,
 			&i.AddOnsData,
 		); err != nil {
@@ -212,23 +230,33 @@ WHERE
         OR LOWER(description) LIKE $1
     )
     AND (
-        $2::float IS NULL 
-        OR price >= $2
+        $2::boolean IS NULL 
+        OR by_admin = $2
     )
     AND (
         $3::float IS NULL 
-        OR price <= $3
+        OR price >= $3
+    )
+    AND (
+        $4::float IS NULL 
+        OR price <= $4
     )
 `
 
 type ListSubscriptionsCountParams struct {
 	Search    interface{}   `json:"search"`
+	ByAdmin   pgtype.Bool   `json:"by_admin"`
 	PriceFrom pgtype.Float8 `json:"price_from"`
 	PriceTo   pgtype.Float8 `json:"price_to"`
 }
 
 func (q *Queries) ListSubscriptionsCount(ctx context.Context, arg ListSubscriptionsCountParams) (int64, error) {
-	row := q.db.QueryRow(ctx, listSubscriptionsCount, arg.Search, arg.PriceFrom, arg.PriceTo)
+	row := q.db.QueryRow(ctx, listSubscriptionsCount,
+		arg.Search,
+		arg.ByAdmin,
+		arg.PriceFrom,
+		arg.PriceTo,
+	)
 	var total_subscriptions int64
 	err := row.Scan(&total_subscriptions)
 	return total_subscriptions, err
@@ -250,9 +278,10 @@ UPDATE subscriptions
 SET name = coalesce($1, name),
     description = coalesce($2, description),
     product_ids = coalesce($3, product_ids),
-    add_ons = coalesce($4, add_ons),
-    price = coalesce($5, price)
-WHERE id = $6
+    stem_ids = coalesce($4, stem_ids), 
+    add_ons = coalesce($5, add_ons),
+    price = coalesce($6, price)
+WHERE id = $7
 RETURNING id
 `
 
@@ -260,6 +289,7 @@ type UpdateSubscriptionParams struct {
 	Name        pgtype.Text    `json:"name"`
 	Description pgtype.Text    `json:"description"`
 	ProductIds  []int32        `json:"product_ids"`
+	StemIds     []int32        `json:"stem_ids"`
 	AddOns      []int32        `json:"add_ons"`
 	Price       pgtype.Numeric `json:"price"`
 	ID          int64          `json:"id"`
@@ -270,6 +300,7 @@ func (q *Queries) UpdateSubscription(ctx context.Context, arg UpdateSubscription
 		arg.Name,
 		arg.Description,
 		arg.ProductIds,
+		arg.StemIds,
 		arg.AddOns,
 		arg.Price,
 		arg.ID,

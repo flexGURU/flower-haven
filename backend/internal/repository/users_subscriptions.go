@@ -12,6 +12,7 @@ type UserSubscription struct {
 	UserID         uint32     `json:"user_id"`
 	SubscriptionID uint32     `json:"subscription_id"`
 	DayOfWeek      int16      `json:"day_of_week"`
+	Frequency      string     `json:"frequency"`
 	Status         bool       `json:"status"`
 	StartDate      time.Time  `json:"start_date"`
 	EndDate        time.Time  `json:"end_date"`
@@ -25,6 +26,7 @@ type UserSubscription struct {
 
 type UpdateUserSubscription struct {
 	ID        uint32     `json:"id"`
+	Frequency *string    `json:"frequency"`
 	DayOfWeek *int16     `json:"day_of_week"`
 	Status    *bool      `json:"status"`
 	StartDate *time.Time `json:"start_date"`

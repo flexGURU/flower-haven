@@ -4,7 +4,7 @@ VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING *;
 
 -- name: TotalRevenue :one
-SELECT SUM(amount) AS total_revenue
+SELECT COALESCE(SUM(amount), 0) AS total_revenue
 FROM payments;
 
 -- name: GetPaymentByID :one
