@@ -1,6 +1,6 @@
 -- name: CreateUserSubscription :one
 INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week, frequency)
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES (sqlc.narg('user_id'), sqlc.arg('subscription_id'), sqlc.arg('start_date'), sqlc.arg('end_date'), sqlc.arg('day_of_week'), sqlc.arg('frequency'))
 RETURNING id;
 
 -- name: UserSubscriptionExists :one

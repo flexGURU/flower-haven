@@ -21,3 +21,5 @@ ALTER TABLE "subscriptions" DROP COLUMN "parent_order_id";
 ALTER TABLE "subscriptions" DROP CONSTRAINT "subscriptions_parent_order_id_fkey";
 
 ALTER TABLE "user_subscriptions" DROP COLUMN "frequency";
+ALTER TABLE "user_subscriptions" ADD CONSTRAINT "user_subscription_user_id_fkey";
+ALTER TABLE "user_subscriptions" ALTER COLUMN "user_id" SET NOT NULL;

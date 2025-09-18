@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/flexGURU/flower-haven/backend/internal/repository"
 	"github.com/flexGURU/flower-haven/backend/pkg"
@@ -12,12 +12,20 @@ import (
 type createOrderReq struct {
 	UserName        string  `json:"user_name" binding:"required"`
 	UserPhoneNumber string  `json:"user_phone_number" binding:"required"`
-	PaymentStatus   string  `json:"payment_status" binding:"required"`
+	PaymentStatus   bool    `json:"payment_status"`
 	Status          string  `json:"status" binding:"required"`
-	ShippingAddress *string `json:"shipping_address,omitempty" `
-	Items           []struct {
-		ProductID uint32 `json:"product_id" binding:"required"`
-		Quantity  int32  `json:"quantity" binding:"required"`
+	DeliveryDate    string  `json:"delivery_date" binding:"required"` // parse into time.Time
+	TimeSlot        string  `json:"time_slot" binding:"required"`
+	ShippingAddress *string `json:"shipping_address,omitempty"`
+	ByAdmin         bool    `json:"by_admin"`
+
+	Items []struct {
+		ProductID     uint32  `json:"product_id" binding:"required"`
+		StemID        *uint32 `json:"stem_id,omitempty"` // flowers only
+		PaymentMethod string  `json:"payment_method" binding:"required,oneof=normal subscription"`
+		Frequency     string  `json:"frequency,omitempty"` // required if subscription
+		Quantity      int32   `json:"quantity" binding:"required"`
+		Amount        float64 `json:"amount" binding:"required"`
 	} `json:"items" binding:"required"`
 }
 
@@ -28,20 +36,48 @@ func (s *Server) createOrderHandler(ctx *gin.Context) {
 		return
 	}
 
+	deliveryDate, err := time.Parse("2006-01-02", req.DeliveryDate)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, "invalid delivery_date format, expected YYYY-MM-DD")))
+		return
+	}
+
 	order := &repository.Order{
 		UserName:        req.UserName,
 		UserPhoneNumber: req.UserPhoneNumber,
-		PaymentStatus:   strings.ToLower(req.PaymentStatus) == "true",
+		PaymentStatus:   req.PaymentStatus,
 		Status:          req.Status,
+		DeliveryDate:    deliveryDate,
+		TimeSlot:        req.TimeSlot,
+		ByAdmin:         req.ByAdmin,
 		ShippingAddress: req.ShippingAddress,
 	}
 
-	orderItem := map[uint32]int32{}
+	// Build order items
+	var orderItems []repository.OrderItem
 	for _, item := range req.Items {
-		orderItem[item.ProductID] = item.Quantity
+		// Validation: subscription must have frequency
+		if item.PaymentMethod == "subscription" && item.Frequency == "" {
+			ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, "subscription items must include frequency")))
+			return
+		}
+
+		orderItem := repository.OrderItem{
+			ProductID:     item.ProductID,
+			Quantity:      item.Quantity,
+			Amount:        item.Amount,
+			PaymentMethod: item.PaymentMethod,
+			Frequency:     item.Frequency,
+		}
+
+		if item.StemID != nil {
+			orderItem.StemID = *item.StemID
+		}
+
+		orderItems = append(orderItems, orderItem)
 	}
 
-	newOrder, err := s.repo.OrderRepository.CreateOrder(ctx, order, []repository.OrderItem{})
+	newOrder, err := s.repo.OrderRepository.CreateOrder(ctx, order, orderItems)
 	if err != nil {
 		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
 		return

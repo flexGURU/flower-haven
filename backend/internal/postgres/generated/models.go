@@ -81,16 +81,17 @@ type ProductStem struct {
 }
 
 type Subscription struct {
-	ID          int64              `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	ProductIds  []int32            `json:"product_ids"`
-	AddOns      []int32            `json:"add_ons"`
-	Price       pgtype.Numeric     `json:"price"`
-	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
-	CreatedAt   time.Time          `json:"created_at"`
-	ByAdmin     bool               `json:"by_admin"`
-	StemIds     []int32            `json:"stem_ids"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	ProductIds    []int32            `json:"product_ids"`
+	AddOns        []int32            `json:"add_ons"`
+	Price         pgtype.Numeric     `json:"price"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt     time.Time          `json:"created_at"`
+	ByAdmin       bool               `json:"by_admin"`
+	StemIds       []int32            `json:"stem_ids"`
+	ParentOrderID pgtype.Int8        `json:"parent_order_id"`
 }
 
 type SubscriptionDelivery struct {
@@ -117,7 +118,7 @@ type User struct {
 
 type UserSubscription struct {
 	ID             int64              `json:"id"`
-	UserID         int64              `json:"user_id"`
+	UserID         pgtype.Int8        `json:"user_id"`
 	SubscriptionID int64              `json:"subscription_id"`
 	DayOfWeek      int16              `json:"day_of_week"`
 	Status         bool               `json:"status"`

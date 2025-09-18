@@ -32,7 +32,7 @@ type Querier interface {
 	GetCategoriesWithProductCount(ctx context.Context) ([]GetCategoriesWithProductCountRow, error)
 	GetCategoryByID(ctx context.Context, id int64) (Category, error)
 	GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error)
-	GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error)
+	GetCountUserSubscriptionsByUserID(ctx context.Context, userID pgtype.Int8) (int64, error)
 	GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderByFullDataIDRow, error)
 	GetOrderByID(ctx context.Context, id int64) (Order, error)
 	GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error)

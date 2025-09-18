@@ -104,7 +104,7 @@ func (s *Server) setUpRoutes() {
 	authRoute.DELETE("/subscription-deliveries/:id", s.deleteSubscriptionDeliveryHandler)
 
 	// Order routes
-	authRoute.POST("/orders", s.createOrderHandler)
+	v1.POST("/orders", s.createOrderHandler)
 	authRoute.GET("/orders/:id", s.getOrderHandler)
 	authRoute.GET("/orders", s.listOrdersHandler)
 	authRoute.PUT("/orders/:id", s.updateOrderHandler)

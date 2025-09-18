@@ -1,6 +1,6 @@
 -- name: CreateSubscription :one
-INSERT INTO subscriptions (name, description, product_ids, add_ons, price, stem_ids, by_admin)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+INSERT INTO subscriptions (name, description, product_ids, add_ons, price, stem_ids, by_admin, parent_order_id)
+VALUES (sqlc.arg('name'), sqlc.arg('description'), sqlc.arg('product_ids'), sqlc.arg('add_ons'), sqlc.arg('price'), sqlc.arg('stem_ids'), sqlc.arg('by_admin'), sqlc.narg('parent_order_id'))
 RETURNING id;
 
 -- name: SubscriptionExists :one

@@ -28,5 +28,6 @@ ALTER TABLE subscriptions ADD COLUMN stem_ids int[] NOT NULL DEFAULT '{}';
 ALTER TABLE subscriptions ADD COLUMN parent_order_id bigint NULL;
 ALTER TABLE subscriptions ADD CONSTRAINT "subscriptions_parent_order_id_fkey" FOREIGN KEY ("parent_order_id") REFERENCES "orders" ("id");
 
-
 ALTER TABLE user_subscriptions ADD COLUMN frequency VARCHAR(50) NOT NULL DEFAULT 'monthly' CHECK (frequency IN ('weekly', 'bi_weekly', 'monthly'));
+ALTER TABLE user_subscriptions DROP CONSTRAINT user_subscription_user_id_fkey;
+ALTER TABLE user_subscriptions ALTER COLUMN user_id DROP NOT NULL;

@@ -33,12 +33,12 @@ RETURNING id
 `
 
 type CreateUserSubscriptionParams struct {
-	UserID         int64     `json:"user_id"`
-	SubscriptionID int64     `json:"subscription_id"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	DayOfWeek      int16     `json:"day_of_week"`
-	Frequency      string    `json:"frequency"`
+	UserID         pgtype.Int8 `json:"user_id"`
+	SubscriptionID int64       `json:"subscription_id"`
+	StartDate      time.Time   `json:"start_date"`
+	EndDate        time.Time   `json:"end_date"`
+	DayOfWeek      int16       `json:"day_of_week"`
+	Frequency      string      `json:"frequency"`
 }
 
 func (q *Queries) CreateUserSubscription(ctx context.Context, arg CreateUserSubscriptionParams) (int64, error) {
@@ -72,7 +72,7 @@ FROM user_subscriptions
 WHERE deleted_at IS NULL AND user_id = $1
 `
 
-func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error) {
+func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID pgtype.Int8) (int64, error) {
 	row := q.db.QueryRow(ctx, getCountUserSubscriptionsByUserID, userID)
 	var total_user_subscriptions int64
 	err := row.Scan(&total_user_subscriptions)
@@ -123,7 +123,7 @@ WHERE us.id = $1
 
 type GetUserSubscriptionByIDRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
@@ -182,14 +182,14 @@ LIMIT $3 OFFSET $2
 `
 
 type GetUserSubscriptionsByUserIDParams struct {
-	UserID int64 `json:"user_id"`
-	Offset int32 `json:"offset"`
-	Limit  int32 `json:"limit"`
+	UserID pgtype.Int8 `json:"user_id"`
+	Offset int32       `json:"offset"`
+	Limit  int32       `json:"limit"`
 }
 
 type GetUserSubscriptionsByUserIDRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
@@ -301,7 +301,7 @@ type ListUserSubscriptionsParams struct {
 
 type ListUserSubscriptionsRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
