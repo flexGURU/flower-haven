@@ -18,6 +18,8 @@ type createOrderReq struct {
 	TimeSlot        string  `json:"time_slot" binding:"required"`
 	ShippingAddress *string `json:"shipping_address,omitempty"`
 	ByAdmin         bool    `json:"by_admin"`
+	Total           float64 `json:"total" binding:"required"`
+	Reference       string  `json:"reference" binding:"required"`
 
 	Items []struct {
 		ProductID     uint32  `json:"product_id" binding:"required"`
@@ -33,6 +35,16 @@ func (s *Server) createOrderHandler(ctx *gin.Context) {
 	var req createOrderReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, err.Error())))
+		return
+	}
+
+	paymentStatus, err := s.ps.VerifyPayment(req.Reference, int64(req.Total*100))
+	if err != nil {
+		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
+		return
+	}
+	if paymentStatus != "success" {
+		ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, "payment not successful")))
 		return
 	}
 

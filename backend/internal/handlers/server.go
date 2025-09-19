@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/flexGURU/flower-haven/backend/internal/paystack"
 	"github.com/flexGURU/flower-haven/backend/internal/postgres"
+	"github.com/flexGURU/flower-haven/backend/internal/services"
 	"github.com/flexGURU/flower-haven/backend/pkg"
 	"github.com/gin-gonic/gin"
 )
@@ -20,12 +22,15 @@ type Server struct {
 	config     pkg.Config
 	tokenMaker pkg.JWTMaker
 	repo       *postgres.PostgresRepo
+	ps         services.IPayStack
 }
 
 func NewServer(config pkg.Config, tokenMaker pkg.JWTMaker, repo *postgres.PostgresRepo) *Server {
 	if config.ENVIRONMENT == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
+	ps := paystack.NewPaystack(config.PAYSTACK_SECRET_KEY, config.PAYSTACK_CALLBACK_URL)
 
 	r := gin.Default()
 
@@ -36,6 +41,7 @@ func NewServer(config pkg.Config, tokenMaker pkg.JWTMaker, repo *postgres.Postgr
 		config:     config,
 		tokenMaker: tokenMaker,
 		repo:       repo,
+		ps:         ps,
 	}
 
 	s.setUpRoutes()
@@ -115,6 +121,13 @@ func (s *Server) setUpRoutes() {
 	authRoute.GET("/payments/:id", s.getPaymentHandler)
 	authRoute.PUT("/payments/:id", s.updatePaymentHandler)
 	authRoute.GET("/payments", s.listPaymentsHandler)
+
+	// Paystack routes
+	v1.POST("/paystack/webhook", s.handlePaystackWebhook)
+	v1.POST("/paystack/initialize", s.initializePaystackPayment)
+	v1.GET("/paystack/payments/:reference", s.getPaystackPayment)
+	authRoute.GET("/paystack/payments", s.listPaystackPayments)
+	authRoute.GET("/paystack/events", s.listPaystackEvents)
 
 	// helpers routes
 	authRoute.GET("/dashboard", s.getDashboardDataHandler)

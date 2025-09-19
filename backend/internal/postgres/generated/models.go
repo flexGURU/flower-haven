@@ -57,6 +57,23 @@ type Payment struct {
 	CreatedAt          time.Time      `json:"created_at"`
 }
 
+type PaystackEvent struct {
+	ID        int64     `json:"id"`
+	Event     string    `json:"event"`
+	Data      []byte    `json:"data"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type PaystackPayment struct {
+	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
+	Amount    string    `json:"amount"`
+	Reference string    `json:"reference"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Product struct {
 	ID            int64              `json:"id"`
 	Name          string             `json:"name"`

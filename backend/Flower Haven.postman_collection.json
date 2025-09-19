@@ -1374,7 +1374,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"user_name\": \"Charlie\",\n  \"user_phone_number\": \"555111222\",\n  \"payment_status\": false,\n  \"status\": \"active\",\n  \"delivery_date\": \"2025-09-22\",\n  \"time_slot\": \"evening\",\n  \"items\": [\n    {\n      \"product_id\": 38,\n      \"stem_id\": 2,\n      \"quantity\": 3,\n      \"amount\": 37.50,\n      \"payment_method\": \"subscription\",\n      \"frequency\": \"weekly\"\n    },\n    {\n      \"product_id\": 7,\n      \"quantity\": 1,\n      \"amount\": 20000,\n      \"payment_method\": \"subscription\",\n      \"frequency\": \"monthly\"\n    },\n    {\n      \"product_id\": 8,\n      \"quantity\": 3,\n      \"amount\": 2100,\n      \"payment_method\": \"one_time\",\n      \"frequency\": \"monthly\"\n    },\n    {\n      \"product_id\": 38,\n    //   \"stem_id\": 2,\n      \"quantity\": 1,\n      \"amount\": 12.50,\n      \"payment_method\": \"one_time\",\n      \"frequency\": \"weekly\"\n    }\n  ]\n}",
+							"raw": "{\n  \"user_name\": \"Charlie\",\n  \"user_phone_number\": \"555111222\",\n  \"payment_status\": false,\n  \"status\": \"active\",\n  \"delivery_date\": \"2025-09-22\",\n  \"time_slot\": \"evening\",\n  \"total\": 37.13,\n  \"reference\": \"6g2crrurgp\",\n  \"items\": [\n    {\n      \"product_id\": 38,\n      \"stem_id\": 2,\n      \"quantity\": 3,\n      \"amount\": 37.50,\n      \"payment_method\": \"subscription\",\n      \"frequency\": \"weekly\"\n    },\n    {\n      \"product_id\": 7,\n      \"quantity\": 1,\n      \"amount\": 20000,\n      \"payment_method\": \"subscription\",\n      \"frequency\": \"monthly\"\n    },\n    {\n      \"product_id\": 8,\n      \"quantity\": 3,\n      \"amount\": 2100,\n      \"payment_method\": \"one_time\",\n      \"frequency\": \"monthly\"\n    },\n    {\n      \"product_id\": 38,\n    //   \"stem_id\": 2,\n      \"quantity\": 1,\n      \"amount\": 12.50,\n      \"payment_method\": \"one_time\",\n      \"frequency\": \"weekly\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1751,6 +1751,137 @@
 							],
 							"path": [
 								"dashboard"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Paystack",
+			"item": [
+				{
+					"name": "Initalize Paystack",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"emiliocliff@gmail.com\",\n    \"amount\": 37.13\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/paystack/initialize",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"paystack",
+								"initialize"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Paystack Payment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/paystack/payments/:reference",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"paystack",
+								"payments",
+								":reference"
+							],
+							"variable": [
+								{
+									"key": "reference",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Paystack Payments",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/paystack/payments?limit=1&offset=1&status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"paystack",
+								"payments"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "1"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								},
+								{
+									"key": "status",
+									"value": null
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Paystack Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/paystack/events?limit=1&offset=1&event=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"paystack",
+								"events"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "1"
+								},
+								{
+									"key": "offset",
+									"value": "1"
+								},
+								{
+									"key": "event",
+									"value": "1"
+								}
 							]
 						}
 					},
