@@ -1,22 +1,18 @@
 <div class="product-form">
-  <!-- Form Header -->
   <div class="flex items-center justify-between mb-6">
     <div>
       <h2 class="text-2xl font-bold text-gray-800">
         {{isEditMode ? 'Edit Product' : 'Add New Product'}}
       </h2>
       <p class="text-gray-600 mt-1">
-        {{isEditMode ? 'Update product information' : 'Create a new product for
-        your catalog'}}
+        {{isEditMode ? 'Update product information' : 'Create a new product '}}
       </p>
     </div>
   </div>
 
   <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Main Product Info -->
       <div class="lg:col-span-2 space-y-6">
-        <!-- Basic Information -->
         <p-card>
           <ng-template pTemplate="header">
             <div class="p-4 border-b">
@@ -25,7 +21,6 @@
           </ng-template>
 
           <div class="space-y-4">
-            <!-- Product Name -->
             <div>
               <label class="block text-sm font-medium mb-2"
                 >Product Name *</label
@@ -46,7 +41,6 @@
               </small>
             </div>
 
-            <!-- Description -->
             <div>
               <label class="block text-sm font-medium mb-2"
                 >Description *</label
@@ -67,7 +61,6 @@
               </small>
             </div>
 
-            <!-- Price and Category -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium mb-2"
@@ -113,88 +106,117 @@
           </div>
         </p-card>
 
-        <!-- Product Image -->
         <div class="mt-4">
           <p-card>
             <ng-template pTemplate="header">
               <div class="p-4 border-b">
-                <h3 class="text-lg font-semibold">Product Image</h3>
+                <h3 class="text-lg font-semibold">Extra Options</h3>
               </div>
             </ng-template>
 
-            <div class="space-y-4 mt-2">
-              <!-- Current Image Preview -->
-              <div *ngIf="currentImageUrl" class="mb-4">
-                <label class="block text-sm font-medium mb-2"
-                  >Current Image</label
-                >
-                <div class="relative inline-block">
-                  <img
-                    [src]="currentImageUrl"
-                    alt="Current product image"
-                    class="w-32 h-32 object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                    (click)="removeCurrentImage()"
-                    pTooltip="Remove image"
-                  >
-                    ×
-                  </button>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+              <div>
+                <p-checkbox
+                  formControlName="is_message_card"
+                  [binary]="true"
+                  inputId="is_message_card"
+                />
+                <label class="ml-2 text-sm font-medium">Is Message Card</label>
               </div>
-
-              <!-- Image Upload -->
-              <div class="">
-                <label class="block text-sm font-medium mb-2"
-                  >Upload New Image</label
-                >
-                <p-fileUpload
-                  #fileUpload
-                  mode="basic"
-                  accept="image/*"
-                  [maxFileSize]="5000000"
-                  (onSelect)="onImageSelect($event)"
-                  chooseLabel="Choose Image"
-                  [auto]="false"
-                  class="w-full"
-                ></p-fileUpload>
-                <small class="text-gray-500 block mt-2">
-                  Upload a single image (max 5MB). Supported formats: JPG, PNG,
-                  GIF
-                </small>
+              <div>
+                <p-checkbox
+                  formControlName="is_add_on"
+                  [binary]="true"
+                  inputId="is_add_on"
+                />
+                <label class="ml-2 text-sm font-medium">Is Add-On</label>
               </div>
-
-              <!-- Preview Selected Image -->
-              @if(selectedImagePreview().length > 0) {
-              <div class="mt-4">
-                <label class="block text-sm font-medium mb-2">Preview</label>
-                <div class="relative inline-block">
-                  <img
-                    [src]="selectedImagePreview()"
-                    alt="Selected image preview"
-                    class="relative w-32 h-32 object-cover rounded-lg border"
-                  />
-                  <button
-                    type="button"
-                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                    (click)="removeImagePreview()"
-                    pTooltip="Remove image"
-                  >
-                    ×
-                  </button>
-                </div>
+              <div>
+                <p-checkbox
+                  formControlName="has_stems"
+                  [binary]="true"
+                  inputId="has_stems"
+                />
+                <label class="ml-2 text-sm font-medium">Has Stems</label>
               </div>
-              }
             </div>
           </p-card>
         </div>
+
+        @if(productForm.get('has_stems')?.value){
+        <div class="mt-4">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="text-lg font-semibold">Stems</h3>
+                <button
+                  pButton
+                  type="button"
+                  label="Add Row"
+                  icon="pi pi-plus"
+                  class="p-button-sm"
+                  (click)="addStemRow()"
+                ></button>
+              </div>
+            </ng-template>
+
+            <div class="mt-2">
+              <table class="w-full border rounded-lg">
+                <thead>
+                  <tr class="bg-gray-50">
+                    <th class="p-2 text-left text-sm font-medium">
+                      Stem Count
+                    </th>
+                    <th class="p-2 text-left text-sm font-medium">
+                      Price (KES)
+                    </th>
+                    <th class="p-2 text-center text-sm font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="stems">
+                  <tr
+                    *ngFor="let stem of stems.controls; let i = index"
+                    [formGroupName]="i"
+                    class="border-t"
+                  >
+                    <td class="p-2">
+                      <input
+                        type="number"
+                        pInputText
+                        formControlName="stem_count"
+                        class="w-full"
+                        placeholder="Count"
+                      />
+                    </td>
+                    <td class="p-2">
+                      <p-inputNumber
+                        formControlName="price"
+                        mode="decimal"
+                        [minFractionDigits]="2"
+                        [maxFractionDigits]="2"
+                        prefix="KES "
+                        class="w-full"
+                      ></p-inputNumber>
+                    </td>
+                    <td class="p-2 text-center">
+                      <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-danger p-button-sm"
+                        (click)="removeStemRow(i)"
+                      ></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </p-card>
+        </div>
+        }
       </div>
 
-      <!-- Sidebar -->
-      <div class="mb-2 space-y-6">
-        <!-- Stock Information -->
+      <div class="flex flex-col mb-2 space-y-3">
         <p-card>
           <ng-template pTemplate="header">
             <div class="p-4 border-b">
@@ -222,7 +244,6 @@
               </small>
             </div>
 
-            <!-- Stock Status Display -->
             <div class="p-3 bg-gray-50 rounded-lg">
               <div class="flex items-center justify-between">
                 <p-badge [severity]="getStockSeverity()"></p-badge>
@@ -231,55 +252,121 @@
           </div>
         </p-card>
 
-        <!-- Form Actions -->
-        <div class="space-y-3">
-          <button
-            pButton
-            type="submit"
-            [label]="isEditMode ? 'Update Product' : 'Create Product'"
-            icon="pi pi-check"
-            class="w-full p-button-lg mt-2"
-            [loading]="saving()"
-            [disabled]="productForm.invalid"
-          ></button>
+        <p-card class="mt-4">
+          <ng-template pTemplate="header">
+            <div class="p-4 border-b">
+              <h3 class="text-lg font-semibold">Product Image</h3>
+            </div>
+          </ng-template>
 
-          <button
-            pButton
-            type="button"
-            label="Cancel"
-            icon="pi pi-times"
-            class="w-full p-button-outlined"
-            (click)="onCancel()"
-          ></button>
-        </div>
+          <div class="space-y-4 mt-2">
+            <div *ngIf="currentImageUrl" class="mb-4">
+              <label class="block text-sm font-medium mb-2"
+                >Current Image</label
+              >
+              <div class="relative inline-block">
+                <img
+                  [src]="currentImageUrl"
+                  alt="Current product image"
+                  class="w-32 h-32 object-cover rounded-lg border"
+                />
+                <button
+                  type="button"
+                  class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                  (click)="removeCurrentImage()"
+                  pTooltip="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
 
-        <!-- Form Validation Summary -->
-        <div
-          *ngIf="productForm.invalid && productForm.touched"
-          class="p-3 bg-red-50 border border-red-200 rounded-lg"
-        >
-          <p class="text-sm text-red-600 font-medium mb-2">
-            Please fix the following errors:
-          </p>
-          <ul class="text-sm text-red-600 list-disc list-inside space-y-1">
-            <li *ngIf="productForm.get('name')?.invalid">
-              Product name is required
-            </li>
-            <li *ngIf="productForm.get('description')?.invalid">
-              Description is required
-            </li>
-            <li *ngIf="productForm.get('price')?.invalid">
-              Valid price is required
-            </li>
-            <li *ngIf="productForm.get('categoryId')?.invalid">
-              Category must be selected
-            </li>
-            <li *ngIf="productForm.get('stock')?.invalid">
-              Stock quantity is required
-            </li>
-          </ul>
-        </div>
+            <div class="">
+              <label class="block text-sm font-medium mb-2"
+                >Upload New Image</label
+              >
+              <p-fileUpload
+                #fileUpload
+                mode="basic"
+                accept="image/*"
+                [maxFileSize]="5000000"
+                (onSelect)="onImageSelect($event)"
+                chooseLabel="Choose Image"
+                [auto]="false"
+                class="w-full"
+              ></p-fileUpload>
+            </div>
+
+            @if(selectedImagePreview().length > 0) {
+            <div class="mt-4">
+              <label class="block text-sm font-medium mb-2">Preview</label>
+              <div class="relative inline-block">
+                <img
+                  [src]="selectedImagePreview()"
+                  alt="Selected image preview"
+                  class="relative w-32 h-32 object-cover rounded-lg border"
+                />
+                <button
+                  type="button"
+                  class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                  (click)="removeImagePreview()"
+                  pTooltip="Remove image"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            }
+          </div>
+        </p-card>
       </div>
+    </div>
+
+    <div class="mt-6 space-y-3">
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Update Product' : 'Create Product'"
+        icon="pi pi-check"
+        class="w-full p-button-lg"
+        [loading]="saving()"
+        [disabled]="productForm.invalid"
+      ></button>
+
+      <button
+        pButton
+        type="button"
+        label="Cancel"
+        icon="pi pi-times"
+        class="w-full p-button-outlined"
+        (click)="onCancel()"
+      ></button>
+    </div>
+
+    <div
+      *ngIf="productForm.invalid && productForm.touched"
+      class="p-3 bg-red-50 border border-red-200 rounded-lg mt-4"
+    >
+      <p class="text-sm text-red-600 font-medium mb-2">
+        Please fix the following errors:
+      </p>
+      <ul class="text-sm text-red-600 list-disc list-inside space-y-1">
+        <li *ngIf="productForm.get('name')?.invalid">
+          Product name is required
+        </li>
+        <li *ngIf="productForm.get('description')?.invalid">
+          Description is required
+        </li>
+        <li *ngIf="productForm.get('price')?.invalid">
+          Valid price is required
+        </li>
+        <li *ngIf="productForm.get('categoryId')?.invalid">
+          Category must be selected
+        </li>
+        <li *ngIf="productForm.get('stock')?.invalid">
+          Stock quantity is required
+        </li>
+      </ul>
     </div>
   </form>
 </div>

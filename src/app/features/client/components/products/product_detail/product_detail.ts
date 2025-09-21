@@ -97,7 +97,7 @@ export class ProductDetailComponent {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router, // Added router for navigation
+    private router: Router,
   ) {
     effect(() => {
       this.addMessageCardToCart();
@@ -201,14 +201,6 @@ export class ProductDetailComponent {
 
   toggleAddon(addon: any) {
     addon.selected = !addon.selected;
-  }
-
-  isFlowerProduct(): boolean {
-    if (this.product()?.category_data?.name === 'Flowers') {
-      return true;
-    } else {
-      return false;
-    }
   }
 
   addMessageCardToCart() {

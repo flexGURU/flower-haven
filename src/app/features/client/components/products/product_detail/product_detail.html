@@ -1,4 +1,4 @@
-<div class="py-8" *ngIf="product()">
+<div class="" *ngIf="product()">
   @if(loading()){
   <div class="card flex justify-center">
     <p-progress-spinner strokeWidth="6" fill="transparent" />
@@ -57,29 +57,32 @@
               <span>Out of stock</span>
             </div>
           </div>
-
-          <div *ngIf="isFlowerProduct()" class="stem-selection">
+          @if(product().has_stems){
+          <div class="stem-selection">
             <label class="block text-sm font-medium text-gray-700 mb-3"
-              >Size:</label
+              >Stems:</label
             >
             <div class="grid grid-cols-3 gap-2">
+              @for(stem of product().stems; track product().id +
+              stem.stem_count){
               <button
-                *ngFor="let size of stemSizes"
                 type="button"
                 class="p-2 text-sm border rounded-md transition-colors"
-                [class.border-pink-500]="selectedStemSize?.value === size.value"
-                [class.bg-pink-50]="selectedStemSize?.value === size.value"
-                [class.text-pink-700]="selectedStemSize?.value === size.value"
-                [class.border-gray-300]="selectedStemSize?.value !== size.value"
-                (click)="selectedStemSize = size"
+                [ngClass]="{
+                  'border-pink-500 bg-pink-50 text-pink-700': selectedStemSize?.stem_count === stem.stem_count,
+                  'border-gray-300': selectedStemSize?.stem_count !== stem.stem_count
+                }"
+                (click)="selectedStemSize = stem"
               >
-                {{size.label}}
-                <div *ngIf="size.price > 0" class="text-xs text-gray-500">
-                  +KES {{size.price}}
+                {{stem.stem_count}}
+                <div *ngIf="stem.price > 0" class="text-xs text-gray-500">
+                  +KES {{stem.price}}
                 </div>
               </button>
+              }
             </div>
           </div>
+          }
 
           <div class="message-card-section">
             <div class="flex items-center mb-3">
@@ -97,7 +100,8 @@
               </label>
             </div>
 
-            <div *ngIf="includeMessageCard()" class="space-y-4">
+            @if (includeMessageCard()) {
+            <div class="space-y-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2"
                   >Select Message Card:</label
@@ -128,6 +132,7 @@
                 </div>
               </div>
             </div>
+            }
           </div>
 
           <div class="purchase-type-section">
