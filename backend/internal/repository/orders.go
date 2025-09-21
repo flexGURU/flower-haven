@@ -14,6 +14,9 @@ type Order struct {
 	TotalAmount     float64     `json:"total_amount"`
 	PaymentStatus   bool        `json:"payment_status"`
 	Status          string      `json:"status"`
+	DeliveryDate    time.Time   `json:"delivery_date"`
+	TimeSlot        string      `json:"time_slot"`
+	ByAdmin         bool        `json:"by_admin"`
 	ShippingAddress *string     `json:"shipping_address,omitempty"`
 	DeletedAt       *time.Time  `json:"deleted_at,omitempty"`
 	CreatedAt       time.Time   `json:"created_at"`
@@ -40,6 +43,9 @@ type OrderItem struct {
 	ID                    uint32   `json:"id"`
 	OrderID               uint32   `json:"order_id"`
 	ProductID             uint32   `json:"product_id"`
+	StemID                uint32   `json:"stem_id,omitempty"`
+	PaymentMethod         string   `json:"payment_method"`
+	Frequency             string   `json:"frequency"`
 	Quantity              int32    `json:"quantity"`
 	Amount                float64  `json:"amount"`
 	OrderData             *Order   `json:"order_data,omitempty"`
@@ -47,7 +53,7 @@ type OrderItem struct {
 }
 
 type OrderRepository interface {
-	CreateOrder(ctx context.Context, order *Order, orderItem map[uint32]int32) (*Order, error)
+	CreateOrder(ctx context.Context, order *Order, orderItems []OrderItem) (*Order, error)
 	GetOrderByID(ctx context.Context, id int64) (*Order, error)
 	UpdateOrder(ctx context.Context, order *UpdateOrder) (*Order, error)
 	ListOrders(ctx context.Context, filter *OrderFilter) ([]*Order, *pkg.Pagination, error)

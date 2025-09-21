@@ -24,7 +24,7 @@ func NewUserSubscriptionRepository(queries *generated.Queries) *UserSubscription
 
 func (usr *UserSubscriptionRepository) CreateUserSubscription(ctx context.Context, subscription *repository.UserSubscription) (*repository.UserSubscription, error) {
 	params := generated.CreateUserSubscriptionParams{
-		UserID:         int64(subscription.UserID),
+		UserID:         pgtype.Int8{Valid: true, Int64: int64(subscription.UserID)},
 		SubscriptionID: int64(subscription.SubscriptionID),
 		DayOfWeek:      subscription.DayOfWeek,
 		StartDate:      subscription.StartDate,
@@ -77,7 +77,7 @@ func (usr *UserSubscriptionRepository) GetUserSubscriptionByID(ctx context.Conte
 
 func (usr *UserSubscriptionRepository) GetUsersSubscriptionsByUserID(ctx context.Context, userId int64, filter *repository.UserSubscriptionFilter) ([]*repository.UserSubscription, *pkg.Pagination, error) {
 	userSubscriptions, err := usr.queries.GetUserSubscriptionsByUserID(ctx, generated.GetUserSubscriptionsByUserIDParams{
-		UserID: userId,
+		UserID: pgtype.Int8{Valid: true, Int64: userId},
 		Limit:  int32(filter.Pagination.PageSize),
 		Offset: pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
 	})
@@ -85,7 +85,7 @@ func (usr *UserSubscriptionRepository) GetUsersSubscriptionsByUserID(ctx context
 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing user's subscriptions with id %d: %s", userId, err.Error())
 	}
 
-	totalCount, err := usr.queries.GetCountUserSubscriptionsByUserID(ctx, userId)
+	totalCount, err := usr.queries.GetCountUserSubscriptionsByUserID(ctx, pgtype.Int8{Valid: true, Int64: userId})
 	if err != nil {
 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error counting user's subscriptions with id %d: %s", userId, err.Error())
 	}
@@ -220,7 +220,7 @@ func (usr *UserSubscriptionRepository) DeleteUserSubscription(ctx context.Contex
 func generatedUserSubToRepoUserSub(genUserSub generated.UserSubscription, userData, subData, paymentData []byte) (*repository.UserSubscription, error) {
 	userSuscription := &repository.UserSubscription{
 		ID:               uint32(genUserSub.ID),
-		UserID:           uint32(genUserSub.UserID),
+		UserID:           0,
 		SubscriptionID:   uint32(genUserSub.SubscriptionID),
 		DayOfWeek:        genUserSub.DayOfWeek,
 		Status:           genUserSub.Status,
@@ -231,6 +231,10 @@ func generatedUserSubToRepoUserSub(genUserSub generated.UserSubscription, userDa
 		UserData:         nil,
 		SubscriptionData: nil,
 		PaymentData:      nil,
+	}
+
+	if genUserSub.UserID.Valid {
+		userSuscription.UserID = uint32(genUserSub.UserID.Int64)
 	}
 
 	if genUserSub.DeletedAt.Valid {

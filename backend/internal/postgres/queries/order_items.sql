@@ -1,6 +1,6 @@
 -- name: CreateOrderItem :one
-INSERT INTO order_items (order_id, product_id, quantity, amount)
-VALUES ($1, $2, $3, $4)
+INSERT INTO order_items (order_id, product_id, quantity, amount, payment_method, frequency, stem_id)
+VALUES (sqlc.arg('order_id'), sqlc.arg('product_id'), sqlc.arg('quantity'), sqlc.arg('amount'), sqlc.arg('payment_method'), sqlc.narg('frequency'), sqlc.narg('stem_id'))
 RETURNING id;
 
 -- name: GetOrderItemsByProductID :many

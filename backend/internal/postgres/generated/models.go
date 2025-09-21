@@ -30,14 +30,20 @@ type Order struct {
 	ShippingAddress pgtype.Text        `json:"shipping_address"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt       time.Time          `json:"created_at"`
+	DeliveryDate    time.Time          `json:"delivery_date"`
+	TimeSlot        string             `json:"time_slot"`
+	ByAdmin         bool               `json:"by_admin"`
 }
 
 type OrderItem struct {
-	ID        int64          `json:"id"`
-	OrderID   int64          `json:"order_id"`
-	ProductID int64          `json:"product_id"`
-	Quantity  int32          `json:"quantity"`
-	Amount    pgtype.Numeric `json:"amount"`
+	ID            int64          `json:"id"`
+	OrderID       int64          `json:"order_id"`
+	ProductID     int64          `json:"product_id"`
+	Quantity      int32          `json:"quantity"`
+	Amount        pgtype.Numeric `json:"amount"`
+	StemID        pgtype.Int8    `json:"stem_id"`
+	PaymentMethod string         `json:"payment_method"`
+	Frequency     pgtype.Text    `json:"frequency"`
 }
 
 type Payment struct {
@@ -51,6 +57,23 @@ type Payment struct {
 	CreatedAt          time.Time      `json:"created_at"`
 }
 
+type PaystackEvent struct {
+	ID        int64     `json:"id"`
+	Event     string    `json:"event"`
+	Data      []byte    `json:"data"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type PaystackPayment struct {
+	ID        int64     `json:"id"`
+	Email     string    `json:"email"`
+	Amount    string    `json:"amount"`
+	Reference string    `json:"reference"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Product struct {
 	ID            int64              `json:"id"`
 	Name          string             `json:"name"`
@@ -61,17 +84,31 @@ type Product struct {
 	StockQuantity int64              `json:"stock_quantity"`
 	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt     time.Time          `json:"created_at"`
+	HasStems      bool               `json:"has_stems"`
+	IsMessageCard bool               `json:"is_message_card"`
+	IsFlowers     bool               `json:"is_flowers"`
+	IsAddOn       bool               `json:"is_add_on"`
+}
+
+type ProductStem struct {
+	ID        int64          `json:"id"`
+	ProductID int64          `json:"product_id"`
+	StemCount int64          `json:"stem_count"`
+	Price     pgtype.Numeric `json:"price"`
 }
 
 type Subscription struct {
-	ID          int64              `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	ProductIds  []int32            `json:"product_ids"`
-	AddOns      []int32            `json:"add_ons"`
-	Price       pgtype.Numeric     `json:"price"`
-	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
-	CreatedAt   time.Time          `json:"created_at"`
+	ID            int64              `json:"id"`
+	Name          string             `json:"name"`
+	Description   string             `json:"description"`
+	ProductIds    []int32            `json:"product_ids"`
+	AddOns        []int32            `json:"add_ons"`
+	Price         pgtype.Numeric     `json:"price"`
+	DeletedAt     pgtype.Timestamptz `json:"deleted_at"`
+	CreatedAt     time.Time          `json:"created_at"`
+	ByAdmin       bool               `json:"by_admin"`
+	StemIds       []int32            `json:"stem_ids"`
+	ParentOrderID pgtype.Int8        `json:"parent_order_id"`
 }
 
 type SubscriptionDelivery struct {
@@ -98,7 +135,7 @@ type User struct {
 
 type UserSubscription struct {
 	ID             int64              `json:"id"`
-	UserID         int64              `json:"user_id"`
+	UserID         pgtype.Int8        `json:"user_id"`
 	SubscriptionID int64              `json:"subscription_id"`
 	DayOfWeek      int16              `json:"day_of_week"`
 	Status         bool               `json:"status"`
@@ -106,4 +143,5 @@ type UserSubscription struct {
 	EndDate        time.Time          `json:"end_date"`
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt      time.Time          `json:"created_at"`
+	Frequency      string             `json:"frequency"`
 }

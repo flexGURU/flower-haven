@@ -13,9 +13,9 @@ import (
 )
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO products (name, description, price, category_id, image_url, stock_quantity)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, name, description, price, category_id, image_url, stock_quantity, deleted_at, created_at
+INSERT INTO products (name, description, price, category_id, has_stems, is_message_card, is_add_on, is_flowers, image_url, stock_quantity)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, name, description, price, category_id, image_url, stock_quantity, deleted_at, created_at, has_stems, is_message_card, is_flowers, is_add_on
 `
 
 type CreateProductParams struct {
@@ -23,6 +23,10 @@ type CreateProductParams struct {
 	Description   string         `json:"description"`
 	Price         pgtype.Numeric `json:"price"`
 	CategoryID    int64          `json:"category_id"`
+	HasStems      bool           `json:"has_stems"`
+	IsMessageCard bool           `json:"is_message_card"`
+	IsAddOn       bool           `json:"is_add_on"`
+	IsFlowers     bool           `json:"is_flowers"`
 	ImageUrl      []string       `json:"image_url"`
 	StockQuantity int64          `json:"stock_quantity"`
 }
@@ -33,6 +37,10 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		arg.Description,
 		arg.Price,
 		arg.CategoryID,
+		arg.HasStems,
+		arg.IsMessageCard,
+		arg.IsAddOn,
+		arg.IsFlowers,
 		arg.ImageUrl,
 		arg.StockQuantity,
 	)
@@ -47,6 +55,10 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 		&i.StockQuantity,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.HasStems,
+		&i.IsMessageCard,
+		&i.IsFlowers,
+		&i.IsAddOn,
 	)
 	return i, err
 }
@@ -63,13 +75,14 @@ func (q *Queries) DeleteProduct(ctx context.Context, id int64) error {
 }
 
 const getProductByID = `-- name: GetProductByID :one
-SELECT p.id, p.name, p.description, p.price, p.category_id, p.image_url, p.stock_quantity, p.deleted_at, p.created_at, 
+SELECT p.id, p.name, p.description, p.price, p.category_id, p.image_url, p.stock_quantity, p.deleted_at, p.created_at, p.has_stems, p.is_message_card, p.is_flowers, p.is_add_on, 
        c.id AS category_id,
        c.name AS category_name, 
        c.description AS category_description
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
 WHERE p.id = $1
+GROUP BY p.id, c.id, c.name, c.description
 `
 
 type GetProductByIDRow struct {
@@ -82,6 +95,10 @@ type GetProductByIDRow struct {
 	StockQuantity       int64              `json:"stock_quantity"`
 	DeletedAt           pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt           time.Time          `json:"created_at"`
+	HasStems            bool               `json:"has_stems"`
+	IsMessageCard       bool               `json:"is_message_card"`
+	IsFlowers           bool               `json:"is_flowers"`
+	IsAddOn             bool               `json:"is_add_on"`
 	CategoryID_2        pgtype.Int8        `json:"category_id_2"`
 	CategoryName        pgtype.Text        `json:"category_name"`
 	CategoryDescription pgtype.Text        `json:"category_description"`
@@ -100,6 +117,10 @@ func (q *Queries) GetProductByID(ctx context.Context, id int64) (GetProductByIDR
 		&i.StockQuantity,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.HasStems,
+		&i.IsMessageCard,
+		&i.IsFlowers,
+		&i.IsAddOn,
 		&i.CategoryID_2,
 		&i.CategoryName,
 		&i.CategoryDescription,
@@ -108,26 +129,26 @@ func (q *Queries) GetProductByID(ctx context.Context, id int64) (GetProductByIDR
 }
 
 const listCountProducts = `-- name: ListCountProducts :one
-SELECT COUNT(*) AS total_products
-FROM products
+SELECT COUNT(DISTINCT p.id) AS total_products
+FROM products p
 WHERE 
-    deleted_at IS NULL
+    p.deleted_at IS NULL
     AND (
         COALESCE($1, '') = '' 
-        OR LOWER(name) LIKE $1
-        OR LOWER(description) LIKE $1
+        OR LOWER(p.name) LIKE $1
+        OR LOWER(p.description) LIKE $1
     )
     AND (
         $2::float IS NULL 
-        OR price >= $2
+        OR p.price >= $2
     )
     AND (
         $3::float IS NULL 
-        OR price <= $3
+        OR p.price <= $3
     )
     AND (
         $4::int[] IS NULL 
-        OR category_id = ANY($4::int[])
+        OR p.category_id = ANY($4::int[])
     )
 `
 
@@ -151,12 +172,26 @@ func (q *Queries) ListCountProducts(ctx context.Context, arg ListCountProductsPa
 }
 
 const listProducts = `-- name: ListProducts :many
-SELECT p.id, p.name, p.description, p.price, p.category_id, p.image_url, p.stock_quantity, p.deleted_at, p.created_at, 
-       c.id AS category_id,
-       c.name AS category_name, 
-       c.description AS category_description
+
+
+SELECT 
+    p.id, p.name, p.description, p.price, p.category_id, p.image_url, p.stock_quantity, p.deleted_at, p.created_at, p.has_stems, p.is_message_card, p.is_flowers, p.is_add_on,
+    c.id AS category_id,
+    c.name AS category_name, 
+    c.description AS category_description,
+    COALESCE(
+        json_agg(
+            jsonb_build_object(
+                'id', ps.id,
+                'product_id', ps.product_id,
+                'stem_count', ps.stem_count,
+                'price', ps.price
+            )
+        ) FILTER (WHERE ps.id IS NOT NULL), '[]'
+    ) AS stems
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN product_stems ps ON ps.product_id = p.id
 WHERE 
     p.deleted_at IS NULL
     AND (
@@ -176,6 +211,7 @@ WHERE
         $4::int[] IS NULL 
         OR p.category_id = ANY($4::int[])
     )
+GROUP BY p.id, c.id, c.name, c.description
 ORDER BY p.created_at DESC
 LIMIT $6 OFFSET $5
 `
@@ -199,11 +235,71 @@ type ListProductsRow struct {
 	StockQuantity       int64              `json:"stock_quantity"`
 	DeletedAt           pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt           time.Time          `json:"created_at"`
+	HasStems            bool               `json:"has_stems"`
+	IsMessageCard       bool               `json:"is_message_card"`
+	IsFlowers           bool               `json:"is_flowers"`
+	IsAddOn             bool               `json:"is_add_on"`
 	CategoryID_2        pgtype.Int8        `json:"category_id_2"`
 	CategoryName        pgtype.Text        `json:"category_name"`
 	CategoryDescription pgtype.Text        `json:"category_description"`
+	Stems               interface{}        `json:"stems"`
 }
 
+// -- name: ListProducts :many
+// SELECT p.*,
+//
+//	c.id AS category_id,
+//	c.name AS category_name,
+//	c.description AS category_description
+//
+// FROM products p
+// LEFT JOIN categories c ON p.category_id = c.id
+// WHERE
+//
+//	p.deleted_at IS NULL
+//	AND (
+//	    COALESCE(sqlc.narg('search'), '') = ''
+//	    OR LOWER(p.name) LIKE sqlc.narg('search')
+//	    OR LOWER(p.description) LIKE sqlc.narg('search')
+//	)
+//	AND (
+//	    sqlc.narg('price_from')::float IS NULL
+//	    OR p.price >= sqlc.narg('price_from')
+//	)
+//	AND (
+//	    sqlc.narg('price_to')::float IS NULL
+//	    OR p.price <= sqlc.narg('price_to')
+//	)
+//	AND (
+//	    sqlc.narg('category_ids')::int[] IS NULL
+//	    OR p.category_id = ANY(sqlc.narg('category_ids')::int[])
+//	)
+//
+// ORDER BY p.created_at DESC
+// LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+// -- name: ListCountProducts :one
+// SELECT COUNT(*) AS total_products
+// FROM products
+// WHERE
+//
+//	deleted_at IS NULL
+//	AND (
+//	    COALESCE(sqlc.narg('search'), '') = ''
+//	    OR LOWER(name) LIKE sqlc.narg('search')
+//	    OR LOWER(description) LIKE sqlc.narg('search')
+//	)
+//	AND (
+//	    sqlc.narg('price_from')::float IS NULL
+//	    OR price >= sqlc.narg('price_from')
+//	)
+//	AND (
+//	    sqlc.narg('price_to')::float IS NULL
+//	    OR price <= sqlc.narg('price_to')
+//	)
+//	AND (
+//	    sqlc.narg('category_ids')::int[] IS NULL
+//	    OR category_id = ANY(sqlc.narg('category_ids')::int[])
+//	);
 func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error) {
 	rows, err := q.db.Query(ctx, listProducts,
 		arg.Search,
@@ -230,9 +326,14 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 			&i.StockQuantity,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.HasStems,
+			&i.IsMessageCard,
+			&i.IsFlowers,
+			&i.IsAddOn,
 			&i.CategoryID_2,
 			&i.CategoryName,
 			&i.CategoryDescription,
+			&i.Stems,
 		); err != nil {
 			return nil, err
 		}
@@ -256,14 +357,14 @@ func (q *Queries) ProductExists(ctx context.Context, id int64) (bool, error) {
 }
 
 const totalProducts = `-- name: TotalProducts :one
-SELECT COUNT(*) AS total_products
+SELECT COALESCE(COUNT(*), 0) AS total_products
 FROM products
 WHERE deleted_at IS NULL
 `
 
-func (q *Queries) TotalProducts(ctx context.Context) (int64, error) {
+func (q *Queries) TotalProducts(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, totalProducts)
-	var total_products int64
+	var total_products interface{}
 	err := row.Scan(&total_products)
 	return total_products, err
 }
@@ -274,10 +375,14 @@ SET name = coalesce($1, name),
     description = coalesce($2, description),
     price = coalesce($3, price),
     category_id = coalesce($4, category_id),
-    image_url = coalesce($5, image_url),
-    stock_quantity = coalesce($6, stock_quantity)
-WHERE id = $7
-RETURNING id, name, description, price, category_id, image_url, stock_quantity, deleted_at, created_at
+    has_stems = coalesce($5, has_stems),
+    is_message_card = coalesce($6, is_message_card),
+    is_flowers = coalesce($7, is_flowers),
+    is_add_on = coalesce($8, is_add_on),
+    image_url = coalesce($9, image_url),
+    stock_quantity = coalesce($10, stock_quantity)
+WHERE id = $11
+RETURNING id, name, description, price, category_id, image_url, stock_quantity, deleted_at, created_at, has_stems, is_message_card, is_flowers, is_add_on
 `
 
 type UpdateProductParams struct {
@@ -285,6 +390,10 @@ type UpdateProductParams struct {
 	Description   pgtype.Text    `json:"description"`
 	Price         pgtype.Numeric `json:"price"`
 	CategoryID    pgtype.Int8    `json:"category_id"`
+	HasStems      pgtype.Bool    `json:"has_stems"`
+	IsMessageCard pgtype.Bool    `json:"is_message_card"`
+	IsFlowers     pgtype.Bool    `json:"is_flowers"`
+	IsAddOn       pgtype.Bool    `json:"is_add_on"`
 	ImageUrl      []string       `json:"image_url"`
 	StockQuantity pgtype.Int8    `json:"stock_quantity"`
 	ID            int64          `json:"id"`
@@ -296,6 +405,10 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		arg.Description,
 		arg.Price,
 		arg.CategoryID,
+		arg.HasStems,
+		arg.IsMessageCard,
+		arg.IsFlowers,
+		arg.IsAddOn,
 		arg.ImageUrl,
 		arg.StockQuantity,
 		arg.ID,
@@ -311,6 +424,10 @@ func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (P
 		&i.StockQuantity,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.HasStems,
+		&i.IsMessageCard,
+		&i.IsFlowers,
+		&i.IsAddOn,
 	)
 	return i, err
 }

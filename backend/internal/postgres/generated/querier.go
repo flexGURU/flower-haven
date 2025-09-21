@@ -11,12 +11,15 @@ import (
 )
 
 type Querier interface {
-	ActiveSubscriptions(ctx context.Context) (int64, error)
+	ActiveSubscriptions(ctx context.Context) (interface{}, error)
 	CreateCategory(ctx context.Context, arg CreateCategoryParams) (Category, error)
 	CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error)
 	CreateOrderItem(ctx context.Context, arg CreateOrderItemParams) (int64, error)
 	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
+	CreatePaystackEvent(ctx context.Context, arg CreatePaystackEventParams) error
+	CreatePaystackPayment(ctx context.Context, arg CreatePaystackPaymentParams) error
 	CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error)
+	CreateProductStem(ctx context.Context, arg CreateProductStemParams) (ProductStem, error)
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (int64, error)
 	CreateSubscriptionDelivery(ctx context.Context, arg CreateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -24,20 +27,24 @@ type Querier interface {
 	DeleteCategory(ctx context.Context, id int64) error
 	DeleteOrder(ctx context.Context, id int64) error
 	DeleteProduct(ctx context.Context, id int64) error
+	DeleteProductStemsByProductID(ctx context.Context, productID int64) error
 	DeleteSubscription(ctx context.Context, id int64) error
 	DeleteSubscriptionDelivery(ctx context.Context, id int64) error
 	DeleteUserSubscription(ctx context.Context, id int64) error
 	GetCategoriesWithProductCount(ctx context.Context) ([]GetCategoriesWithProductCountRow, error)
 	GetCategoryByID(ctx context.Context, id int64) (Category, error)
 	GetCountOrderItemsByProductID(ctx context.Context, productID int64) (int64, error)
-	GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error)
+	GetCountUserSubscriptionsByUserID(ctx context.Context, userID pgtype.Int8) (int64, error)
 	GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderByFullDataIDRow, error)
 	GetOrderByID(ctx context.Context, id int64) (Order, error)
 	GetOrderItemsByProductID(ctx context.Context, arg GetOrderItemsByProductIDParams) ([]GetOrderItemsByProductIDRow, error)
 	GetPaymentByID(ctx context.Context, id int64) (Payment, error)
 	GetPaymentsByOrderID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
 	GetPaymentsByUserSubscriptionID(ctx context.Context, orderID pgtype.Int8) (Payment, error)
+	GetPaystackPaymentByReference(ctx context.Context, reference string) (PaystackPayment, error)
 	GetProductByID(ctx context.Context, id int64) (GetProductByIDRow, error)
+	GetProductStemByID(ctx context.Context, id int64) (ProductStem, error)
+	GetProductStemsByProductID(ctx context.Context, productID int64) ([]ProductStem, error)
 	GetRecentOrders(ctx context.Context) ([]Order, error)
 	GetSubscriptionByID(ctx context.Context, id int64) (GetSubscriptionByIDRow, error)
 	GetSubscriptionDeliveryByUserSubscriptionID(ctx context.Context, userSubscriptionID int64) ([]SubscriptionDelivery, error)
@@ -49,11 +56,65 @@ type Querier interface {
 	ListCategoriesCount(ctx context.Context, search interface{}) (int64, error)
 	ListCountOrder(ctx context.Context, arg ListCountOrderParams) (int64, error)
 	ListCountPayments(ctx context.Context, arg ListCountPaymentsParams) (int64, error)
+	ListCountPaystackEvents(ctx context.Context, event pgtype.Text) (int64, error)
+	ListCountPaystackPayments(ctx context.Context, status pgtype.Text) (int64, error)
 	ListCountProducts(ctx context.Context, arg ListCountProductsParams) (int64, error)
 	ListCountSubscriptionDelivery(ctx context.Context) (int64, error)
 	ListCountUserSubscriptions(ctx context.Context, status pgtype.Bool) (int64, error)
 	ListOrder(ctx context.Context, arg ListOrderParams) ([]Order, error)
 	ListPayments(ctx context.Context, arg ListPaymentsParams) ([]Payment, error)
+	ListPaystackEvents(ctx context.Context, arg ListPaystackEventsParams) ([]PaystackEvent, error)
+	ListPaystackPayments(ctx context.Context, arg ListPaystackPaymentsParams) ([]PaystackPayment, error)
+	// -- name: ListProducts :many
+	// SELECT p.*,
+	//        c.id AS category_id,
+	//        c.name AS category_name,
+	//        c.description AS category_description
+	// FROM products p
+	// LEFT JOIN categories c ON p.category_id = c.id
+	// WHERE
+	//     p.deleted_at IS NULL
+	//     AND (
+	//         COALESCE(sqlc.narg('search'), '') = ''
+	//         OR LOWER(p.name) LIKE sqlc.narg('search')
+	//         OR LOWER(p.description) LIKE sqlc.narg('search')
+	//     )
+	//     AND (
+	//         sqlc.narg('price_from')::float IS NULL
+	//         OR p.price >= sqlc.narg('price_from')
+	//     )
+	//     AND (
+	//         sqlc.narg('price_to')::float IS NULL
+	//         OR p.price <= sqlc.narg('price_to')
+	//     )
+	//     AND (
+	//         sqlc.narg('category_ids')::int[] IS NULL
+	//         OR p.category_id = ANY(sqlc.narg('category_ids')::int[])
+	//     )
+	// ORDER BY p.created_at DESC
+	// LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+	// -- name: ListCountProducts :one
+	// SELECT COUNT(*) AS total_products
+	// FROM products
+	// WHERE
+	//     deleted_at IS NULL
+	//     AND (
+	//         COALESCE(sqlc.narg('search'), '') = ''
+	//         OR LOWER(name) LIKE sqlc.narg('search')
+	//         OR LOWER(description) LIKE sqlc.narg('search')
+	//     )
+	//     AND (
+	//         sqlc.narg('price_from')::float IS NULL
+	//         OR price >= sqlc.narg('price_from')
+	//     )
+	//     AND (
+	//         sqlc.narg('price_to')::float IS NULL
+	//         OR price <= sqlc.narg('price_to')
+	//     )
+	//     AND (
+	//         sqlc.narg('category_ids')::int[] IS NULL
+	//         OR category_id = ANY(sqlc.narg('category_ids')::int[])
+	//     );
 	ListProducts(ctx context.Context, arg ListProductsParams) ([]ListProductsRow, error)
 	ListSubscriptionDelivery(ctx context.Context, arg ListSubscriptionDeliveryParams) ([]SubscriptionDelivery, error)
 	ListSubscriptions(ctx context.Context, arg ListSubscriptionsParams) ([]ListSubscriptionsRow, error)
@@ -64,13 +125,15 @@ type Querier interface {
 	OrderExists(ctx context.Context, id int64) (bool, error)
 	ProductExists(ctx context.Context, id int64) (bool, error)
 	SubscriptionExists(ctx context.Context, id int64) (bool, error)
-	TotalOrders(ctx context.Context) (int64, error)
-	TotalProducts(ctx context.Context) (int64, error)
-	TotalRevenue(ctx context.Context) (int64, error)
+	TotalOrders(ctx context.Context) (interface{}, error)
+	TotalProducts(ctx context.Context) (interface{}, error)
+	TotalRevenue(ctx context.Context) (interface{}, error)
 	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
 	UpdateOrder(ctx context.Context, arg UpdateOrderParams) (int64, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (int64, error)
+	UpdatePaystackPaymentStatus(ctx context.Context, arg UpdatePaystackPaymentStatusParams) error
 	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdateProductStem(ctx context.Context, arg UpdateProductStemParams) (ProductStem, error)
 	UpdateSubscription(ctx context.Context, arg UpdateSubscriptionParams) (int64, error)
 	UpdateSubscriptionDelivery(ctx context.Context, arg UpdateSubscriptionDeliveryParams) (SubscriptionDelivery, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error)

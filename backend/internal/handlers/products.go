@@ -14,7 +14,14 @@ type createProductReq struct {
 	Price         float64  `json:"price" binding:"required"`
 	ImageUrl      []string `json:"image_url" binding:"required"`
 	CategoryId    uint32   `json:"category_id" binding:"required"`
+	HasStems      bool     `json:"has_stems"`
+	IsMessageCard bool     `json:"is_message_card"`
+	IsFlowers     bool     `json:"is_flowers"`
+	IsAddOn       bool     `json:"is_add_on"`
 	StockQuantity int64    `json:"stock_quantity" binding:"required"`
+
+	// extended fields
+	Stems []repository.ProductStem `json:"stems,omitempty"`
 }
 
 func (s *Server) createProductHandler(ctx *gin.Context) {
@@ -24,13 +31,27 @@ func (s *Server) createProductHandler(ctx *gin.Context) {
 		return
 	}
 
+	// if has stems make price to the first stem price
+	if req.HasStems && len(req.Stems) <= 0 {
+		ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, "product has stems but no stems provided")))
+		return
+	}
+	if req.HasStems {
+		req.Price = req.Stems[0].Price
+	}
+
 	product := &repository.Product{
 		Name:          req.Name,
 		Description:   req.Description,
 		Price:         req.Price,
 		ImageUrl:      req.ImageUrl,
+		HasStems:      req.HasStems,
+		IsMessageCard: req.IsMessageCard,
+		IsFlowers:     req.IsFlowers,
+		IsAddOn:       req.IsAddOn,
 		CategoryID:    req.CategoryId,
 		StockQuantity: req.StockQuantity,
+		Stems:         req.Stems,
 	}
 
 	newProduct, err := s.repo.ProductRepository.CreateProduct(ctx, product)

@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/flexGURU/flower-haven/backend/internal/postgres/generated"
 	"github.com/flexGURU/flower-haven/backend/internal/repository"
@@ -27,13 +29,17 @@ func NewOrderRepository(db *Store) *OrderRepository {
 	}
 }
 
-func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Order, orderItems map[uint32]int32) (*repository.Order, error) {
+func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Order, orderItems []repository.OrderItem) (*repository.Order, error) {
 	err := or.db.ExecTx(ctx, func(q *generated.Queries) error {
+		// create order details
 		createOrderParams := generated.CreateOrderParams{
 			UserName:        order.UserName,
 			UserPhoneNumber: order.UserPhoneNumber,
 			PaymentStatus:   order.PaymentStatus,
 			Status:          order.Status,
+			DeliveryDate:    order.DeliveryDate,
+			TimeSlot:        order.TimeSlot,
+			ByAdmin:         order.ByAdmin,
 			ShippingAddress: pgtype.Text{Valid: false},
 		}
 
@@ -45,52 +51,102 @@ func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Or
 		}
 
 		totalAmount := 0.0
-		orderItemParams := []generated.CreateOrderItemParams{}
-		orderItemResult := []repository.OrderItem{}
-		for productId, quantity := range orderItems {
-			product, err := q.GetProductByID(ctx, int64(productId))
+		clientSubscriptionParams := map[int]generated.CreateSubscriptionParams{}
+		clientUserSubscriptionParams := map[int]generated.CreateUserSubscriptionParams{}
+		orderItemParams := make([]generated.CreateOrderItemParams, len(orderItems))
+		for idx, item := range orderItems {
+			product, err := q.GetProductByID(ctx, int64(item.ProductID))
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
-					return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", productId)
+					return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", item.ProductID)
 				}
 				return pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching product by id: %s", err.Error())
 			}
 
-			if product.StockQuantity < int64(quantity) {
-				return pkg.Errorf(pkg.INVALID_ERROR, "product with id %d has stock_quantity of %d and trying to make an order of stock_quantity %d. Need to add stock first", productId, product.StockQuantity, quantity)
+			if item.StemID != 0 {
+				// check if stem exists
+				stem, err := q.GetProductStemByID(ctx, int64(item.StemID))
+				if err != nil {
+					if errors.Is(err, sql.ErrNoRows) {
+						return pkg.Errorf(pkg.NOT_FOUND_ERROR, "stem with ID %d not found", item.StemID)
+					}
+					return pkg.Errorf(pkg.INTERNAL_ERROR, "error fetching stem by id: %s", err.Error())
+				}
+				product.Price = stem.Price
 			}
 
-			amount := pkg.PgTypeNumericToFloat64(product.Price) * float64(quantity)
+			if product.StockQuantity < int64(item.Quantity) {
+				return pkg.Errorf(pkg.INVALID_ERROR, "product with id %d has stock_quantity of %d and trying to make an order of stock_quantity %d. Need to add stock first", item.ProductID, product.StockQuantity, item.Quantity)
+			}
+
+			amount := pkg.PgTypeNumericToFloat64(product.Price) * float64(item.Quantity)
 			totalAmount += amount
-			orderItemParams = append(orderItemParams, generated.CreateOrderItemParams{
-				ProductID: int64(productId),
-				Quantity:  quantity,
-				Amount:    pkg.Float64ToPgTypeNumeric(amount),
-			})
+
+			if amount != item.Amount {
+				return pkg.Errorf(pkg.INVALID_ERROR, "product with id %d has price of %.2f and trying to make an order with amount %.2f. Amount should be %.2f", item.ProductID, pkg.PgTypeNumericToFloat64(product.Price), item.Amount, amount)
+			}
 
 			_, err = q.UpdateProduct(ctx, generated.UpdateProductParams{
-				ID: int64(productId),
+				ID: int64(item.ProductID),
 				StockQuantity: pgtype.Int8{
 					Valid: true,
-					Int64: product.StockQuantity - int64(quantity),
+					Int64: product.StockQuantity - int64(item.Quantity),
 				},
 			})
 			if err != nil {
-				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update product with id %d quantity: %s", productId, err.Error())
+				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to update product with id %d quantity: %s", item.Quantity, err.Error())
 			}
 
-			orderItemResult = append(orderItemResult, repository.OrderItem{
-				ProductID: productId,
-				Quantity:  quantity,
-				Amount:    amount,
-				CurrentProductDetails: &repository.Product{
-					ID:       uint32(product.ID),
-					Name:     product.Description,
-					Price:    pkg.PgTypeNumericToFloat64(product.Price),
-					ImageUrl: product.ImageUrl,
-				},
-				OrderData: nil,
-			})
+			if item.PaymentMethod == "subscription" {
+				// create subscription params by_admin to false
+				createSubParams := generated.CreateSubscriptionParams{
+					Name:        order.UserName,
+					Description: fmt.Sprintf("Subscription made by %s for product %s of quantity %d on %s", order.UserName, product.Name, item.Quantity, time.Now().Format("2006-01-02 15:04:05")),
+					ProductIds:  []int32{int32(item.ProductID)},
+					AddOns:      []int32{},
+					Price:       pkg.Float64ToPgTypeNumeric(amount),
+					StemIds:     []int32{int32(item.StemID)},
+					ByAdmin:     false,
+				}
+				clientSubscriptionParams[idx] = createSubParams
+
+				// create user_subscription params with frequency and day_of_week
+				createUserSubParams := generated.CreateUserSubscriptionParams{
+					UserID:    pgtype.Int8{Valid: false},
+					StartDate: time.Now(),
+					EndDate:   time.Now().AddDate(0, 3, 0), // default to 3 months
+					DayOfWeek: int16(order.DeliveryDate.Weekday()),
+					Frequency: item.Frequency,
+				}
+				clientUserSubscriptionParams[idx] = createUserSubParams
+
+				// add the orderItem params To CreateOrderItemParams
+				createOrerItemParam := generated.CreateOrderItemParams{
+					ProductID:     int64(item.ProductID),
+					Quantity:      item.Quantity,
+					Amount:        pkg.Float64ToPgTypeNumeric(amount),
+					PaymentMethod: item.PaymentMethod,
+					Frequency:     pgtype.Text{Valid: true, String: item.Frequency},
+					StemID:        pgtype.Int8{Valid: false},
+				}
+				if item.StemID != 0 {
+					createOrerItemParam.StemID = pgtype.Int8{Valid: true, Int64: int64(item.StemID)}
+				}
+				orderItemParams[idx] = createOrerItemParam
+			} else {
+				createOrerItemParam := generated.CreateOrderItemParams{
+					ProductID:     int64(item.ProductID),
+					Quantity:      item.Quantity,
+					Amount:        pkg.Float64ToPgTypeNumeric(amount),
+					PaymentMethod: item.PaymentMethod,
+					Frequency:     pgtype.Text{Valid: false},
+					StemID:        pgtype.Int8{Valid: false},
+				}
+				if item.StemID != 0 {
+					createOrerItemParam.StemID = pgtype.Int8{Valid: true, Int64: int64(item.StemID)}
+				}
+				orderItemParams[idx] = createOrerItemParam
+			}
 		}
 
 		createOrderParams.TotalAmount = pkg.Float64ToPgTypeNumeric(totalAmount)
@@ -99,22 +155,43 @@ func (or *OrderRepository) CreateOrder(ctx context.Context, order *repository.Or
 			return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order: %s", err.Error())
 		}
 
-		for idx, param := range orderItemParams {
+		// create subscriptions with orderId as parent id
+		subScriptionIds := map[int]int64{}
+		for idx, subParams := range clientSubscriptionParams {
+			subParams.ParentOrderID = pgtype.Int8{Valid: true, Int64: orderId}
+			subscriptionId, err := q.CreateSubscription(ctx, subParams)
+			if err != nil {
+				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create subscription: %s", err.Error())
+			}
+			subScriptionIds[idx] = subscriptionId
+		}
+
+		// create user subsctiprions
+		for idx, userSubParams := range clientUserSubscriptionParams {
+			userSubParams.SubscriptionID = subScriptionIds[idx]
+			_, err := q.CreateUserSubscription(ctx, userSubParams)
+			if err != nil {
+				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create user subscription: %s", err.Error())
+			}
+		}
+
+		// create order items
+		for _, param := range orderItemParams {
 			param.OrderID = orderId
-			orderItemResult[idx].OrderID = uint32(orderId)
 			if _, err := q.CreateOrderItem(ctx, param); err != nil {
 				return pkg.Errorf(pkg.INTERNAL_ERROR, "failed to create order item: %s", err.Error())
 			}
 		}
 
 		order.ID = uint32(orderId)
-		order.TotalAmount = totalAmount
-		order.OrderItemsData = orderItemResult
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return order, err
+	return or.GetOrderByID(ctx, int64(order.ID))
 }
 
 func (or *OrderRepository) GetOrderByID(ctx context.Context, id int64) (*repository.Order, error) {

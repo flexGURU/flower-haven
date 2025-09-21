@@ -13,31 +13,32 @@ import (
 )
 
 const activeSubscriptions = `-- name: ActiveSubscriptions :one
-SELECT COUNT(*) AS active_subscriptions
+SELECT COALESCE(COUNT(*), 0) AS active_subscriptions
 FROM user_subscriptions
 WHERE status = true
   AND deleted_at IS NULL
 `
 
-func (q *Queries) ActiveSubscriptions(ctx context.Context) (int64, error) {
+func (q *Queries) ActiveSubscriptions(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, activeSubscriptions)
-	var active_subscriptions int64
+	var active_subscriptions interface{}
 	err := row.Scan(&active_subscriptions)
 	return active_subscriptions, err
 }
 
 const createUserSubscription = `-- name: CreateUserSubscription :one
-INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week, frequency)
+VALUES ($1, $2, $3, $4, $5, $6)
 RETURNING id
 `
 
 type CreateUserSubscriptionParams struct {
-	UserID         int64     `json:"user_id"`
-	SubscriptionID int64     `json:"subscription_id"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	DayOfWeek      int16     `json:"day_of_week"`
+	UserID         pgtype.Int8 `json:"user_id"`
+	SubscriptionID int64       `json:"subscription_id"`
+	StartDate      time.Time   `json:"start_date"`
+	EndDate        time.Time   `json:"end_date"`
+	DayOfWeek      int16       `json:"day_of_week"`
+	Frequency      string      `json:"frequency"`
 }
 
 func (q *Queries) CreateUserSubscription(ctx context.Context, arg CreateUserSubscriptionParams) (int64, error) {
@@ -47,6 +48,7 @@ func (q *Queries) CreateUserSubscription(ctx context.Context, arg CreateUserSubs
 		arg.StartDate,
 		arg.EndDate,
 		arg.DayOfWeek,
+		arg.Frequency,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -70,7 +72,7 @@ FROM user_subscriptions
 WHERE deleted_at IS NULL AND user_id = $1
 `
 
-func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID int64) (int64, error) {
+func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID pgtype.Int8) (int64, error) {
 	row := q.db.QueryRow(ctx, getCountUserSubscriptionsByUserID, userID)
 	var total_user_subscriptions int64
 	err := row.Scan(&total_user_subscriptions)
@@ -79,7 +81,7 @@ func (q *Queries) GetCountUserSubscriptionsByUserID(ctx context.Context, userID 
 
 const getUserSubscriptionByID = `-- name: GetUserSubscriptionByID :one
 SELECT 
-    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
+    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at, us.frequency,
     COALESCE(p1.user_json, '{}') AS user_data,
     COALESCE(p2.subscription_json, '{}') AS subscription_data,
     COALESCE(p3.payment_json, '[]') AS payment_data
@@ -121,7 +123,7 @@ WHERE us.id = $1
 
 type GetUserSubscriptionByIDRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
@@ -129,6 +131,7 @@ type GetUserSubscriptionByIDRow struct {
 	EndDate          time.Time          `json:"end_date"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt        time.Time          `json:"created_at"`
+	Frequency        string             `json:"frequency"`
 	UserData         []byte             `json:"user_data"`
 	SubscriptionData []byte             `json:"subscription_data"`
 	PaymentData      []byte             `json:"payment_data"`
@@ -147,6 +150,7 @@ func (q *Queries) GetUserSubscriptionByID(ctx context.Context, id int64) (GetUse
 		&i.EndDate,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.Frequency,
 		&i.UserData,
 		&i.SubscriptionData,
 		&i.PaymentData,
@@ -156,7 +160,7 @@ func (q *Queries) GetUserSubscriptionByID(ctx context.Context, id int64) (GetUse
 
 const getUserSubscriptionsByUserID = `-- name: GetUserSubscriptionsByUserID :many
 SELECT 
-    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
+    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at, us.frequency,
     COALESCE(p1.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
 LEFT JOIN LATERAL (
@@ -178,14 +182,14 @@ LIMIT $3 OFFSET $2
 `
 
 type GetUserSubscriptionsByUserIDParams struct {
-	UserID int64 `json:"user_id"`
-	Offset int32 `json:"offset"`
-	Limit  int32 `json:"limit"`
+	UserID pgtype.Int8 `json:"user_id"`
+	Offset int32       `json:"offset"`
+	Limit  int32       `json:"limit"`
 }
 
 type GetUserSubscriptionsByUserIDRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
@@ -193,6 +197,7 @@ type GetUserSubscriptionsByUserIDRow struct {
 	EndDate          time.Time          `json:"end_date"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt        time.Time          `json:"created_at"`
+	Frequency        string             `json:"frequency"`
 	SubscriptionData []byte             `json:"subscription_data"`
 }
 
@@ -215,6 +220,7 @@ func (q *Queries) GetUserSubscriptionsByUserID(ctx context.Context, arg GetUserS
 			&i.EndDate,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.Frequency,
 			&i.SubscriptionData,
 		); err != nil {
 			return nil, err
@@ -247,7 +253,7 @@ func (q *Queries) ListCountUserSubscriptions(ctx context.Context, status pgtype.
 
 const listUserSubscriptions = `-- name: ListUserSubscriptions :many
 SELECT 
-    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at,
+    us.id, us.user_id, us.subscription_id, us.day_of_week, us.status, us.start_date, us.end_date, us.deleted_at, us.created_at, us.frequency,
     COALESCE(p1.user_json, '{}') AS user_data,
     COALESCE(p2.subscription_json, '{}') AS subscription_data
 FROM user_subscriptions us
@@ -295,7 +301,7 @@ type ListUserSubscriptionsParams struct {
 
 type ListUserSubscriptionsRow struct {
 	ID               int64              `json:"id"`
-	UserID           int64              `json:"user_id"`
+	UserID           pgtype.Int8        `json:"user_id"`
 	SubscriptionID   int64              `json:"subscription_id"`
 	DayOfWeek        int16              `json:"day_of_week"`
 	Status           bool               `json:"status"`
@@ -303,6 +309,7 @@ type ListUserSubscriptionsRow struct {
 	EndDate          time.Time          `json:"end_date"`
 	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt        time.Time          `json:"created_at"`
+	Frequency        string             `json:"frequency"`
 	UserData         []byte             `json:"user_data"`
 	SubscriptionData []byte             `json:"subscription_data"`
 }
@@ -326,6 +333,7 @@ func (q *Queries) ListUserSubscriptions(ctx context.Context, arg ListUserSubscri
 			&i.EndDate,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.Frequency,
 			&i.UserData,
 			&i.SubscriptionData,
 		); err != nil {

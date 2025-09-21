@@ -23,6 +23,7 @@ type PostgresRepo struct {
 	ProductRepository              *ProductRepository
 	OrderRepository                *OrderRepository
 	PaymentRepository              *PaymentRepository
+	PaystackRepository             *PaystackRepository
 }
 
 func NewPostgresRepo(store *Store) *PostgresRepo {
@@ -32,9 +33,10 @@ func NewPostgresRepo(store *Store) *PostgresRepo {
 		SubscriptionDeliveryRepository: NewSubscriptionDeliveryRepository(generated.New(store.pool)),
 		UserSubscriptionRepository:     NewUserSubscriptionRepository(generated.New(store.pool)),
 		CategoryRepository:             NewCategoryRepository(generated.New(store.pool)),
-		ProductRepository:              NewProductRepository(generated.New(store.pool)),
+		ProductRepository:              NewProductRepository(store),
 		OrderRepository:                NewOrderRepository(store),
 		PaymentRepository:              NewPaymentRepository(generated.New(store.pool)),
+		PaystackRepository:             NewPaystackRepository(generated.New(store.pool)),
 	}
 }
 

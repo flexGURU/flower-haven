@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"strings"
 
@@ -16,33 +17,61 @@ var _ repository.ProductRepository = (*ProductRepository)(nil)
 
 type ProductRepository struct {
 	queries *generated.Queries
+	db      *Store
 }
 
-func NewProductRepository(queries *generated.Queries) *ProductRepository {
-	return &ProductRepository{queries: queries}
+func NewProductRepository(db *Store) *ProductRepository {
+	return &ProductRepository{
+		db:      db,
+		queries: generated.New(db.pool),
+	}
 }
 
 func (pr *ProductRepository) CreateProduct(ctx context.Context, product *repository.Product) (*repository.Product, error) {
-	generatedProduct, err := pr.queries.CreateProduct(ctx, generated.CreateProductParams{
-		Name:          product.Name,
-		Description:   product.Description,
-		Price:         pkg.Float64ToPgTypeNumeric(product.Price),
-		CategoryID:    int64(product.CategoryID),
-		ImageUrl:      product.ImageUrl,
-		StockQuantity: product.StockQuantity,
-	})
-	if err != nil {
-		if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
-			return nil, pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+	err := pr.db.ExecTx(ctx, func(q *generated.Queries) error {
+		generatedProduct, err := q.CreateProduct(ctx, generated.CreateProductParams{
+			Name:          product.Name,
+			Description:   product.Description,
+			Price:         pkg.Float64ToPgTypeNumeric(product.Price),
+			CategoryID:    int64(product.CategoryID),
+			HasStems:      product.HasStems,
+			IsMessageCard: product.IsMessageCard,
+			IsFlowers:     product.IsFlowers,
+			IsAddOn:       product.IsAddOn,
+			ImageUrl:      product.ImageUrl,
+			StockQuantity: product.StockQuantity,
+		})
+		if err != nil {
+			if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+				return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+			}
+			return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product: %s", err.Error())
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product: %s", err.Error())
-	}
 
-	product.ID = uint32(generatedProduct.ID)
-	product.CreatedAt = generatedProduct.CreatedAt
-	product.CategoryData = nil
+		product.ID = uint32(generatedProduct.ID)
+		product.CreatedAt = generatedProduct.CreatedAt
+		product.CategoryData = nil
 
-	return product, nil
+		if product.HasStems {
+			for _, stem := range product.Stems {
+				_, err := q.CreateProductStem(ctx, generated.CreateProductStemParams{
+					ProductID: int64(product.ID),
+					StemCount: int64(stem.StemCount),
+					Price:     pkg.Float64ToPgTypeNumeric(stem.Price),
+				})
+				if err != nil {
+					if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+						return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+					}
+					return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product stem: %s", err.Error())
+				}
+			}
+		}
+
+		return nil
+	})
+
+	return product, err
 }
 
 func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*repository.Product, error) {
@@ -61,6 +90,10 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*rep
 		Price:         pkg.PgTypeNumericToFloat64(generatedProduct.Price),
 		CategoryID:    uint32(generatedProduct.CategoryID),
 		ImageUrl:      generatedProduct.ImageUrl,
+		HasStems:      generatedProduct.HasStems,
+		IsMessageCard: generatedProduct.IsMessageCard,
+		IsFlowers:     generatedProduct.IsFlowers,
+		IsAddOn:       generatedProduct.IsAddOn,
 		StockQuantity: generatedProduct.StockQuantity,
 		DeletedAt:     nil,
 		CreatedAt:     generatedProduct.CreatedAt,
@@ -79,6 +112,26 @@ func (pr *ProductRepository) GetProductByID(ctx context.Context, id int64) (*rep
 		}
 	}
 
+	if product.HasStems {
+		var stems []repository.ProductStem
+		productStems, err := pr.queries.GetProductStemsByProductID(ctx, int64(product.ID))
+		if err != nil {
+			if !errors.Is(err, sql.ErrNoRows) {
+				return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error getting product stems: %s", err.Error())
+			}
+		}
+
+		for _, stem := range productStems {
+			stems = append(stems, repository.ProductStem{
+				ID:        uint32(stem.ID),
+				ProductID: uint32(stem.ProductID),
+				StemCount: uint32(stem.StemCount),
+				Price:     pkg.PgTypeNumericToFloat64(stem.Price),
+			})
+		}
+		product.Stems = stems
+	}
+
 	return product, nil
 }
 
@@ -89,6 +142,10 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 		Description:   pgtype.Text{Valid: false},
 		Price:         pgtype.Numeric{Valid: false},
 		CategoryID:    pgtype.Int8{Valid: false},
+		HasStems:      pgtype.Bool{Valid: false},
+		IsMessageCard: pgtype.Bool{Valid: false},
+		IsFlowers:     pgtype.Bool{Valid: false},
+		IsAddOn:       pgtype.Bool{Valid: false},
 		ImageUrl:      nil,
 		StockQuantity: pgtype.Int8{Valid: false},
 	}
@@ -120,29 +177,154 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 	if product.StockQuantity != nil {
 		params.StockQuantity = pgtype.Int8{Int64: int64(*product.StockQuantity), Valid: true}
 	}
+	if product.HasStems != nil {
+		params.HasStems = pgtype.Bool{Bool: *product.HasStems, Valid: true}
+	}
+	if product.IsMessageCard != nil {
+		params.IsMessageCard = pgtype.Bool{Bool: *product.IsMessageCard, Valid: true}
+	}
+	if product.IsFlowers != nil {
+		params.IsFlowers = pgtype.Bool{Bool: *product.IsFlowers, Valid: true}
+	}
+	if product.IsAddOn != nil {
+		params.IsAddOn = pgtype.Bool{Bool: *product.IsAddOn, Valid: true}
+	}
 
-	generatedProduct, err := pr.queries.UpdateProduct(ctx, params)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", product.ID)
+	err := pr.db.ExecTx(ctx, func(q *generated.Queries) error {
+		if product.Stems != nil {
+			// delete all existing stems and recreate them
+			if err := q.DeleteProductStemsByProductID(ctx, int64(product.ID)); err != nil {
+				return pkg.Errorf(pkg.INTERNAL_ERROR, "error deleting existing product stems: %s", err.Error())
+			}
+
+			for _, stem := range product.Stems {
+				stemProductId := product.ID
+				_, err := q.CreateProductStem(ctx, generated.CreateProductStemParams{
+					ProductID: int64(stemProductId),
+					StemCount: int64(*stem.StemCount),
+					Price:     pkg.Float64ToPgTypeNumeric(*stem.Price),
+				})
+				if err != nil {
+					if pkg.PgxErrorCode(err) == pkg.UNIQUE_VIOLATION {
+						return pkg.Errorf(pkg.ALREADY_EXISTS_ERROR, "%s", err.Error())
+					}
+					return pkg.Errorf(pkg.INTERNAL_ERROR, "error creating product stem: %s", err.Error())
+				}
+			}
 		}
-		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error updating product: %s", err.Error())
+
+		_, err := pr.queries.UpdateProduct(ctx, params)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return pkg.Errorf(pkg.NOT_FOUND_ERROR, "product with ID %d not found", product.ID)
+			}
+			return pkg.Errorf(pkg.INTERNAL_ERROR, "error updating product: %s", err.Error())
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
-	productData := &repository.Product{
-		ID:            uint32(generatedProduct.ID),
-		Name:          generatedProduct.Name,
-		Description:   generatedProduct.Description,
-		CategoryID:    uint32(generatedProduct.CategoryID),
-		Price:         pkg.PgTypeNumericToFloat64(generatedProduct.Price),
-		ImageUrl:      generatedProduct.ImageUrl,
-		StockQuantity: generatedProduct.StockQuantity,
-		CreatedAt:     generatedProduct.CreatedAt,
-		DeletedAt:     nil,
-	}
-
-	return productData, nil
+	return pr.GetProductByID(ctx, int64(product.ID))
 }
+
+// func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {
+// 	paramsListProducts := generated.ListProductsParams{
+// 		Limit:       int32(filter.Pagination.PageSize),
+// 		Offset:      pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
+// 		Search:      pgtype.Text{Valid: false},
+// 		PriceFrom:   pgtype.Float8{Valid: false},
+// 		PriceTo:     pgtype.Float8{Valid: false},
+// 		CategoryIds: nil,
+// 	}
+
+// 	paramsCountProducts := generated.ListCountProductsParams{
+// 		Search:      pgtype.Text{Valid: false},
+// 		PriceFrom:   pgtype.Float8{Valid: false},
+// 		PriceTo:     pgtype.Float8{Valid: false},
+// 		CategoryIds: nil,
+// 	}
+
+// 	if filter.Search != nil {
+// 		search := strings.ToLower(*filter.Search)
+// 		paramsListProducts.Search = pgtype.Text{
+// 			Valid:  true,
+// 			String: "%" + search + "%",
+// 		}
+// 		paramsCountProducts.Search = pgtype.Text{
+// 			Valid:  true,
+// 			String: "%" + search + "%",
+// 		}
+// 	}
+
+// 	if filter.PriceFrom != nil && filter.PriceTo != nil {
+// 		paramsListProducts.PriceFrom = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceFrom,
+// 		}
+// 		paramsListProducts.PriceTo = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceTo,
+// 		}
+
+// 		paramsCountProducts.PriceFrom = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceFrom,
+// 		}
+// 		paramsCountProducts.PriceTo = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceTo,
+// 		}
+// 	}
+
+// 	if filter.CategoryIDs != nil {
+// 		paramsListProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+// 		paramsCountProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+// 		for _, id := range *filter.CategoryIDs {
+// 			paramsListProducts.CategoryIds = append(paramsListProducts.CategoryIds, int32(id))
+// 			paramsCountProducts.CategoryIds = append(paramsCountProducts.CategoryIds, int32(id))
+// 		}
+// 	}
+
+// 	generatedProducts, err := pr.queries.ListProducts(ctx, paramsListProducts)
+// 	if err != nil {
+// 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing products: %s", err.Error())
+// 	}
+
+// 	totalCount, err := pr.queries.ListCountProducts(ctx, paramsCountProducts)
+// 	if err != nil {
+// 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error counting products: %s", err.Error())
+// 	}
+
+// 	products := make([]*repository.Product, len(generatedProducts))
+// 	for i, p := range generatedProducts {
+// 		products[i] = &repository.Product{
+// 			ID:            uint32(p.ID),
+// 			Name:          p.Name,
+// 			Description:   p.Description,
+// 			Price:         pkg.PgTypeNumericToFloat64(p.Price),
+// 			CategoryID:    uint32(p.CategoryID),
+// 			ImageUrl:      p.ImageUrl,
+// 			StockQuantity: p.StockQuantity,
+// 			DeletedAt:     nil,
+// 			CreatedAt:     p.CreatedAt,
+// 			CategoryData:  nil,
+// 		}
+
+// 		if p.CategoryID_2.Valid {
+// 			products[i].CategoryData = &repository.Category{
+// 				ID:          uint32(p.CategoryID_2.Int64),
+// 				Name:        p.CategoryName.String,
+// 				Description: p.CategoryDescription.String,
+// 			}
+// 		}
+// 	}
+
+// 	return products, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil
+// }
 
 func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {
 	paramsListProducts := generated.ListProductsParams{
@@ -174,28 +356,15 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 	}
 
 	if filter.PriceFrom != nil && filter.PriceTo != nil {
-		paramsListProducts.PriceFrom = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceFrom,
-		}
-		paramsListProducts.PriceTo = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceTo,
-		}
-
-		paramsCountProducts.PriceFrom = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceFrom,
-		}
-		paramsCountProducts.PriceTo = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceTo,
-		}
+		paramsListProducts.PriceFrom = pgtype.Float8{Valid: true, Float64: *filter.PriceFrom}
+		paramsListProducts.PriceTo = pgtype.Float8{Valid: true, Float64: *filter.PriceTo}
+		paramsCountProducts.PriceFrom = pgtype.Float8{Valid: true, Float64: *filter.PriceFrom}
+		paramsCountProducts.PriceTo = pgtype.Float8{Valid: true, Float64: *filter.PriceTo}
 	}
 
 	if filter.CategoryIDs != nil {
-		paramsListProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
-		paramsCountProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+		paramsListProducts.CategoryIds = make([]int32, 0, len(*filter.CategoryIDs))
+		paramsCountProducts.CategoryIds = make([]int32, 0, len(*filter.CategoryIDs))
 		for _, id := range *filter.CategoryIDs {
 			paramsListProducts.CategoryIds = append(paramsListProducts.CategoryIds, int32(id))
 			paramsCountProducts.CategoryIds = append(paramsCountProducts.CategoryIds, int32(id))
@@ -214,13 +383,17 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 
 	products := make([]*repository.Product, len(generatedProducts))
 	for i, p := range generatedProducts {
-		products[i] = &repository.Product{
+		product := &repository.Product{
 			ID:            uint32(p.ID),
 			Name:          p.Name,
 			Description:   p.Description,
 			Price:         pkg.PgTypeNumericToFloat64(p.Price),
 			CategoryID:    uint32(p.CategoryID),
 			ImageUrl:      p.ImageUrl,
+			HasStems:      p.HasStems,
+			IsMessageCard: p.IsMessageCard,
+			IsFlowers:     p.IsFlowers,
+			IsAddOn:       p.IsAddOn,
 			StockQuantity: p.StockQuantity,
 			DeletedAt:     nil,
 			CreatedAt:     p.CreatedAt,
@@ -228,12 +401,38 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 		}
 
 		if p.CategoryID_2.Valid {
-			products[i].CategoryData = &repository.Category{
+			product.CategoryData = &repository.Category{
 				ID:          uint32(p.CategoryID_2.Int64),
 				Name:        p.CategoryName.String,
 				Description: p.CategoryDescription.String,
 			}
 		}
+
+		// Unmarshal stems JSON
+		if p.Stems != nil {
+			var stems []repository.ProductStem
+
+			switch v := p.Stems.(type) {
+			case []byte:
+				if err := json.Unmarshal(v, &stems); err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			case []interface{}:
+				raw, err := json.Marshal(v)
+				if err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error marshaling stems interface{}: %s", err.Error())
+				}
+				if err := json.Unmarshal(raw, &stems); err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			default:
+				return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "unexpected stems type: %T", p.Stems)
+			}
+
+			product.Stems = stems
+		}
+
+		products[i] = product
 	}
 
 	return products, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil

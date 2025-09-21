@@ -19,6 +19,8 @@ type Config struct {
 	TOKEN_DURATION          time.Duration `mapstructure:"TOKEN_DURATION"`
 	TOKEN_SYMMETRIC_KEY     string        `mapstructure:"TOKEN_SYMMETRIC_KEY"`
 	TOKEN_ISSUER            string        `mapstructure:"TOKEN_ISSUER"`
+	PAYSTACK_SECRET_KEY     string        `mapstructure:"PAYSTACK_SECRET_KEY"`
+	PAYSTACK_CALLBACK_URL   string        `mapstructure:"PAYSTACK_CALLBACK_URL"`
 }
 
 func LoadConfig(path string) (Config, error) {
@@ -54,4 +56,6 @@ func setDefaults() {
 	viper.SetDefault("TOKEN_DURATION", 0)
 	viper.SetDefault("TOKEN_SYMMETRIC_KEY", "")
 	viper.SetDefault("TOKEN_ISSUER", "")
+	viper.SetDefault("PAYSTACK_SECRET_KEY", "")
+	viper.SetDefault("PAYSTACK_CALLBACK_URL", "")
 }

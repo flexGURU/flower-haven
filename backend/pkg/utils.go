@@ -83,3 +83,7 @@ func StringToFloat64(s string) (float64, error) {
 
 	return f, nil
 }
+
+func DayOfWeekToInt(day time.Weekday) int16 {
+	return int16(day)
+}

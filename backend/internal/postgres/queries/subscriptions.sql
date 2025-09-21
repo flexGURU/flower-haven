@@ -1,6 +1,6 @@
 -- name: CreateSubscription :one
-INSERT INTO subscriptions (name, description, product_ids, add_ons, price)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO subscriptions (name, description, product_ids, add_ons, price, stem_ids, by_admin, parent_order_id)
+VALUES (sqlc.arg('name'), sqlc.arg('description'), sqlc.arg('product_ids'), sqlc.arg('add_ons'), sqlc.arg('price'), sqlc.arg('stem_ids'), sqlc.arg('by_admin'), sqlc.narg('parent_order_id'))
 RETURNING id;
 
 -- name: SubscriptionExists :one
@@ -29,6 +29,7 @@ UPDATE subscriptions
 SET name = coalesce(sqlc.narg('name'), name),
     description = coalesce(sqlc.narg('description'), description),
     product_ids = coalesce(sqlc.narg('product_ids'), product_ids),
+    stem_ids = coalesce(sqlc.narg('stem_ids'), stem_ids), 
     add_ons = coalesce(sqlc.narg('add_ons'), add_ons),
     price = coalesce(sqlc.narg('price'), price)
 WHERE id = sqlc.arg('id')
@@ -71,6 +72,10 @@ WHERE
         OR LOWER(s.description) LIKE sqlc.narg('search')
     )
     AND (
+        sqlc.narg('by_admin')::boolean IS NULL 
+        OR s.by_admin = sqlc.narg('by_admin')
+    )
+    AND (
         sqlc.narg('price_from')::float IS NULL 
         OR s.price >= sqlc.narg('price_from')
     )
@@ -90,6 +95,10 @@ WHERE
         COALESCE(sqlc.narg('search'), '') = '' 
         OR LOWER(name) LIKE sqlc.narg('search')
         OR LOWER(description) LIKE sqlc.narg('search')
+    )
+    AND (
+        sqlc.narg('by_admin')::boolean IS NULL 
+        OR by_admin = sqlc.narg('by_admin')
     )
     AND (
         sqlc.narg('price_from')::float IS NULL 

@@ -1,13 +1,13 @@
 -- name: CreateUserSubscription :one
-INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO user_subscriptions (user_id, subscription_id, start_date, end_date, day_of_week, frequency)
+VALUES (sqlc.narg('user_id'), sqlc.arg('subscription_id'), sqlc.arg('start_date'), sqlc.arg('end_date'), sqlc.arg('day_of_week'), sqlc.arg('frequency'))
 RETURNING id;
 
 -- name: UserSubscriptionExists :one
 SELECT EXISTS(SELECT 1 FROM user_subscriptions WHERE id = $1) AS exists;
 
 -- name: ActiveSubscriptions :one
-SELECT COUNT(*) AS active_subscriptions
+SELECT COALESCE(COUNT(*), 0) AS active_subscriptions
 FROM user_subscriptions
 WHERE status = true
   AND deleted_at IS NULL;

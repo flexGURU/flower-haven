@@ -13,8 +13,8 @@ import (
 )
 
 const createOrder = `-- name: CreateOrder :one
-INSERT INTO orders (user_name, user_phone_number, total_amount, payment_status, status, shipping_address)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO orders (user_name, user_phone_number, total_amount, payment_status, status, shipping_address, delivery_date, time_slot, by_admin)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING id
 `
 
@@ -25,6 +25,9 @@ type CreateOrderParams struct {
 	PaymentStatus   bool           `json:"payment_status"`
 	Status          string         `json:"status"`
 	ShippingAddress pgtype.Text    `json:"shipping_address"`
+	DeliveryDate    time.Time      `json:"delivery_date"`
+	TimeSlot        string         `json:"time_slot"`
+	ByAdmin         bool           `json:"by_admin"`
 }
 
 func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64, error) {
@@ -35,6 +38,9 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (int64
 		arg.PaymentStatus,
 		arg.Status,
 		arg.ShippingAddress,
+		arg.DeliveryDate,
+		arg.TimeSlot,
+		arg.ByAdmin,
 	)
 	var id int64
 	err := row.Scan(&id)
@@ -54,7 +60,7 @@ func (q *Queries) DeleteOrder(ctx context.Context, id int64) error {
 
 const getOrderByFullDataID = `-- name: GetOrderByFullDataID :one
 SELECT 
-  o.id, o.user_name, o.user_phone_number, o.total_amount, o.payment_status, o.status, o.shipping_address, o.deleted_at, o.created_at,
+  o.id, o.user_name, o.user_phone_number, o.total_amount, o.payment_status, o.status, o.shipping_address, o.deleted_at, o.created_at, o.delivery_date, o.time_slot, o.by_admin,
   COALESCE(items.items, '[]') AS order_item_data
 FROM orders o
 LEFT JOIN LATERAL (
@@ -92,6 +98,9 @@ type GetOrderByFullDataIDRow struct {
 	ShippingAddress pgtype.Text        `json:"shipping_address"`
 	DeletedAt       pgtype.Timestamptz `json:"deleted_at"`
 	CreatedAt       time.Time          `json:"created_at"`
+	DeliveryDate    time.Time          `json:"delivery_date"`
+	TimeSlot        string             `json:"time_slot"`
+	ByAdmin         bool               `json:"by_admin"`
 	OrderItemData   []byte             `json:"order_item_data"`
 }
 
@@ -108,13 +117,16 @@ func (q *Queries) GetOrderByFullDataID(ctx context.Context, id int64) (GetOrderB
 		&i.ShippingAddress,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.DeliveryDate,
+		&i.TimeSlot,
+		&i.ByAdmin,
 		&i.OrderItemData,
 	)
 	return i, err
 }
 
 const getOrderByID = `-- name: GetOrderByID :one
-SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at FROM orders WHERE id = $1
+SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at, delivery_date, time_slot, by_admin FROM orders WHERE id = $1
 `
 
 func (q *Queries) GetOrderByID(ctx context.Context, id int64) (Order, error) {
@@ -130,12 +142,15 @@ func (q *Queries) GetOrderByID(ctx context.Context, id int64) (Order, error) {
 		&i.ShippingAddress,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.DeliveryDate,
+		&i.TimeSlot,
+		&i.ByAdmin,
 	)
 	return i, err
 }
 
 const getRecentOrders = `-- name: GetRecentOrders :many
-SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at FROM orders
+SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at, delivery_date, time_slot, by_admin FROM orders
 WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT 7
@@ -160,6 +175,9 @@ func (q *Queries) GetRecentOrders(ctx context.Context) ([]Order, error) {
 			&i.ShippingAddress,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.DeliveryDate,
+			&i.TimeSlot,
+			&i.ByAdmin,
 		); err != nil {
 			return nil, err
 		}
@@ -206,7 +224,7 @@ func (q *Queries) ListCountOrder(ctx context.Context, arg ListCountOrderParams) 
 }
 
 const listOrder = `-- name: ListOrder :many
-SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at FROM orders
+SELECT id, user_name, user_phone_number, total_amount, payment_status, status, shipping_address, deleted_at, created_at, delivery_date, time_slot, by_admin FROM orders
 WHERE
     deleted_at IS NULL
     AND (
@@ -260,6 +278,9 @@ func (q *Queries) ListOrder(ctx context.Context, arg ListOrderParams) ([]Order, 
 			&i.ShippingAddress,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.DeliveryDate,
+			&i.TimeSlot,
+			&i.ByAdmin,
 		); err != nil {
 			return nil, err
 		}
@@ -283,14 +304,14 @@ func (q *Queries) OrderExists(ctx context.Context, id int64) (bool, error) {
 }
 
 const totalOrders = `-- name: TotalOrders :one
-SELECT COUNT(*) AS total_orders
+SELECT COALESCE(COUNT(*), 0) AS total_orders
 FROM orders
 WHERE deleted_at IS NULL
 `
 
-func (q *Queries) TotalOrders(ctx context.Context) (int64, error) {
+func (q *Queries) TotalOrders(ctx context.Context) (interface{}, error) {
 	row := q.db.QueryRow(ctx, totalOrders)
-	var total_orders int64
+	var total_orders interface{}
 	err := row.Scan(&total_orders)
 	return total_orders, err
 }
