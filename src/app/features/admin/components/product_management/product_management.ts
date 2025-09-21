@@ -16,7 +16,10 @@ import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
 import { ProductFormComponent } from '../product-form/product-form';
 import { DialogModule } from 'primeng/dialog';
-import { productQuery } from '../../../../shared/services/product.query';
+import {
+  categoryQuery,
+  productQuery,
+} from '../../../../shared/services/product.query';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
@@ -47,9 +50,9 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 export class ProductManagement {
   products: Product[] = [];
   filteredProducts: Product[] = [];
-  categories: Category[] = [];
   productForm = signal(false);
   productQueryData = productQuery();
+  categoryQueryData = categoryQuery();
   first = signal(0);
   loading = signal(false);
 
@@ -76,29 +79,20 @@ export class ProductManagement {
       const products = this.productQueryData.data() ?? [];
       this.products = products;
       this.filteredProducts = [...products];
+
+      this.categoryOptions = [
+        { name: 'All Categories', id: '' },
+        ...(this.categoryQueryData.data() ?? []),
+      ];
     });
   }
 
   private productService = inject(ProductService);
 
-  ngOnInit() {
-    this.loadCategories();
-  }
-
   onPageChange(event: any) {
     this.#productService.page.set(event.page + 1);
     this.#productService.limit.set(event.rows);
     this.first.set(event.first);
-  }
-
-  loadCategories() {
-    this.productService.getCategories().subscribe((categories) => {
-      this.categories = categories;
-      this.categoryOptions = [
-        { name: 'All Categories', id: '' },
-        ...categories,
-      ];
-    });
   }
 
   searchProducts() {

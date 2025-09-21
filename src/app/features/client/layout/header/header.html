@@ -24,11 +24,13 @@
         <i class="pi pi-bars text-2xl"></i>
       </button>
 
-      <div class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-3 sm:my-0">
+      <div
+        class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-3 sm:my-0 relative"
+      >
         <div class="relative group w-full">
           <input
             type="text"
-            (input)="test()"
+            (input)="test($event)"
             [(ngModel)]="searchQuery"
             pInputText
             (keyup.enter)="onSearch()"
@@ -42,6 +44,37 @@
             🔍
           </button>
         </div>
+
+        @if (searchQuery()) {
+
+        <p-popover #op>
+          <div>
+            <div *ngIf="products().length > 0; else noResults">
+              @for (product of products(); track product.id) {
+              <a
+                (click)="navigateToProduct(product.id!)"
+                class="flex items-center gap-3 cursor-pointer px-4 py-2 hover:bg-pink-50 hover:text-pink-600 transition-colors rounded-md"
+              >
+                <img
+                  [src]="product.image_url[0]"
+                  alt="{{ product.name }}"
+                  class="w-10 h-10 object-cover rounded"
+                  loading="lazy"
+                />
+                <div class="flex-1">
+                  <div class="font-medium truncate">{{ product.name }}</div>
+                </div>
+              </a>
+              }
+            </div>
+
+            <ng-template #noResults>
+              <div class="px-4 py-2 text-gray-500">No results found</div>
+            </ng-template>
+          </div>
+        </p-popover>
+
+        }
       </div>
 
       <div class="flex items-center space-x-3 mt-3 sm:mt-0">
@@ -93,7 +126,7 @@
             class="absolute top-full left-0 bg-white text-gray-800 shadow-lg rounded-md py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10"
           >
             <a
-              *ngFor="let category of categories"
+              *ngFor="let category of categories()"
               [routerLink]="['/category', category.id]"
               class="block px-4 py-2 hover:bg-pink-50 hover:text-pink-600"
             >

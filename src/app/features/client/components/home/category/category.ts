@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { Category } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { categoryQuery } from '../../../../../shared/services/product.query';
 
 @Component({
   selector: 'app-category',
@@ -10,18 +11,11 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
 })
 export class CategoryComponent {
-  categories: Category[] = [];
   #productService = inject(ProductService);
   #router = inject(Router);
+  #categoryQueryData = categoryQuery();
 
-  ngOnInit() {
-    this.loadCategories();
-  }
-  loadCategories() {
-    this.#productService.getCategories().subscribe((categories) => {
-      this.categories = categories;
-    });
-  }
+  categories = computed<Category[]>(() => this.#categoryQueryData.data() ?? []);
 
   loadProductsByCategory(categoryId: string) {
     this.#productService.categoryId.set([categoryId]);

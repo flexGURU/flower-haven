@@ -15,3 +15,16 @@ export const productQuery = () => {
 
   return query;
 };
+
+export const categoryQuery = () => {
+  const productService = inject(ProductService);
+
+  const query = injectQuery(() => ({
+    queryKey: ['categories'],
+    queryFn: () => lastValueFrom(productService.fetchCategories()),
+    staleTime: 300 * 1000,
+    refetchOnWindowFocus: true,
+  }));
+
+  return query;
+};
