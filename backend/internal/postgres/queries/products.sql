@@ -36,13 +36,77 @@ SET name = coalesce(sqlc.narg('name'), name),
 WHERE id = sqlc.arg('id')
 RETURNING *;
 
+-- -- name: ListProducts :many
+-- SELECT p.*, 
+--        c.id AS category_id,
+--        c.name AS category_name, 
+--        c.description AS category_description
+-- FROM products p
+-- LEFT JOIN categories c ON p.category_id = c.id
+-- WHERE 
+--     p.deleted_at IS NULL
+--     AND (
+--         COALESCE(sqlc.narg('search'), '') = '' 
+--         OR LOWER(p.name) LIKE sqlc.narg('search')
+--         OR LOWER(p.description) LIKE sqlc.narg('search')
+--     )
+--     AND (
+--         sqlc.narg('price_from')::float IS NULL 
+--         OR p.price >= sqlc.narg('price_from')
+--     )
+--     AND (
+--         sqlc.narg('price_to')::float IS NULL 
+--         OR p.price <= sqlc.narg('price_to')
+--     )
+--     AND (
+--         sqlc.narg('category_ids')::int[] IS NULL 
+--         OR p.category_id = ANY(sqlc.narg('category_ids')::int[])
+--     )
+-- ORDER BY p.created_at DESC
+-- LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
+
+-- -- name: ListCountProducts :one
+-- SELECT COUNT(*) AS total_products
+-- FROM products
+-- WHERE 
+--     deleted_at IS NULL
+--     AND (
+--         COALESCE(sqlc.narg('search'), '') = '' 
+--         OR LOWER(name) LIKE sqlc.narg('search')
+--         OR LOWER(description) LIKE sqlc.narg('search')
+--     )
+--     AND (
+--         sqlc.narg('price_from')::float IS NULL 
+--         OR price >= sqlc.narg('price_from')
+--     )
+--     AND (
+--         sqlc.narg('price_to')::float IS NULL 
+--         OR price <= sqlc.narg('price_to')
+--     )
+--     AND (
+--         sqlc.narg('category_ids')::int[] IS NULL 
+--         OR category_id = ANY(sqlc.narg('category_ids')::int[])
+--     );
+
 -- name: ListProducts :many
-SELECT p.*, 
-       c.id AS category_id,
-       c.name AS category_name, 
-       c.description AS category_description
+SELECT 
+    p.*,
+    c.id AS category_id,
+    c.name AS category_name, 
+    c.description AS category_description,
+    COALESCE(
+        json_agg(
+            jsonb_build_object(
+                'id', ps.id,
+                'product_id', ps.product_id,
+                'stem_count', ps.stem_count,
+                'price', ps.price
+            )
+        ) FILTER (WHERE ps.id IS NOT NULL), '[]'
+    ) AS stems
 FROM products p
 LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN product_stems ps ON ps.product_id = p.id
 WHERE 
     p.deleted_at IS NULL
     AND (
@@ -62,30 +126,31 @@ WHERE
         sqlc.narg('category_ids')::int[] IS NULL 
         OR p.category_id = ANY(sqlc.narg('category_ids')::int[])
     )
+GROUP BY p.id, c.id, c.name, c.description
 ORDER BY p.created_at DESC
 LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: ListCountProducts :one
-SELECT COUNT(*) AS total_products
-FROM products
+SELECT COUNT(DISTINCT p.id) AS total_products
+FROM products p
 WHERE 
-    deleted_at IS NULL
+    p.deleted_at IS NULL
     AND (
         COALESCE(sqlc.narg('search'), '') = '' 
-        OR LOWER(name) LIKE sqlc.narg('search')
-        OR LOWER(description) LIKE sqlc.narg('search')
+        OR LOWER(p.name) LIKE sqlc.narg('search')
+        OR LOWER(p.description) LIKE sqlc.narg('search')
     )
     AND (
         sqlc.narg('price_from')::float IS NULL 
-        OR price >= sqlc.narg('price_from')
+        OR p.price >= sqlc.narg('price_from')
     )
     AND (
         sqlc.narg('price_to')::float IS NULL 
-        OR price <= sqlc.narg('price_to')
+        OR p.price <= sqlc.narg('price_to')
     )
     AND (
         sqlc.narg('category_ids')::int[] IS NULL 
-        OR category_id = ANY(sqlc.narg('category_ids')::int[])
+        OR p.category_id = ANY(sqlc.narg('category_ids')::int[])
     );
 
 -- name: DeleteProduct :exec

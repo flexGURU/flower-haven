@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"strings"
 
@@ -214,6 +215,101 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 	return pr.GetProductByID(ctx, int64(product.ID))
 }
 
+// func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {
+// 	paramsListProducts := generated.ListProductsParams{
+// 		Limit:       int32(filter.Pagination.PageSize),
+// 		Offset:      pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
+// 		Search:      pgtype.Text{Valid: false},
+// 		PriceFrom:   pgtype.Float8{Valid: false},
+// 		PriceTo:     pgtype.Float8{Valid: false},
+// 		CategoryIds: nil,
+// 	}
+
+// 	paramsCountProducts := generated.ListCountProductsParams{
+// 		Search:      pgtype.Text{Valid: false},
+// 		PriceFrom:   pgtype.Float8{Valid: false},
+// 		PriceTo:     pgtype.Float8{Valid: false},
+// 		CategoryIds: nil,
+// 	}
+
+// 	if filter.Search != nil {
+// 		search := strings.ToLower(*filter.Search)
+// 		paramsListProducts.Search = pgtype.Text{
+// 			Valid:  true,
+// 			String: "%" + search + "%",
+// 		}
+// 		paramsCountProducts.Search = pgtype.Text{
+// 			Valid:  true,
+// 			String: "%" + search + "%",
+// 		}
+// 	}
+
+// 	if filter.PriceFrom != nil && filter.PriceTo != nil {
+// 		paramsListProducts.PriceFrom = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceFrom,
+// 		}
+// 		paramsListProducts.PriceTo = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceTo,
+// 		}
+
+// 		paramsCountProducts.PriceFrom = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceFrom,
+// 		}
+// 		paramsCountProducts.PriceTo = pgtype.Float8{
+// 			Valid:   true,
+// 			Float64: *filter.PriceTo,
+// 		}
+// 	}
+
+// 	if filter.CategoryIDs != nil {
+// 		paramsListProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+// 		paramsCountProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+// 		for _, id := range *filter.CategoryIDs {
+// 			paramsListProducts.CategoryIds = append(paramsListProducts.CategoryIds, int32(id))
+// 			paramsCountProducts.CategoryIds = append(paramsCountProducts.CategoryIds, int32(id))
+// 		}
+// 	}
+
+// 	generatedProducts, err := pr.queries.ListProducts(ctx, paramsListProducts)
+// 	if err != nil {
+// 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing products: %s", err.Error())
+// 	}
+
+// 	totalCount, err := pr.queries.ListCountProducts(ctx, paramsCountProducts)
+// 	if err != nil {
+// 		return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error counting products: %s", err.Error())
+// 	}
+
+// 	products := make([]*repository.Product, len(generatedProducts))
+// 	for i, p := range generatedProducts {
+// 		products[i] = &repository.Product{
+// 			ID:            uint32(p.ID),
+// 			Name:          p.Name,
+// 			Description:   p.Description,
+// 			Price:         pkg.PgTypeNumericToFloat64(p.Price),
+// 			CategoryID:    uint32(p.CategoryID),
+// 			ImageUrl:      p.ImageUrl,
+// 			StockQuantity: p.StockQuantity,
+// 			DeletedAt:     nil,
+// 			CreatedAt:     p.CreatedAt,
+// 			CategoryData:  nil,
+// 		}
+
+// 		if p.CategoryID_2.Valid {
+// 			products[i].CategoryData = &repository.Category{
+// 				ID:          uint32(p.CategoryID_2.Int64),
+// 				Name:        p.CategoryName.String,
+// 				Description: p.CategoryDescription.String,
+// 			}
+// 		}
+// 	}
+
+// 	return products, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil
+// }
+
 func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {
 	paramsListProducts := generated.ListProductsParams{
 		Limit:       int32(filter.Pagination.PageSize),
@@ -244,28 +340,15 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 	}
 
 	if filter.PriceFrom != nil && filter.PriceTo != nil {
-		paramsListProducts.PriceFrom = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceFrom,
-		}
-		paramsListProducts.PriceTo = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceTo,
-		}
-
-		paramsCountProducts.PriceFrom = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceFrom,
-		}
-		paramsCountProducts.PriceTo = pgtype.Float8{
-			Valid:   true,
-			Float64: *filter.PriceTo,
-		}
+		paramsListProducts.PriceFrom = pgtype.Float8{Valid: true, Float64: *filter.PriceFrom}
+		paramsListProducts.PriceTo = pgtype.Float8{Valid: true, Float64: *filter.PriceTo}
+		paramsCountProducts.PriceFrom = pgtype.Float8{Valid: true, Float64: *filter.PriceFrom}
+		paramsCountProducts.PriceTo = pgtype.Float8{Valid: true, Float64: *filter.PriceTo}
 	}
 
 	if filter.CategoryIDs != nil {
-		paramsListProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
-		paramsCountProducts.CategoryIds = make([]int32, len(*filter.CategoryIDs))
+		paramsListProducts.CategoryIds = make([]int32, 0, len(*filter.CategoryIDs))
+		paramsCountProducts.CategoryIds = make([]int32, 0, len(*filter.CategoryIDs))
 		for _, id := range *filter.CategoryIDs {
 			paramsListProducts.CategoryIds = append(paramsListProducts.CategoryIds, int32(id))
 			paramsCountProducts.CategoryIds = append(paramsCountProducts.CategoryIds, int32(id))
@@ -284,13 +367,17 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 
 	products := make([]*repository.Product, len(generatedProducts))
 	for i, p := range generatedProducts {
-		products[i] = &repository.Product{
+		product := &repository.Product{
 			ID:            uint32(p.ID),
 			Name:          p.Name,
 			Description:   p.Description,
 			Price:         pkg.PgTypeNumericToFloat64(p.Price),
 			CategoryID:    uint32(p.CategoryID),
 			ImageUrl:      p.ImageUrl,
+			HasStems:      p.HasStems,
+			IsMessageCard: p.IsMessageCard,
+			IsFlowers:     p.IsFlowers,
+			IsAddOn:       p.IsAddOn,
 			StockQuantity: p.StockQuantity,
 			DeletedAt:     nil,
 			CreatedAt:     p.CreatedAt,
@@ -298,12 +385,38 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 		}
 
 		if p.CategoryID_2.Valid {
-			products[i].CategoryData = &repository.Category{
+			product.CategoryData = &repository.Category{
 				ID:          uint32(p.CategoryID_2.Int64),
 				Name:        p.CategoryName.String,
 				Description: p.CategoryDescription.String,
 			}
 		}
+
+		// Unmarshal stems JSON
+		if p.Stems != nil {
+			var stems []repository.ProductStem
+
+			switch v := p.Stems.(type) {
+			case []byte:
+				if err := json.Unmarshal(v, &stems); err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			case []interface{}:
+				raw, err := json.Marshal(v)
+				if err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error marshaling stems interface{}: %s", err.Error())
+				}
+				if err := json.Unmarshal(raw, &stems); err != nil {
+					return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			default:
+				return nil, nil, pkg.Errorf(pkg.INTERNAL_ERROR, "unexpected stems type: %T", p.Stems)
+			}
+
+			product.Stems = stems
+		}
+
+		products[i] = product
 	}
 
 	return products, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil
