@@ -142,6 +142,10 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 		Description:   pgtype.Text{Valid: false},
 		Price:         pgtype.Numeric{Valid: false},
 		CategoryID:    pgtype.Int8{Valid: false},
+		HasStems:      pgtype.Bool{Valid: false},
+		IsMessageCard: pgtype.Bool{Valid: false},
+		IsFlowers:     pgtype.Bool{Valid: false},
+		IsAddOn:       pgtype.Bool{Valid: false},
 		ImageUrl:      nil,
 		StockQuantity: pgtype.Int8{Valid: false},
 	}
@@ -172,6 +176,18 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 	}
 	if product.StockQuantity != nil {
 		params.StockQuantity = pgtype.Int8{Int64: int64(*product.StockQuantity), Valid: true}
+	}
+	if product.HasStems != nil {
+		params.HasStems = pgtype.Bool{Bool: *product.HasStems, Valid: true}
+	}
+	if product.IsMessageCard != nil {
+		params.IsMessageCard = pgtype.Bool{Bool: *product.IsMessageCard, Valid: true}
+	}
+	if product.IsFlowers != nil {
+		params.IsFlowers = pgtype.Bool{Bool: *product.IsFlowers, Valid: true}
+	}
+	if product.IsAddOn != nil {
+		params.IsAddOn = pgtype.Bool{Bool: *product.IsAddOn, Valid: true}
 	}
 
 	err := pr.db.ExecTx(ctx, func(q *generated.Queries) error {
