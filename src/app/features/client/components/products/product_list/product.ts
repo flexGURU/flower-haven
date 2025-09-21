@@ -18,7 +18,6 @@ import { productQuery } from '../../../../../shared/services/product.query';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 
-
 @Component({
   selector: 'app-product',
   templateUrl: './product.html',
@@ -36,7 +35,7 @@ import { MessageModule } from 'primeng/message';
     ToastModule,
     ProgressSpinner,
     MessageModule,
-    ],
+  ],
   providers: [MessageService],
 })
 export class ProductComponent {
@@ -50,10 +49,11 @@ export class ProductComponent {
   initialPriceTo = signal(50000);
   initialPriceFrom = signal(50);
 
+  first = signal(0);
+
   newProducts: Product[] = [];
   productQueryData = productQuery();
 
-  // Filters
   priceRange = signal([this.initialPriceFrom(), this.initialPriceTo()]);
   selectedCategories = signal<string[]>([]);
   inStockOnly = false;
@@ -70,6 +70,8 @@ export class ProductComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private messageService = inject(MessageService);
+
+  total = computed(() => this.productService.totalProducts());
   constructor() {}
   ngOnInit() {
     this.loadCategories();
@@ -120,8 +122,9 @@ export class ProductComponent {
   }
 
   onPageChange(event: any) {
-    this.currentPage = event.page + 1;
-    this.pageSize = event.rows;
+    this.productService.page.set(event.page + 1);
+    this.productService.limit.set(event.rows);
+    this.first.set(event.first);
   }
 
   addToCart(product: Product) {

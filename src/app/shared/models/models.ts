@@ -8,12 +8,14 @@ export interface Product {
   stock_quantity: number;
   createdAt?: Date;
   category_data?: Category;
-  stems?: stems[];
+  is_message_card?: boolean;
+  is_add_on?: boolean;
+  has_stems?: boolean;
+  stems?: Stem[];
 }
 
-interface stems {
-  label: string;
-  value: string;
+export interface Stem {
+  stem_count: string;
   price: number;
 }
 export interface Category {

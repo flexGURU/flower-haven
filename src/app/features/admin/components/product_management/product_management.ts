@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BadgeModule } from 'primeng/badge';
@@ -39,6 +39,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     ProductFormComponent,
     MessageModule,
     ProgressSpinnerModule,
+    PaginatorModule,
+    MessageModule,
   ],
   providers: [ConfirmationService, MessageService],
 })
@@ -46,8 +48,10 @@ export class ProductManagement {
   products: Product[] = [];
   filteredProducts: Product[] = [];
   categories: Category[] = [];
-  productForm = false;
+  productForm = signal(false);
   productQueryData = productQuery();
+  first = signal(0);
+  loading = signal(false);
 
   // Filters
   searchTerm = signal('');
@@ -62,6 +66,8 @@ export class ProductManagement {
   ];
 
   #productService = inject(ProductService);
+
+  total = computed(() => this.#productService.totalProducts());
   constructor(
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
@@ -77,6 +83,12 @@ export class ProductManagement {
 
   ngOnInit() {
     this.loadCategories();
+  }
+
+  onPageChange(event: any) {
+    this.#productService.page.set(event.page + 1);
+    this.#productService.limit.set(event.rows);
+    this.first.set(event.first);
   }
 
   loadCategories() {
@@ -141,9 +153,20 @@ export class ProductManagement {
       message: `Are you sure you want to delete the product "${product.name}"?`,
       header: 'Confirm Deletion',
       icon: 'pi pi-exclamation-triangle',
+      rejectButtonProps: {
+        label: 'Cancel',
+        severity: 'secondary',
+        outlined: true,
+      },
+      acceptButtonProps: {
+        label: 'Confirm',
+        loading: this.loading(),
+      },
       accept: () => {
+        this.loading.set(true);
         this.productService.deleteProduct(product.id!).subscribe({
           next: () => {
+            this.loading.set(false);
             this.messageService.add({
               severity: 'success',
               summary: 'Success',
@@ -166,18 +189,18 @@ export class ProductManagement {
 
   showProductDetails = false;
   isEditMode = false;
-  selectedProduct: any = null;
+  selectedProduct: Product | null = null;
 
   showProductForm() {
     this.isEditMode = false;
     this.selectedProduct = null;
-    this.productForm = true;
+    this.productForm.set(true);
   }
 
-  editProduct(product: any) {
+  editProduct(product: Product) {
     this.isEditMode = true;
     this.selectedProduct = { ...product };
-    this.productForm = true;
+    this.productForm.set(true);
   }
 
   viewProduct(product: any) {
@@ -187,12 +210,12 @@ export class ProductManagement {
 
   editProductFromDetails() {
     this.showProductDetails = false;
-    this.editProduct(this.selectedProduct);
+    this.editProduct(this.selectedProduct!);
   }
 
-  onProductSave(productData: any) {
+  onProductSave(productData: Product) {
     // Handle save logic
-    this.productForm = false;
+    this.productForm.set(false);
     this.messageService.add({
       severity: 'success',
       summary: 'Success',
@@ -204,7 +227,7 @@ export class ProductManagement {
   }
 
   onFormCancel() {
-    this.productForm = false;
+    this.productForm.set(false);
   }
 
   onFormClose() {

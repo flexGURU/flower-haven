@@ -10,7 +10,7 @@
           <div class="mb-6">
             <label class="block text-sm font-medium mb-2">Price Range</label>
             <p-slider
-            class="cursor-pointer"
+              class="cursor-pointer"
               [(ngModel)]="priceRange"
               [range]="true"
               [min]="initialPriceFrom()"
@@ -140,13 +140,12 @@
         }
 
         <p-paginator
-          *ngIf="totalProducts > pageSize"
-          [rows]="pageSize"
-          [totalRecords]="totalProducts"
-          [first]="(currentPage - 1) * pageSize"
           (onPageChange)="onPageChange($event)"
-          [rowsPerPageOptions]="[ 12, 24, 48]"
-        ></p-paginator>
+          [first]="first()"
+          [rows]="15"
+          [totalRecords]="total()"
+          [rowsPerPageOptions]="[15,  30, 50]"
+        />
       </div>
     </div>
   </div>

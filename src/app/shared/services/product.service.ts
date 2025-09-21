@@ -22,11 +22,12 @@ export class ProductService {
   private messageCardSubject = new BehaviorSubject<Product[]>([]);
 
   page = signal(1);
-  limit = signal(10);
+  limit = signal(15);
   search = signal('');
   priceFrom = signal<number | null>(null);
   priceTo = signal(0);
   categoryId = signal<string[] | []>([]);
+  totalProducts = signal(0);
 
   initialProductFilters = {
     page: this.page(),
@@ -57,6 +58,7 @@ export class ProductService {
     this.fecthCategories().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
+    effect(() => {});
   }
 
   getAddOns() {
@@ -68,13 +70,21 @@ export class ProductService {
   }
 
   fetchProducts(): Observable<Product[]> {
-    return this.http.get<{ data: Product[] }>(this.productBaseApiUrl()).pipe(
-      map((response) => response.data),
-      catchError((error) => {
-        console.error('Error fetching products:', error);
-        return throwError(() => new Error('Failed to fetch products.'));
-      }),
-    );
+    return this.http
+      .get<{
+        data: Product[];
+        pagination: { total: number };
+      }>(`${this.productBaseApiUrl()}`)
+      .pipe(
+        tap((response) => {
+          this.totalProducts.set(response.pagination.total);
+        }),
+        map((response) => response.data),
+        catchError((error) => {
+          console.error('Error fetching products:', error);
+          return throwError(() => new Error('Failed to fetch products.'));
+        }),
+      );
   }
 
   addProduct(product: Product): Observable<{ data: Product }> {
@@ -190,8 +200,9 @@ export class ProductService {
     return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
       tap((response) => {
         const messageCards = response.data.filter(
-          (product) => product.category_data?.name === 'Message Cards',
+          (product) => product.is_message_card === true,
         );
+
         this.messageCardSubject.next(messageCards);
       }),
     );

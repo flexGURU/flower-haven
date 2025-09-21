@@ -1,5 +1,5 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
-  <div class="container mx-auto px-4 md:py-4">
+  <div class="container mx-auto px-4 md:py-2">
     <div class="flex items-center justify-between flex-wrap">
       <div class="flex items-center space-x-2">
         <a
@@ -11,7 +11,9 @@
             class="w-14 h-14 sm:w-20 sm:h-20"
             alt="Flower Haven Logo"
           />
-          <span>Floral Haven</span>
+          <a href="">
+            <span>Floral Haven</span>
+          </a>
         </a>
       </div>
 
@@ -48,8 +50,9 @@
             pButton
             type="button"
             icon="pi pi-shopping-cart"
-            class="p-button-text p-button-rounded"
             routerLink="/cart"
+            rounded="true"
+            variant="outlined"
           >
             Cart
           </button>
