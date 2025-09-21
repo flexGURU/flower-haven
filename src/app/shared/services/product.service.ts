@@ -17,7 +17,6 @@ import { HttpClient } from '@angular/common/http';
 export class ProductService {
   private readonly categoryApiUrl = `${apiUrl}/categories`;
   private readonly productApiUrl = `${apiUrl}/products`;
-  private categorySubject = new BehaviorSubject<Category[]>([]);
   private addOnsSubject = new BehaviorSubject<Product[]>([]);
   private messageCardSubject = new BehaviorSubject<Product[]>([]);
 
@@ -55,10 +54,11 @@ export class ProductService {
   });
 
   constructor(private http: HttpClient) {
-    this.fecthCategories().subscribe();
     this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
-    effect(() => {});
+    effect(() => {
+      console.log('url changed:', this.productBaseApiUrl());
+    });
   }
 
   getAddOns() {
@@ -129,15 +129,9 @@ export class ProductService {
       );
   }
 
-  getCategories() {
-    return this.categorySubject.asObservable();
-  }
-
-  fecthCategories(): Observable<{ data: Category[] }> {
+  fetchCategories(): Observable<Category[]> {
     return this.http.get<{ data: Category[] }>(this.categoryApiUrl).pipe(
-      tap((response) => {
-        this.categorySubject.next(response.data);
-      }),
+      map((response) => response.data),
       catchError((error) => {
         console.error('Error fetching categories:', error);
         return throwError(() => new Error('Failed to fetch categories.'));
@@ -150,7 +144,7 @@ export class ProductService {
       .post<{ data: Category }>(this.categoryApiUrl, category)
       .pipe(
         tap(() => {
-          this.fecthCategories().subscribe();
+          this.fetchCategories().subscribe();
         }),
       );
   }
@@ -162,7 +156,7 @@ export class ProductService {
       }>(`${this.categoryApiUrl}/${category.id}`, category)
       .pipe(
         tap(() => {
-          this.fecthCategories().subscribe();
+          this.fetchCategories().subscribe();
         }),
         catchError((error) => {
           console.error('Error updating category:', error);
@@ -176,23 +170,18 @@ export class ProductService {
       .delete<{ message: string }>(`${this.categoryApiUrl}/${id}`)
       .pipe(
         tap(() => {
-          this.fecthCategories().subscribe();
+          this.fetchCategories().subscribe();
         }),
       );
   }
-  fetchAddOns(): Observable<Product[]> {
+  fetchAddOns(): Observable<{ data: Product[] }> {
     return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
       tap((response) => {
         const addons = response.data.filter(
-          (product) => product.category_data?.name === 'Add-Ons',
+          (product) => product.is_add_on === true,
         );
         this.addOnsSubject.next(addons);
       }),
-      map((response) =>
-        response.data.filter(
-          (product) => product.category_data?.name === 'Add-Ons',
-        ),
-      ),
     );
   }
 

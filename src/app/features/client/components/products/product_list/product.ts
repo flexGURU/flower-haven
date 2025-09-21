@@ -14,7 +14,10 @@ import { ButtonModule } from 'primeng/button';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
-import { productQuery } from '../../../../../shared/services/product.query';
+import {
+  categoryQuery,
+  productQuery,
+} from '../../../../../shared/services/product.query';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 
@@ -41,13 +44,14 @@ import { MessageModule } from 'primeng/message';
 export class ProductComponent {
   allProducts: Product[] = [];
   products: Product[] = [];
-  categories: Category[] = [];
   totalProducts = 0;
   currentPage = 1;
   pageSize = 12;
   pageTitle = 'All Products';
   initialPriceTo = signal(50000);
   initialPriceFrom = signal(50);
+
+  categoryQueryData = categoryQuery();
 
   first = signal(0);
 
@@ -74,17 +78,12 @@ export class ProductComponent {
   total = computed(() => this.productService.totalProducts());
   constructor() {}
   ngOnInit() {
-    this.loadCategories();
     this.productService.fetchProducts().subscribe((products) => {
       this.allProducts = products;
     });
   }
 
-  loadCategories() {
-    this.productService.getCategories().subscribe((categories) => {
-      this.categories = categories;
-    });
-  }
+  categories = computed<Category[]>(() => this.categoryQueryData.data() ?? []);
 
   prices = computed(() => {
     return [this.priceRange()[0], this.priceRange()[1]];

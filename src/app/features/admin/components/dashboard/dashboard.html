@@ -1,17 +1,25 @@
-<div class="dashboard">
-  <!-- Page Header -->
+<div>
   <div class="mb-6">
     <h1 class="text-3xl font-bold text-gray-800 mb-2 ml-3">Dashboard</h1>
   </div>
 
-  <!-- Stats Cards -->
+  <div>
+    @if (stats.isLoading()) {
+    <div class="flex justify-center items-center py-8">
+      <div class="card flex justify-center">
+        <p-progress-spinner strokeWidth="6" fill="transparent" />
+      </div>
+    </div>
+    }
+  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <p-card class="stats-card">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm font-medium text-gray-600">Total Revenue</p>
           <p class="text-2xl font-bold text-gray-900">
-            KES {{stats.totalRevenue | number}}
+            KES {{stats.data()?.total_revenue | number}}
           </p>
         </div>
         <div class="bg-green-100 p-3 rounded-full">
@@ -19,12 +27,13 @@
         </div>
       </div>
     </p-card>
-
     <p-card class="stats-card">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm font-medium text-gray-600">Total Orders</p>
-          <p class="text-2xl font-bold text-gray-900">{{stats.totalOrders}}</p>
+          <p class="text-2xl font-bold text-gray-900">
+            {{ stats.data()?.total_orders }}
+          </p>
         </div>
         <div class="bg-blue-100 p-3 rounded-full">
           <i class="pi pi-shopping-cart text-blue-600 text-xl"></i>
@@ -37,7 +46,7 @@
         <div>
           <p class="text-sm font-medium text-gray-600">Active Subscriptions</p>
           <p class="text-2xl font-bold text-gray-900">
-            {{stats.activeSubscriptions}}
+            {{stats.data()?.active_subscriptions}}
           </p>
         </div>
         <div class="bg-purple-100 p-3 rounded-full">
@@ -51,7 +60,7 @@
         <div>
           <p class="text-sm font-medium text-gray-600">Total products</p>
           <p class="text-2xl font-bold text-gray-900">
-            {{stats.totalCustomers}}
+            {{stats.data()?.total_products}}
           </p>
         </div>
         <div class="bg-pink-100 p-3 rounded-full">
@@ -59,10 +68,6 @@
         </div>
       </div>
     </p-card>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Revenue Chart -->
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -75,35 +80,17 @@
             pButton
             type="button"
             label="View All"
-            class="p-button-text p-button-sm"
             routerLink="/admin/orders"
+            icon="pi pi-arrow-right right"
+            iconPos="right"
           ></button>
         </div>
       </ng-template>
-
-      <p-table [value]="recentOrders" [paginator]="false">
-        <ng-template pTemplate="header">
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Amount</th>
-            <th>Status</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-order>
-          <tr>
-            <td>{{ order.id }}</td>
-            <td>{{ order.customerName }}</td>
-            <td>KES {{ order.total }}</td>
-            <td>
-              <p-badge
-                [value]="order.status"
-                [severity]="getOrderStatusSeverity(order.status)"
-              ></p-badge>
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
+      <ng-template pTemplate="emptymessage">
+        <div class="p-4 text-center text-gray-600">
+          No recent orders available.
+        </div>
+      </ng-template>
     </p-card>
 
     <!-- Stock Summary -->
@@ -121,7 +108,7 @@
         </div>
       </ng-template>
 
-      <p-table [value]="stockSummary" [paginator]="false">
+      <p-table [value]="stats.data()?.categories" [paginator]="false">
         <ng-template pTemplate="header">
           <tr>
             <th>Category</th>
@@ -129,14 +116,14 @@
             <th>Status</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-product>
+        <ng-template pTemplate="body" let-category>
           <tr>
-            <td>{{ product.name }}</td>
-            <td>{{ product.quantity }}</td>
+            <td>{{ category.name }}</td>
+            <td>{{ category.products_count }}</td>
             <td>
               <p-badge
-                [value]="getStockStatus(product.quantity)"
-                [severity]="getStockSeverity(product.quantity)"
+                [value]="getStockStatus(category.products_count)"
+                [severity]="getStockSeverity(category.products_count)"
               ></p-badge>
             </td>
           </tr>

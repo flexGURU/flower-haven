@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { Category } from '../../../../shared/models/models';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -12,6 +12,10 @@ import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { ProductService } from '../../../../shared/services/product.service';
+import { categoryQuery } from '../../../../shared/services/product.query';
+import { CommonModule } from '@angular/common';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { MessageModule } from 'primeng/message';
 
 @Component({
   selector: 'app-category-management',
@@ -27,6 +31,9 @@ import { ProductService } from '../../../../shared/services/product.service';
     PaginatorModule,
     InputTextModule,
     ButtonModule,
+    ProgressSpinnerModule,
+    MessageModule,
+    CommonModule,
   ],
   providers: [MessageService, ConfirmationService],
 })
@@ -35,46 +42,48 @@ export class CategoryManagement {
   filteredCategories: Category[] = [];
   loading = true;
 
-  // Form dialog properties
   categoryForm = false;
   showCategoryDetails = false;
   isEditMode = false;
   selectedCategory!: Category;
 
-  // Filter properties
+  categoryData = categoryQuery();
+
   searchTerm = '';
 
   private productService = inject(ProductService);
-  productCounts: { [categoryId: string]: number } = {};
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
 
-  constructor(
-    private confirmationService: ConfirmationService,
-    private messageService: MessageService,
-  ) {}
-
+  constructor() {
+    effect(() => {
+      const categories = this.categoryData.data() || [];
+      this.categories = categories;
+      this.filteredCategories = [...this.categories];
+    });
+  }
   ngOnInit() {
-    this.loadCategories();
+    // this.loadCategories();
   }
 
   loadCategories() {
     this.loading = true;
 
-    this.productService.getCategories().subscribe({
-      next: (categories) => {
-        
-        this.categories = categories;
-        this.filteredCategories = [...this.categories];
-        this.loading = false;
-      },
-      error: (error) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to load categories. Please try again later.',
-        });
-        this.loading = false;
-      },
-    });
+    // this.productService.getCategories().subscribe({
+    //   next: (categories) => {
+    //     this.categories = categories;
+    //     this.filteredCategories = [...this.categories];
+    //     this.loading = false;
+    //   },
+    //   error: (error) => {
+    //     this.messageService.add({
+    //       severity: 'error',
+    //       summary: 'Error',
+    //       detail: 'Failed to load categories. Please try again later.',
+    //     });
+    //     this.loading = false;
+    //   },
+    // });
   }
 
   applyFilters() {
@@ -142,8 +151,7 @@ export class CategoryManagement {
     });
   }
 
-  deleteCategory(category: Category) {
-  }
+  deleteCategory(category: Category) {}
 
   onCategorySave(categoryData: Category) {
     this.categoryForm = false;
@@ -163,25 +171,5 @@ export class CategoryManagement {
 
   onFormClose() {
     this.isEditMode = false;
-  }
-
-  getProductCount(categoryId: string): number {
-    return this.productCounts[categoryId] || 0;
-  }
-
-  getActiveProductCount(categoryId: string): number {
-    return Math.floor(this.getProductCount(categoryId) * 0.8);
-  }
-
-  private generateId(): string {
-    return Date.now().toString();
-  }
-
-  getStockSeverity(
-    stock: number,
-  ): 'info' | 'success' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    if (stock === 0) return 'danger';
-    if (stock <= 10) return 'warn';
-    return 'success';
   }
 }

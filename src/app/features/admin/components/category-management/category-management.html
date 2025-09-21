@@ -44,110 +44,122 @@
     </div>
   </div>
 
-  <!-- Categories Table -->
-  <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
-    <p-table
-      [tableStyle]="{ 'min-width': '60rem' }"
-      [value]="filteredCategories"
-      showGridlines
-      [paginator]="filteredCategories.length > 10"
-      [rows]="10"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first} out of {last}"
-      [rowsPerPageOptions]="[10, 25, 50]"
-      [loading]="loading"
-      styleClass="p-datatable-striped"
-      [globalFilterFields]="['name', 'description']"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Image</th>
-
-          <th pSortableColumn="name">
-            Category Name <p-sortIcon field="name"></p-sortIcon>
-          </th>
-
-          <th style="width: 120px">Actions</th>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="body" let-category>
-        <tr>
-          <td>
-            <div class="flex items-center gap-2">
-              <img
-                [src]="category.image_url[0]"
-                class="w-12 h-12 object-cover rounded-lg border"
-                alt=""
-              />
-            </div>
-          </td>
-          <td>
-            <div class="flex items-center gap-3">
-              <div>
-                <p class="font-medium text-gray-900">{{ category.name }}</p>
-              </div>
-            </div>
-          </td>
-          <td>
-            <div class="flex gap-1">
-              <button
-                pButton
-                type="button"
-                icon="pi pi-eye"
-                class="p-button-text p-button-sm p-button-secondary"
-                (click)="viewCategory(category)"
-                pTooltip="View Details"
-                tooltipPosition="top"
-              ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-pencil"
-                class="p-button-text p-button-sm p-button-info"
-                (click)="editCategory(category)"
-                pTooltip="Edit Category"
-                tooltipPosition="top"
-              ></button>
-              <button
-                pButton
-                type="button"
-                icon="pi pi-trash"
-                class="p-button-text p-button-sm p-button-danger"
-                (click)="confirmDelete(category)"
-                pTooltip="Delete Category"
-                tooltipPosition="top"
-                [disabled]="getProductCount(category.id) > 0"
-              ></button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="4" class="text-center py-12">
-            <div class="text-gray-500">
-              <i class="pi pi-tags text-5xl mb-4 block text-gray-300"></i>
-              <p class="text-lg font-medium mb-2">No categories found</p>
-              <p class="text-sm">
-                Try adjusting your search criteria or add a new category
-              </p>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="loadingbody">
-        <tr>
-          <td colspan="4" class="text-center py-8">
-            <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
-            <p class="mt-2 text-gray-600">Loading categories...</p>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
+  @if (categoryData.isLoading()) {
+  <div class="flex justify-center items-center py-8">
+    <div class="card flex justify-center">
+      <p-progress-spinner strokeWidth="6" fill="transparent" />
+    </div>
   </div>
+  } @if(categoryData.isError()){
+  <p-message severity="error">Failed to Fetch Categories</p-message>
+
+  }
+
+  <!-- Categories Table -->
+  @if (categoryData.data()) {
+  <div class="w-full flex flex-col gap-2 justify-center mb-4">
+    <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
+      <p-table
+        [tableStyle]="{ 'min-width': '60rem' }"
+        [value]="filteredCategories"
+        [paginator]="filteredCategories.length > 10"
+        [rows]="10"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} out of {last}"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        styleClass="p-datatable-striped"
+        [globalFilterFields]="['name', 'description']"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Image</th>
+
+            <th pSortableColumn="name">
+              Category Name <p-sortIcon field="name"></p-sortIcon>
+            </th>
+
+            <th style="width: 120px">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-category>
+          <tr>
+            <td>
+              <div class="flex items-center gap-2">
+                <img
+                  [src]="category.image_url[0]"
+                  class="w-10 h-10 object-cover rounded-lg"
+                  alt=""
+                />
+              </div>
+            </td>
+            <td>
+              <div class="flex items-center gap-3">
+                <div>
+                  <p class="font-medium text-gray-900">{{ category.name }}</p>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="flex gap-1">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-eye"
+                  class="p-button-text p-button-sm p-button-secondary"
+                  (click)="viewCategory(category)"
+                  pTooltip="View Details"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-text p-button-sm p-button-info"
+                  (click)="editCategory(category)"
+                  pTooltip="Edit Category"
+                  tooltipPosition="top"
+                ></button>
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-text p-button-sm p-button-danger"
+                  (click)="confirmDelete(category)"
+                  pTooltip="Delete Category"
+                  tooltipPosition="top"
+                ></button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="4" class="text-center py-12">
+              <div class="text-gray-500">
+                <i class="pi pi-tags text-5xl mb-4 block text-gray-300"></i>
+                <p class="text-lg font-medium mb-2">No categories found</p>
+                <p class="text-sm">
+                  Try adjusting your search criteria or add a new category
+                </p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="loadingbody">
+          <tr>
+            <td colspan="4" class="text-center py-8">
+              <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+              <p class="mt-2 text-gray-600">Loading categories...</p>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+  }
 </div>
 
 <!-- Category Form Dialog/Popup -->
@@ -219,28 +231,6 @@
             <p class="text-gray-800 leading-relaxed">
               {{ selectedCategory.description || 'No description available' }}
             </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-600 mb-1"
-              >Products in Category</label
-            >
-            <div class="flex items-center gap-2">
-              <span class="text-lg font-semibold text-blue-600"
-                >{{ getProductCount('') }}</span
-              >
-              <span class="text-gray-600">products</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Category Statistics -->
-        <div class="grid grid-cols-2 gap-4">
-          <div class="p-4 bg-blue-50 rounded-lg text-center">
-            <div class="text-2xl font-bold text-blue-600">
-              {{ getProductCount('') }}
-            </div>
-            <div class="text-sm text-blue-800">Total Products</div>
           </div>
         </div>
       </div>

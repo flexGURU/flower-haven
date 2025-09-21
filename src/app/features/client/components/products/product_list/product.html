@@ -27,10 +27,8 @@
           <div class="mb-6">
             <label class="block text-sm font-medium mb-2">Categories</label>
             <div class="space-y-2">
-              <div
-                *ngFor="let category of categories"
-                class="flex items-center"
-              >
+              @for (category of categories(); track category.id) {
+              <div class="flex items-center">
                 <p-checkbox
                   [(ngModel)]="selectedCategories"
                   [value]="category.id"
@@ -38,6 +36,7 @@
                 ></p-checkbox>
                 <label class="ml-2 text-sm">{{category.name}}</label>
               </div>
+              }
             </div>
           </div>
 

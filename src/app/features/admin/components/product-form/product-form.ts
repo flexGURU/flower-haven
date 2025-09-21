@@ -34,6 +34,7 @@ import { ProductService } from '../../../../shared/services/product.service';
 import { FirebaseService } from '../../services/firebase';
 import { MessageService } from 'primeng/api';
 import { TableModule } from 'primeng/table';
+import { categoryQuery } from '../../../../shared/services/product.query';
 
 @Component({
   selector: 'app-product-form',
@@ -72,17 +73,22 @@ export class ProductFormComponent {
   selectedFiles = signal<File[]>([]);
   selectedImagePreview = signal<string[]>([]);
 
+
+  categoryQueryData = categoryQuery();
+
   private productService = inject(ProductService);
   private firebaseService = inject(FirebaseService);
   private messageService = inject(MessageService);
 
   constructor(private fb: FormBuilder) {
-    effect(() => {});
+    effect(() => {
+
+      this.categories = this.categoryQueryData.data() ?? [];
+    });
   }
 
   ngOnInit() {
     this.initializeForm();
-    this.loadCategories();
 
     if (this.isEditMode && this.productData) {
       this.populateForm();
@@ -135,11 +141,7 @@ export class ProductFormComponent {
     }
   }
 
-  loadCategories() {
-    this.productService.getCategories().subscribe((reponse) => {
-      this.categories = reponse;
-    });
-  }
+ 
 
   onImageSelect(event: any) {
     if (event.files && event.files.length) {
