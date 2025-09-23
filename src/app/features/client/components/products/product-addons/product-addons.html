@@ -1,8 +1,16 @@
 <div class="">
+  @if (productQuery.isLoading()) {
+  <div class="flex justify-center items-center py-8">
+    <div class="card flex justify-center">
+      <p-progress-spinner strokeWidth="6" fill="transparent" />
+    </div>
+  </div>
+  }
   <div
     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
   >
-    <div *ngFor="let addon of addons" class="addon-item h-full">
+    @for (addon of addons(); track addon.id) {
+    <div class="addon-item h-full">
       <p-card class="h-full flex flex-col">
         <ng-template pTemplate="header">
           <img
@@ -14,7 +22,6 @@
         <div class="text-center flex-1 flex flex-col justify-between">
           <div>
             <h3 class="font-semibold text-lg mb-2">{{ addon.name }}</h3>
-            <!-- <p class="text-gray-600 mb-3">{{ addon.description }}</p> -->
           </div>
           <div>
             <p class="text-pink-600 font-bold text-xl mb-3">
@@ -32,26 +39,15 @@
         </div>
       </p-card>
     </div>
+
+    }
   </div>
 
-  <div class="mt-6 text-center" *ngIf="getSelectedAddons().length > 0">
-    <div class="bg-pink-50 p-4 rounded-lg">
-      <h4 class="font-semibold mb-2">Selected Add-ons:</h4>
-      <div class="space-y-1">
-        <div
-          *ngFor="let addon of getSelectedAddons()"
-          class="flex justify-between"
-        >
-          <span>{{addon.name}}</span>
-          <span class="font-semibold">KES {{addon.price}}</span>
-        </div>
-      </div>
-      <div class="border-t pt-2 mt-2">
-        <div class="flex justify-between font-bold text-lg">
-          <span>Total Add-ons:</span>
-          <span class="text-pink-600">KES {{getTotalAddonsPrice()}}</span>
-        </div>
-      </div>
-    </div>
-  </div>
+  <p-paginator
+    (onPageChange)="onPageChange($event)"
+    [first]="first()"
+    [rows]="15"
+    [totalRecords]="total()"
+    [rowsPerPageOptions]="[15,  30, 50]"
+  />
 </div>

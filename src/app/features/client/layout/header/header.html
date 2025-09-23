@@ -1,19 +1,17 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
-  <div class="container mx-auto px-4 md:py-2">
+  <div class="container mx-auto px-3 py-1 sm:py-2">
     <div class="flex items-center justify-between flex-wrap">
       <div class="flex items-center space-x-2">
         <a
           routerLink="/"
-          class="flex items-center gap-2 text-xl sm:text-2xl font-bold"
+          class="flex items-center gap-2 text-lg sm:text-2xl font-bold"
         >
           <img
             src="assets/fh.png"
-            class="w-14 h-14 sm:w-20 sm:h-20"
+            class="w-10 h-10 sm:w-16 sm:h-16 rounded-full object-cover"
             alt="Flower Haven Logo"
           />
-          <a href="">
-            <span>Floral Haven</span>
-          </a>
+          <span>Floral Haven</span>
         </a>
       </div>
 
@@ -25,7 +23,7 @@
       </button>
 
       <div
-        class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-3 sm:my-0 relative"
+        class="w-full sm:w-auto sm:flex-1 sm:max-w-md mx-auto my-2 sm:my-0 relative"
       >
         <div class="relative group w-full">
           <input
@@ -35,7 +33,7 @@
             pInputText
             (keyup.enter)="onSearch()"
             placeholder="Search flowers, gifts..."
-            class="w-full pl-4 pr-12 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
+            class="w-full pl-3 pr-10 py-1 sm:py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <button
             (click)="onSearch()"
@@ -46,7 +44,6 @@
         </div>
 
         @if (searchQuery()) {
-
         <p-popover #op>
           <div>
             <div *ngIf="products().length > 0; else noResults">
@@ -73,11 +70,11 @@
             </ng-template>
           </div>
         </p-popover>
-
         }
       </div>
 
-      <div class="flex items-center space-x-3 mt-3 sm:mt-0">
+      <!-- Cart -->
+      <div class="flex items-center space-x-3 mt-2 sm:mt-0">
         <div class="relative inline-block">
           <button
             pButton
@@ -102,19 +99,25 @@
     </div>
   </div>
 
+  <!-- NAVIGATION -->
   <nav class="bg-pink-600 text-white">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-3">
       <div
-        class="flex flex-col sm:flex-row sm:items-center sm:space-x-8 py-3"
-        [ngClass]="{'hidden': !isMobileMenuOpen, 'flex': isMobileMenuOpen, 'sm:flex': true}"
+        class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 py-1 sm:py-3"
+        [ngClass]="{
+          hidden: !isMobileMenuOpen,
+          flex: isMobileMenuOpen,
+          'sm:flex': true
+        }"
       >
         <a
           routerLink="/products"
-          class="hover:text-pink-200 transition-colors"
+          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
           >All Products</a
         >
 
+        <!-- Categories Dropdown -->
         <div class="relative group">
           <button
             class="hover:text-pink-200 transition-colors flex items-center"
@@ -137,13 +140,13 @@
 
         <a
           routerLink="/about"
-          class="hover:text-pink-200 transition-colors"
+          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
           >About</a
         >
         <a
           routerLink="/contact"
-          class="hover:text-pink-200 transition-colors"
+          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
           routerLinkActive="text-pink-200"
           >Contact</a
         >

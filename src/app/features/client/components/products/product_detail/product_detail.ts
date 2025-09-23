@@ -105,12 +105,12 @@ export class ProductDetailComponent {
       this.items.set([
         {
           label: 'Products',
-          icon: 'pi pi-fw pi-list',
+          icon: '',
           routerLink: '/products',
         },
         {
           label: this.product().name,
-          icon: 'pi pi-fw pi-tag',
+          icon: '',
           routerLink: `/product/${this.product().id}`,
         },
       ]);

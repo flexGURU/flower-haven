@@ -102,7 +102,6 @@ export class ProductComponent {
     this.productService.priceTo.set(this.prices()[1]);
     this.productService.page.set(this.currentPage);
     this.productService.limit.set(this.pageSize);
-    console.log('prices', this.prices());
   }
   clearFilters() {
     this.productService.page.set(1);

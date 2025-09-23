@@ -1,4 +1,13 @@
-import { Component, EventEmitter, inject, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  EventEmitter,
+  inject,
+  OnInit,
+  Output,
+  signal,
+} from '@angular/core';
 import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
@@ -9,8 +18,12 @@ import { InputNumber } from 'primeng/inputnumber';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
+import { productQuery } from '../../../../../shared/services/product.query';
+import { PaginatorModule } from 'primeng/paginator';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ScrollerModule } from 'primeng/scroller';
 
-export interface AddsOnInterface extends Product {
+interface Addon extends Product {
   selected: boolean;
 }
 
@@ -23,51 +36,48 @@ export interface AddsOnInterface extends Product {
     CardModule,
     CheckboxModule,
     FormsModule,
+    PaginatorModule,
+    ProgressSpinnerModule,
+    ScrollerModule,
   ],
   standalone: true,
 })
 export class ProductAddonsComponent {
   selected?: boolean;
-  addons: AddsOnInterface[] = [];
   quantities: { [key: string]: number } = {};
+  productQuery = productQuery();
   @Output() addonAddedToCart = new EventEmitter<Product>();
   @Output() addonRemovedFromCart = new EventEmitter<Product>();
+  selectedAddon = signal<Addon>({} as Addon);
+  first = signal(0);
+  addons = computed<Addon[]>(
+    () =>
+      this.productQuery
+        .data()
+        ?.filter((product) => product.is_add_on === true)
+        .map((product) => ({ ...product, selected: false })) || [],
+  );
 
-  constructor(private productService: ProductService) {}
-  private cartService = inject(CartService);
+  #productService = inject(ProductService);
+  total = computed(() => this.#productService.totalAddOns());
 
-  ngOnInit() {
-    this.productService.getAddOns().subscribe((products) => {
-      this.addons = products.map((product) => ({
-        ...product,
-        selected: false,
-      }));
-    });
+  constructor() {
+    effect(() => {});
   }
 
-  onAddonToggle(addon: AddsOnInterface) {
+  onAddonToggle(addon: Addon) {
     if (addon.selected) {
       this.addonAddedToCart.emit(addon);
     } else {
-      // Remove from cart
       if (addon) {
         this.addonRemovedFromCart.emit(addon);
       }
     }
   }
 
-  addAddonToCart(addon: Product) {
-    this.cartService.addToCart(addon);
-  }
-
-  getSelectedAddons() {
-    return this.addons.filter((addon) => addon.selected);
-  }
-
-  getTotalAddonsPrice(): number {
-    return this.getSelectedAddons().reduce(
-      (total, addon) => total + addon.price,
-      0,
-    );
+  onPageChange(event: any) {
+    this.#productService.page.set(event.page + 1);
+    this.#productService.limit.set(event.rows);
+    this.first.set(event.first);
   }
 }

@@ -27,6 +27,7 @@ export class ProductService {
   priceTo = signal(0);
   categoryId = signal<string[] | []>([]);
   totalProducts = signal(0);
+  totalAddOns = signal(0);
 
   initialProductFilters = {
     page: this.page(),
@@ -54,10 +55,8 @@ export class ProductService {
   });
 
   constructor(private http: HttpClient) {
-    this.fetchAddOns().subscribe();
     this.fetchMessageCards().subscribe();
     effect(() => {
-      console.log('url changed:', this.productBaseApiUrl());
     });
   }
 
@@ -78,6 +77,8 @@ export class ProductService {
       .pipe(
         tap((response) => {
           this.totalProducts.set(response.pagination.total);
+          const addOns = response.data.filter(product => product.is_add_on);
+          this.totalAddOns.set(addOns.length);
         }),
         map((response) => response.data),
         catchError((error) => {
@@ -174,16 +175,7 @@ export class ProductService {
         }),
       );
   }
-  fetchAddOns(): Observable<{ data: Product[] }> {
-    return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
-      tap((response) => {
-        const addons = response.data.filter(
-          (product) => product.is_add_on === true,
-        );
-        this.addOnsSubject.next(addons);
-      }),
-    );
-  }
+
 
   fetchMessageCards(): Observable<{ data: Product[] }> {
     return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(

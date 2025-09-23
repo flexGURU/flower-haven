@@ -4,8 +4,8 @@
     <p-progress-spinner strokeWidth="6" fill="transparent" />
   </div>
   } @if(!loading()){
-  <div class="container mx-auto px-4">
-    <div class="mt-16 card flex text-pink-600">
+  <div class="container md:mx-auto md:px-4">
+    <div class="mt-8 card flex text-pink-600">
       <p-breadcrumb [model]="items()" [home]="home" />
     </div>
     <div
@@ -15,9 +15,10 @@
         <p-image
           src="{{product().image_url}}"
           alt="{{product().name}}"
-          [preview]="true"
           class="rounded-lg shadow-lg max-w-full h-auto"
-        />
+        >
+          <ng-template pTemplate="indicator"> </ng-template>
+        </p-image>
       </div>
 
       <div class="lg:w-1/2 p-4">
@@ -244,13 +245,6 @@
         </div>
       </div>
     </div>
-    <!-- 
-    <div class="mt-12">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">
-        RECOMMENDED PRODUCT()S
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-    </div> -->
   </div>
   }
 </div>
