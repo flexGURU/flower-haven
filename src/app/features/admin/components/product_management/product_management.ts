@@ -87,8 +87,6 @@ export class ProductManagement {
     });
   }
 
-  private productService = inject(ProductService);
-
   onPageChange(event: any) {
     this.#productService.page.set(event.page + 1);
     this.#productService.limit.set(event.rows);
@@ -158,7 +156,7 @@ export class ProductManagement {
       },
       accept: () => {
         this.loading.set(true);
-        this.productService.deleteProduct(product.id!).subscribe({
+        this.#productService.deleteProduct(product.id!).subscribe({
           next: () => {
             this.loading.set(false);
             this.messageService.add({

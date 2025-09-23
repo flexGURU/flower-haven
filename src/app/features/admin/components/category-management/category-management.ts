@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Category } from '../../../../shared/models/models';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
@@ -49,6 +49,7 @@ export class CategoryManagement {
 
   categoryData = categoryQuery();
 
+  first = signal(0);
   searchTerm = '';
 
   private productService = inject(ProductService);
@@ -62,29 +63,8 @@ export class CategoryManagement {
       this.filteredCategories = [...this.categories];
     });
   }
-  ngOnInit() {
-    // this.loadCategories();
-  }
 
-  loadCategories() {
-    this.loading = true;
-
-    // this.productService.getCategories().subscribe({
-    //   next: (categories) => {
-    //     this.categories = categories;
-    //     this.filteredCategories = [...this.categories];
-    //     this.loading = false;
-    //   },
-    //   error: (error) => {
-    //     this.messageService.add({
-    //       severity: 'error',
-    //       summary: 'Error',
-    //       detail: 'Failed to load categories. Please try again later.',
-    //     });
-    //     this.loading = false;
-    //   },
-    // });
-  }
+  total = computed(() => this.categoryData.data()?.length || 0);
 
   applyFilters() {
     this.filteredCategories = this.categories.filter(
@@ -136,7 +116,7 @@ export class CategoryManagement {
               summary: 'Success',
               detail: `Category "${category.name}" has been deleted.`,
             });
-            this.loadCategories();
+            this.categoryData.refetch();
           },
           error: (err) => {
             console.error('Deletion failed:', err);
@@ -155,7 +135,7 @@ export class CategoryManagement {
 
   onCategorySave(categoryData: Category) {
     this.categoryForm = false;
-    this.loadCategories();
+    this.categoryData.refetch();
     this.messageService.add({
       severity: 'success',
       summary: 'Success',

@@ -3,7 +3,11 @@ import {
   importProvidersFrom,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import {
+  provideRouter,
+  withEnabledBlockingInitialNavigation,
+  withInMemoryScrolling,
+} from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
 
@@ -42,5 +46,13 @@ export const appConfig: ApplicationConfig = {
         options: { darkModeSelector: '.my-app-dark' },
       },
     }),
+    provideRouter(
+      routes,
+      withEnabledBlockingInitialNavigation(),
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'enabled',
+        anchorScrolling: 'enabled',
+      }),
+    ),
   ],
 };

@@ -1,13 +1,16 @@
-<div
-  class="fixed top-0 left-0 w-full z-50 transition-transform duration-300"
-  [class.-translate-y-full]="!isHeaderVisible()"
->
-  <app-header />
-</div>
+<div class="flex flex-col min-h-screen w-full max-w-full overflow-x-hidden">
+  <div
+    class="fixed top-0 left-0 w-full z-50 transition-transform duration-300"
+    [class.-translate-y-full]="!isHeaderVisible()"
+  >
+    <app-header />
+  </div>
 
-<!-- Adjust this margin-top to the height of your header -->
-<div class="mt-28 p-2">
-  <router-outlet></router-outlet>
-</div>
+  <main class="flex-1 mt-28 w-full max-w-full">
+    <div class="w-full max-w-full px-2 md:px-4">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
 
-<app-footer />
+  <app-footer />
+</div>
