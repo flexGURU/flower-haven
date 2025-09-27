@@ -20,6 +20,7 @@ import {
 } from '../../../../../shared/services/product.query';
 import { ProgressSpinner } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
+import { Meta, Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-product',
@@ -50,7 +51,6 @@ export class ProductComponent {
   pageTitle = 'Products';
   initialPriceTo = signal(50000);
   initialPriceFrom = signal(50);
-  
 
   categoryQueryData = categoryQuery();
 
@@ -77,15 +77,23 @@ export class ProductComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private messageService = inject(MessageService);
+  private title = inject(Title);
+  private meta = inject(Meta);
 
   total = computed(() => this.productService.totalProducts());
   constructor() {}
   ngOnInit() {
+    this.title.setTitle('Products - Floral Haven');
+    this.meta.updateTag({
+      name: 'description',
+      content:
+        'Explore our diverse range of products at Floral Haven. From fresh flowers to elegant arrangements, find the perfect choice for every occasion.',
+    });
+    this.productService.page.set(this.currentPage);
     this.productService.fetchProducts().subscribe((products) => {
       this.allProducts = products;
     });
   }
-
 
   categories = computed<Category[]>(() => this.categoryQueryData.data() ?? []);
 
