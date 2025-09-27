@@ -4,25 +4,29 @@ import { CarouselModule } from 'primeng/carousel';
 @Component({
   selector: 'app-testimonials',
   templateUrl: './testimonials.html',
-  imports: [CarouselModule, ]
+  imports: [CarouselModule],
 })
 export class TestimonialsComponent {
-
-     testimonials = [
+  testimonials = [
     {
       text: 'The flowers were absolutely beautiful and lasted for weeks! Will definitely order again.',
-      name: 'Sarah Johnson',
-      location: 'New York, NY',
+      name: 'Wanjiku Muthui',
+      location: 'Nairobi, Kenya',
     },
     {
       text: 'Amazing service and the subscription plan is so convenient. Fresh flowers every week!',
-      name: 'Michael Chen',
-      location: 'Los Angeles, CA',
+      name: 'Harry Odongo',
+      location: 'Kisumu, Kenya',
     },
     {
       text: 'Perfect for surprising my wife. The arrangement was exactly what I wanted.',
-      name: 'David Wilson',
-      location: 'Chicago, IL',
+      name: 'Eunice Wanjiru',
+      location: 'Mombasa, Kenya',
+    },
+    {
+      text: 'Such a delightful experience. The bouquet was fresh and elegantly arranged.',
+      name: 'Dennis Omari',
+      location: 'Nakuru, Kenya',
     },
   ];
   carouselResponsiveOptions = [
@@ -37,5 +41,4 @@ export class TestimonialsComponent {
       numScroll: 1,
     },
   ];
-
 }

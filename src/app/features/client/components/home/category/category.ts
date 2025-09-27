@@ -17,6 +17,10 @@ export class CategoryComponent {
 
   categories = computed<Category[]>(() => this.#categoryQueryData.data() ?? []);
 
+  constructor() {
+    effect(() => {});
+  }
+
   loadProductsByCategory(categoryId: string) {
     this.#productService.categoryId.set([categoryId]);
 

@@ -3,52 +3,52 @@
     <div class="flex flex-col lg:flex-row gap-8">
       <!-- Filters Sidebar -->
       <div class="lg:w-1/4 mt-16">
-        <div class="bg-white p-6 rounded-lg shadow-md sticky top-24">
-          <h3 class="text-lg font-semibold mb-4">Filters</h3>
+        <div class="top-24">
+          <div
+            class="bg-white p-6 rounded-lg shadow-md max-h-[80vh] overflow-y-auto"
+          >
+            <!-- <h3 class="text-lg font-semibold mb-4">Filters</h3>
 
-          <!-- Price Range -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2">Price Range</label>
-            <p-slider
-              class="cursor-pointer"
-              [(ngModel)]="priceRange"
-              [range]="true"
-              [min]="initialPriceFrom()"
-              [max]="initialPriceTo()"
-              (onChange)="applyFilters()"
-            ></p-slider>
-            <div class="flex justify-between text-sm text-gray-600 mt-2">
-              <span>KES {{priceRange()[0]}}</span>
-              <span>KES {{priceRange()[1]}}</span>
-            </div>
-          </div>
-
-          <!-- Categories -->
-          <div class="mb-6">
-            <label class="block text-sm font-medium mb-2">Categories</label>
-            <div class="space-y-2">
-              @for (category of categories(); track category.id) {
-              <div class="flex items-center">
-                <p-checkbox
-                  [(ngModel)]="selectedCategories"
-                  [value]="category.id"
-                  (onChange)="applyFilters()"
-                ></p-checkbox>
-                <label class="ml-2 text-sm">{{category.name}}</label>
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2">Price Range</label>
+              <p-slider
+                class="cursor-pointer"
+                [(ngModel)]="priceRange"
+                [range]="true"
+                [min]="initialPriceFrom()"
+                [max]="initialPriceTo()"
+                (onChange)="applyFilters()"
+              ></p-slider>
+              <div class="flex justify-between text-sm text-gray-600 mt-2">
+                <span>KES {{priceRange()[0]}}</span>
+                <span>KES {{priceRange()[1]}}</span>
               </div>
-              }
             </div>
+
+            <div class="mb-6">
+              <label class="block text-sm font-medium mb-2">Categories</label>
+              <div class="space-y-2">
+                @for (category of categories(); track category.id) {
+                <div class="flex items-center">
+                  <p-checkbox
+                    [(ngModel)]="selectedCategories"
+                    [value]="category.id"
+                    (onChange)="applyFilters()"
+                  ></p-checkbox>
+                  <label class="ml-2 text-sm">{{category.name}}</label>
+                </div>
+                }
+              </div>
+            </div> -->
+
+            <button
+              pButton
+              type="button"
+              label="All Products"
+              class="w-full"
+              (click)="clearFilters()"
+            ></button>
           </div>
-
-          <!-- Availability -->
-
-          <button
-            pButton
-            type="button"
-            label="Clear Filters"
-            class="p-button-outlined w-full"
-            (click)="clearFilters()"
-          ></button>
         </div>
       </div>
 

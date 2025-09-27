@@ -18,7 +18,10 @@ import { InputNumber } from 'primeng/inputnumber';
 import { CardModule } from 'primeng/card';
 import { CheckboxModule } from 'primeng/checkbox';
 import { FormsModule } from '@angular/forms';
-import { productQuery } from '../../../../../shared/services/product.query';
+import {
+  addonQuery,
+  productQuery,
+} from '../../../../../shared/services/product.query';
 import { PaginatorModule } from 'primeng/paginator';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ScrollerModule } from 'primeng/scroller';
@@ -45,17 +48,17 @@ interface Addon extends Product {
 export class ProductAddonsComponent {
   selected?: boolean;
   quantities: { [key: string]: number } = {};
-  productQuery = productQuery();
+  addOnsQuery = addonQuery();
   @Output() addonAddedToCart = new EventEmitter<Product>();
   @Output() addonRemovedFromCart = new EventEmitter<Product>();
   selectedAddon = signal<Addon>({} as Addon);
   first = signal(0);
   addons = computed<Addon[]>(
     () =>
-      this.productQuery
-        .data()
-        ?.filter((product) => product.is_add_on === true)
-        .map((product) => ({ ...product, selected: false })) || [],
+      (this.addOnsQuery.data() ?? []).map((addon) => ({
+        ...addon,
+        selected: false,
+      })) as Addon[],
   );
 
   #productService = inject(ProductService);

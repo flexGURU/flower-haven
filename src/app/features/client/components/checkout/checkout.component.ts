@@ -35,7 +35,7 @@ import { Cart } from '../cart/cart.model';
 export class CheckoutComponent {
   minDate: Date;
   timeSlots: any[] = [];
-  private readonly phoneNumber = '254799335366';
+  private readonly phoneNumber = '254794663008';
 
   @Input() sumOrderDetails!: Cart;
 

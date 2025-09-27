@@ -1,14 +1,14 @@
 <header class="bg-white shadow-md sticky top-0 z-50">
-  <div class="container mx-auto px-3 py-1 sm:py-2">
+  <div class="container mx-auto px-3 py-2 sm:py-3">
     <div class="flex items-center justify-between flex-wrap">
       <div class="flex items-center space-x-2">
         <a
           routerLink="/"
-          class="flex items-center gap-2 text-lg sm:text-2xl font-bold"
+          class="flex items-center gap-2 text-lg sm:text-2xl font-bold text-gray-800"
         >
           <img
             src="assets/fh.png"
-            class="w-10 h-10 sm:w-16 sm:h-16 rounded-full object-cover"
+            class="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover"
             alt="Flower Haven Logo"
           />
           <span>Floral Haven</span>
@@ -33,7 +33,7 @@
             pInputText
             (keyup.enter)="onSearch()"
             placeholder="Search flowers, gifts..."
-            class="w-full pl-3 pr-10 py-1 sm:py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
+            class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500"
           />
           <button
             (click)="onSearch()"
@@ -73,7 +73,6 @@
         }
       </div>
 
-      <!-- Cart -->
       <div class="flex items-center space-x-3 mt-2 sm:mt-0">
         <div class="relative inline-block">
           <button
@@ -99,11 +98,10 @@
     </div>
   </div>
 
-  <!-- NAVIGATION -->
-  <nav class="bg-pink-600 text-white">
+  <nav class="bg-gray-800 text-white">
     <div class="container mx-auto px-3">
       <div
-        class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 py-1 sm:py-3"
+        class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 py-2 sm:py-3"
         [ngClass]="{
           hidden: !isMobileMenuOpen,
           flex: isMobileMenuOpen,
@@ -112,15 +110,14 @@
       >
         <a
           routerLink="/products"
-          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
-          routerLinkActive="text-pink-200"
+          class="py-2 sm:py-0 hover:text-pink-400 transition-colors"
+          routerLinkActive="text-pink-400"
           >All Products</a
         >
 
-        <!-- Categories Dropdown -->
         <div class="relative group">
           <button
-            class="hover:text-pink-200 transition-colors flex items-center"
+            class="hover:text-pink-400 transition-colors flex items-center"
           >
             Categories
             <i class="pi pi-chevron-down ml-1"></i>
@@ -140,14 +137,14 @@
 
         <a
           routerLink="/about"
-          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
-          routerLinkActive="text-pink-200"
+          class="py-2 sm:py-0 hover:text-pink-400 transition-colors"
+          routerLinkActive="text-pink-400"
           >About</a
         >
         <a
           routerLink="/contact"
-          class="py-2 sm:py-0 hover:text-pink-200 transition-colors"
-          routerLinkActive="text-pink-200"
+          class="py-2 sm:py-0 hover:text-pink-400 transition-colors"
+          routerLinkActive="text-pink-400"
           >Contact</a
         >
       </div>

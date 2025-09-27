@@ -28,3 +28,29 @@ export const categoryQuery = () => {
 
   return query;
 };
+
+export const addonQuery = () => {
+  const productService = inject(ProductService);
+
+  const query = injectQuery(() => ({
+    queryKey: ['addons'],
+    queryFn: () => lastValueFrom(productService.fetchAddOns()),
+    staleTime: 300 * 1000,
+    refetchOnWindowFocus: true,
+  }));
+
+  return query;
+};
+
+export const messageCardQuery = () => {
+  const productService = inject(ProductService);
+
+  const query = injectQuery(() => ({
+    queryKey: ['message-cards'],
+    queryFn: () => lastValueFrom(productService.fetchMessageCards()),
+    staleTime: 300 * 1000,
+    refetchOnWindowFocus: true,
+  }));
+
+  return query;
+};

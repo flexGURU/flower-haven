@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+body {
+  font-family: "Inter", sans-serif;
+  min-height: 120vh; /* Added to allow scrolling and test the intersection observer */
+}
+/* Base styles for the transition */
+.animate-start {
+  transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Custom ease for a smooth feel */
+  opacity: 0;
+}
+
+/* Slide from Left Start State */
+.slide-left-start {
+  transform: translateX(-100px);
+}
+/* Slide from Right Start State */
+.slide-right-start {
+  transform: translateX(100px);
+}
+
+/* End State (Target) */
+.in-view {
+  opacity: 1;
+  transform: translateX(0) translateY(0);
+}
+
+/* Custom PButton styling for the demo */
+.p-button {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  color: #ffffff;
+  background-color: #d82d63; /* Using the 600 shade from mypreset.ts */
+  border: 1px solid #d82d63;
+  transition:
+    background-color 0.3s,
+    transform 0.2s;
+  cursor: pointer;
+}
+.p-button:hover {
+  background-color: #c31b50; /* Slightly darker on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(216, 45, 99, 0.3);
+}
+
+/* Utility classes for the dots to use the new color */
+.bg-pink-600-custom {
+  background-color: #d82d63;
+}
+.bg-pink-400-custom {
+  background-color: #f58ea9;
+}
+.bg-pink-200-custom {
+  background-color: #fbcfd0;
+}

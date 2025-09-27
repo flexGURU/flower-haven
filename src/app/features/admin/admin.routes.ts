@@ -14,21 +14,29 @@ export const adminRoutes: Routes = [
     component: AdminLayout,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
       {
         path: 'dashboard',
-        component: DashboardComponent,
         canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/dashboard/dashboard').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: 'products',
-        component: ProductManagement,
         canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/product_management/product_management').then(
+            (m) => m.ProductManagement,
+          ),
       },
       {
         path: 'categories',
-        component: CategoryManagement,
         canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/category-management/category-management').then(
+            (m) => m.CategoryManagement,
+          ),
       },
     ],
   },
