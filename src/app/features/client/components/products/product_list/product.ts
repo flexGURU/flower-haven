@@ -47,9 +47,10 @@ export class ProductComponent {
   totalProducts = 0;
   currentPage = 1;
   pageSize = 12;
-  pageTitle = 'All Products';
+  pageTitle = 'Products';
   initialPriceTo = signal(50000);
   initialPriceFrom = signal(50);
+  
 
   categoryQueryData = categoryQuery();
 
@@ -62,6 +63,8 @@ export class ProductComponent {
   selectedCategories = signal<string[]>([]);
   inStockOnly = false;
   sortBy = 'name';
+
+  selectCategory = signal('');
 
   sortOptions = [
     { label: 'Name A-Z', value: 'name' },
@@ -82,6 +85,7 @@ export class ProductComponent {
       this.allProducts = products;
     });
   }
+
 
   categories = computed<Category[]>(() => this.categoryQueryData.data() ?? []);
 

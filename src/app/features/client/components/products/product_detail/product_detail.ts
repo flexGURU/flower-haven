@@ -23,6 +23,7 @@ import { CartItem } from '../../cart/cart.model';
 import { MessageService } from 'primeng/api';
 import { Breadcrumb, BreadcrumbModule } from 'primeng/breadcrumb';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { messageCardQuery } from '../../../../../shared/services/product.query';
 
 @Component({
   selector: 'app-product-detail',
@@ -54,7 +55,7 @@ export class ProductDetailComponent {
   reviewCount = 24;
   averageRating = 4.5;
   addonsVisible = false;
-  messageCards: Product[] = [];
+  messageCardQuery = messageCardQuery();
   loading = signal(false);
 
   home = { icon: 'pi pi-home', routerLink: '/' };
@@ -121,6 +122,8 @@ export class ProductDetailComponent {
   private cartService = inject(CartService);
   private messageService = inject(MessageService);
 
+  messageCards = computed<Product[]>(() => this.messageCardQuery.data() ?? []);
+
   ngOnInit() {
     this.route.params.subscribe((params) => {
       this.loading.set(true);
@@ -133,9 +136,6 @@ export class ProductDetailComponent {
     });
 
     this.selectedStemSize = this.stemSizes[0];
-    this.productService.getMessageCards().subscribe((response) => {
-      this.messageCards = response;
-    });
   }
 
   loadProduct(id: string) {

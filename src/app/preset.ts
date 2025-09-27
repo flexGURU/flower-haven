@@ -2,22 +2,22 @@
 import { definePreset } from '@primeng/themes';
 import Aura from '@primeng/themes/aura';
 
-const LightPinkPreset = definePreset(Aura, {
+const MagentaPinkPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#fff5f7',  // very soft blush
-      100: '#ffe9ed',
-      200: '#ffd4da',
-      300: '#ffbfc9',
-      400: '#ffa9b8',
-      500: '#f75d7aff', // base pink
-      600: '#ff7a93', // slightly stronger, still soft
-      700: '#ff6280',
-      800: '#ff4a6e',
-      900: '#ff345d', // most saturated but not dark
-      950: '#ff1b4c', // deep accent but still bright
+      50:  '#fff0f7', // very light pink tint
+      100: '#ffd9eb',
+      200: '#ffb3d7',
+      300: '#ff8cc3',
+      400: '#f45ba4',
+      500: '#e4378d',
+      600: '#cc1e77', // <-- main brand color
+      700: '#a3185f',
+      800: '#7a1247',
+      900: '#510b2f',
+      950: '#2b0419', // deep accent
     },
   },
 });
 
-export default LightPinkPreset;
+export default MagentaPinkPreset;

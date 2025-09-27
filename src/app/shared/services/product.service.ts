@@ -56,16 +56,7 @@ export class ProductService {
 
   constructor(private http: HttpClient) {
     this.fetchMessageCards().subscribe();
-    effect(() => {
-    });
-  }
-
-  getAddOns() {
-    return this.addOnsSubject.asObservable();
-  }
-
-  getMessageCards() {
-    return this.messageCardSubject.asObservable();
+    effect(() => {});
   }
 
   fetchProducts(): Observable<Product[]> {
@@ -77,13 +68,40 @@ export class ProductService {
       .pipe(
         tap((response) => {
           this.totalProducts.set(response.pagination.total);
-          const addOns = response.data.filter(product => product.is_add_on);
-          this.totalAddOns.set(addOns.length);
         }),
         map((response) => response.data),
         catchError((error) => {
           console.error('Error fetching products:', error);
           return throwError(() => new Error('Failed to fetch products.'));
+        }),
+      );
+  }
+
+  fetchAddOns(): Observable<Product[]> {
+    return this.http
+      .get<{ data: Product[] }>(`${this.productApiUrl}?page=1&limit=500`)
+      .pipe(
+        map((response) => {
+          const addOns = response.data.filter((product) => product.is_add_on);
+          return addOns;
+        }),
+        catchError((error) => {
+          console.error('Error fetching add-ons:', error);
+          return throwError(() => new Error('Failed to fetch add-ons.'));
+        }),
+      );
+  }
+
+  fetchMessageCards(): Observable<Product[]> {
+    return this.http
+      .get<{ data: Product[] }>(`${this.productApiUrl}?page=1&limit=500`)
+      .pipe(
+        map((response) => {
+          return response.data.filter((product) => product.is_message_card);
+        }),
+        catchError((error) => {
+          console.error('Error fetching message cards:', error);
+          return throwError(() => new Error('Failed to fetch message cards.'));
         }),
       );
   }
@@ -174,18 +192,5 @@ export class ProductService {
           this.fetchCategories().subscribe();
         }),
       );
-  }
-
-
-  fetchMessageCards(): Observable<{ data: Product[] }> {
-    return this.http.get<{ data: Product[] }>(`${this.productApiUrl}`).pipe(
-      tap((response) => {
-        const messageCards = response.data.filter(
-          (product) => product.is_message_card === true,
-        );
-
-        this.messageCardSubject.next(messageCards);
-      }),
-    );
   }
 }

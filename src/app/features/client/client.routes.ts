@@ -10,10 +10,32 @@ export const clientRoutes: Routes = [
     path: '',
     component: ClientLayout,
     children: [
-      { path: '', component: HomeLayoutComponent },
-      { path: 'products', component: ProductComponent },
-      { path: 'product/:id', component: ProductDetailComponent },
-      { path: 'cart', component: CartComponent },
+      {
+        path: '',
+        loadComponent: () =>
+          import('./components/home/layout/layout').then(
+            (m) => m.HomeLayoutComponent,
+          ),
+      },
+      {
+        path: 'products',
+        loadComponent: () =>
+          import('./components/products/product_list/product').then(
+            (m) => m.ProductComponent,
+          ),
+      },
+      {
+        path: 'product/:id',
+        loadComponent: () =>
+          import('./components/products/product_detail/product_detail').then(
+            (m) => m.ProductDetailComponent,
+          ),
+      },
+      {
+        path: 'cart',
+        loadComponent: () =>
+          import('./components/cart/cart').then((m) => m.CartComponent),
+      },
       {
         path: 'contact',
         loadComponent: () =>
@@ -21,7 +43,7 @@ export const clientRoutes: Routes = [
             (m) => m.ContactComponent,
           ),
       },
-       {
+      {
         path: 'about',
         loadComponent: () =>
           import('./components/about/about.component').then(

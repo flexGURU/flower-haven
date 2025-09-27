@@ -8,8 +8,8 @@ import { CommonModule } from '@angular/common';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { CategoryComponent } from '../category/category';
 import { HeroComponent } from '../hero/hero';
-import { FeaturedComponent } from '../featured/featured';
 import { TestimonialsComponent } from '../testimonials/testimonials';
+import { FeaturedComponent } from '../featured/featured';
 
 @Component({
   selector: 'app-home',
@@ -18,7 +18,6 @@ import { TestimonialsComponent } from '../testimonials/testimonials';
     CarouselModule,
     CardModule,
     ButtonModule,
-    RouterLink,
     CommonModule,
     CategoryComponent,
     HeroComponent,

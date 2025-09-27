@@ -11,6 +11,10 @@ export class ClientLayout {
   isHeaderVisible = signal(true);
   private lastScrollTop = 0;
   private ticking = false;
+  private readonly phoneNumber = '254794663008';
+  private readonly encodedMessage = encodeURIComponent(
+    "Hello, I would like to inquire about Floral Haven's products and services.",
+  );
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
@@ -32,5 +36,12 @@ export class ClientLayout {
 
       this.ticking = true;
     }
+  }
+
+  navigateWhatsApp() {
+    window.open(
+      `https://wa.me/${this.phoneNumber}?text=${this.encodedMessage}`,
+      '_blank',
+    );
   }
 }
