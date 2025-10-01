@@ -57,11 +57,14 @@ type UpdateProductStem struct {
 }
 
 type ProductFilter struct {
-	Pagination  *pkg.Pagination
-	Search      *string
-	PriceFrom   *float64
-	PriceTo     *float64
-	CategoryIDs *[]int64
+	Pagination    *pkg.Pagination
+	Search        *string
+	PriceFrom     *float64
+	PriceTo       *float64
+	CategoryIDs   *[]int64
+	IsMessageCard *bool
+	IsFlowers     *bool
+	IsAddOn       *bool
 }
 
 type ProductRepository interface {
@@ -72,4 +75,6 @@ type ProductRepository interface {
 	DeleteProduct(ctx context.Context, id int64) error
 
 	GetDashboardData(ctx context.Context) (interface{}, error)
+	ListAddOns(ctx context.Context) ([]*Product, error)
+	ListMessageCards(ctx context.Context) ([]*Product, error)
 }

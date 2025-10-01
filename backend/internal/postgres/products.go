@@ -328,19 +328,25 @@ func (pr *ProductRepository) UpdateProduct(ctx context.Context, product *reposit
 
 func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repository.ProductFilter) ([]*repository.Product, *pkg.Pagination, error) {
 	paramsListProducts := generated.ListProductsParams{
-		Limit:       int32(filter.Pagination.PageSize),
-		Offset:      pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
-		Search:      pgtype.Text{Valid: false},
-		PriceFrom:   pgtype.Float8{Valid: false},
-		PriceTo:     pgtype.Float8{Valid: false},
-		CategoryIds: nil,
+		Limit:         int32(filter.Pagination.PageSize),
+		Offset:        pkg.Offset(filter.Pagination.Page, filter.Pagination.PageSize),
+		Search:        pgtype.Text{Valid: false},
+		PriceFrom:     pgtype.Float8{Valid: false},
+		PriceTo:       pgtype.Float8{Valid: false},
+		IsMessageCard: pgtype.Bool{Valid: false},
+		IsFlowers:     pgtype.Bool{Valid: false},
+		IsAddOn:       pgtype.Bool{Valid: false},
+		CategoryIds:   nil,
 	}
 
 	paramsCountProducts := generated.ListCountProductsParams{
-		Search:      pgtype.Text{Valid: false},
-		PriceFrom:   pgtype.Float8{Valid: false},
-		PriceTo:     pgtype.Float8{Valid: false},
-		CategoryIds: nil,
+		Search:        pgtype.Text{Valid: false},
+		PriceFrom:     pgtype.Float8{Valid: false},
+		PriceTo:       pgtype.Float8{Valid: false},
+		IsMessageCard: pgtype.Bool{Valid: false},
+		IsFlowers:     pgtype.Bool{Valid: false},
+		IsAddOn:       pgtype.Bool{Valid: false},
+		CategoryIds:   nil,
 	}
 
 	if filter.Search != nil {
@@ -369,6 +375,21 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 			paramsListProducts.CategoryIds = append(paramsListProducts.CategoryIds, int32(id))
 			paramsCountProducts.CategoryIds = append(paramsCountProducts.CategoryIds, int32(id))
 		}
+	}
+
+	if filter.IsMessageCard != nil {
+		paramsListProducts.IsMessageCard = pgtype.Bool{Valid: true, Bool: *filter.IsMessageCard}
+		paramsCountProducts.IsMessageCard = pgtype.Bool{Valid: true, Bool: *filter.IsMessageCard}
+	}
+
+	if filter.IsFlowers != nil {
+		paramsListProducts.IsFlowers = pgtype.Bool{Valid: true, Bool: *filter.IsFlowers}
+		paramsCountProducts.IsFlowers = pgtype.Bool{Valid: true, Bool: *filter.IsFlowers}
+	}
+
+	if filter.IsAddOn != nil {
+		paramsListProducts.IsAddOn = pgtype.Bool{Valid: true, Bool: *filter.IsAddOn}
+		paramsCountProducts.IsAddOn = pgtype.Bool{Valid: true, Bool: *filter.IsAddOn}
 	}
 
 	generatedProducts, err := pr.queries.ListProducts(ctx, paramsListProducts)
@@ -436,6 +457,132 @@ func (pr *ProductRepository) ListProducts(ctx context.Context, filter *repositor
 	}
 
 	return products, pkg.CalculatePagination(uint32(totalCount), filter.Pagination.PageSize, filter.Pagination.Page), nil
+}
+
+func (pr *ProductRepository) ListAddOns(ctx context.Context) ([]*repository.Product, error) {
+	generatedProducts, err := pr.queries.ListAddOns(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing products: %s", err.Error())
+	}
+
+	products := make([]*repository.Product, len(generatedProducts))
+	for i, p := range generatedProducts {
+		product := &repository.Product{
+			ID:            uint32(p.ID),
+			Name:          p.Name,
+			Description:   p.Description,
+			Price:         pkg.PgTypeNumericToFloat64(p.Price),
+			CategoryID:    uint32(p.CategoryID),
+			ImageUrl:      p.ImageUrl,
+			HasStems:      p.HasStems,
+			IsMessageCard: p.IsMessageCard,
+			IsFlowers:     p.IsFlowers,
+			IsAddOn:       p.IsAddOn,
+			StockQuantity: p.StockQuantity,
+			DeletedAt:     nil,
+			CreatedAt:     p.CreatedAt,
+			CategoryData:  nil,
+		}
+
+		if p.CategoryID_2.Valid {
+			product.CategoryData = &repository.Category{
+				ID:          uint32(p.CategoryID_2.Int64),
+				Name:        p.CategoryName.String,
+				Description: p.CategoryDescription.String,
+			}
+		}
+
+		// Unmarshal stems JSON
+		if p.Stems != nil {
+			var stems []repository.ProductStem
+
+			switch v := p.Stems.(type) {
+			case []byte:
+				if err := json.Unmarshal(v, &stems); err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			case []interface{}:
+				raw, err := json.Marshal(v)
+				if err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error marshaling stems interface{}: %s", err.Error())
+				}
+				if err := json.Unmarshal(raw, &stems); err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			default:
+				return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "unexpected stems type: %T", p.Stems)
+			}
+
+			product.Stems = stems
+		}
+
+		products[i] = product
+	}
+
+	return products, nil
+}
+
+func (pr *ProductRepository) ListMessageCards(ctx context.Context) ([]*repository.Product, error) {
+	generatedProducts, err := pr.queries.ListMessageCards(ctx)
+	if err != nil {
+		return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error listing products: %s", err.Error())
+	}
+
+	products := make([]*repository.Product, len(generatedProducts))
+	for i, p := range generatedProducts {
+		product := &repository.Product{
+			ID:            uint32(p.ID),
+			Name:          p.Name,
+			Description:   p.Description,
+			Price:         pkg.PgTypeNumericToFloat64(p.Price),
+			CategoryID:    uint32(p.CategoryID),
+			ImageUrl:      p.ImageUrl,
+			HasStems:      p.HasStems,
+			IsMessageCard: p.IsMessageCard,
+			IsFlowers:     p.IsFlowers,
+			IsAddOn:       p.IsAddOn,
+			StockQuantity: p.StockQuantity,
+			DeletedAt:     nil,
+			CreatedAt:     p.CreatedAt,
+			CategoryData:  nil,
+		}
+
+		if p.CategoryID_2.Valid {
+			product.CategoryData = &repository.Category{
+				ID:          uint32(p.CategoryID_2.Int64),
+				Name:        p.CategoryName.String,
+				Description: p.CategoryDescription.String,
+			}
+		}
+
+		// Unmarshal stems JSON
+		if p.Stems != nil {
+			var stems []repository.ProductStem
+
+			switch v := p.Stems.(type) {
+			case []byte:
+				if err := json.Unmarshal(v, &stems); err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			case []interface{}:
+				raw, err := json.Marshal(v)
+				if err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error marshaling stems interface{}: %s", err.Error())
+				}
+				if err := json.Unmarshal(raw, &stems); err != nil {
+					return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "error unmarshaling stems: %s", err.Error())
+				}
+			default:
+				return nil, pkg.Errorf(pkg.INTERNAL_ERROR, "unexpected stems type: %T", p.Stems)
+			}
+
+			product.Stems = stems
+		}
+
+		products[i] = product
+	}
+
+	return products, nil
 }
 
 func (pr *ProductRepository) DeleteProduct(ctx context.Context, id int64) error {

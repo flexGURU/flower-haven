@@ -43,6 +43,7 @@ func (s *Server) createOrderHandler(ctx *gin.Context) {
 		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
 		return
 	}
+
 	if paymentStatus != "success" {
 		ctx.JSON(http.StatusBadRequest, errorResponse(pkg.Errorf(pkg.INVALID_ERROR, "payment not successful")))
 		return

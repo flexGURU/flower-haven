@@ -89,11 +89,14 @@ func (s *Server) updateProductHandler(ctx *gin.Context) {
 
 func (s *Server) listProductsHandler(ctx *gin.Context) {
 	filter := &repository.ProductFilter{
-		Pagination:  &pkg.Pagination{},
-		Search:      nil,
-		PriceFrom:   nil,
-		PriceTo:     nil,
-		CategoryIDs: nil,
+		Pagination:    &pkg.Pagination{},
+		Search:        nil,
+		PriceFrom:     nil,
+		PriceTo:       nil,
+		CategoryIDs:   nil,
+		IsMessageCard: nil,
+		IsFlowers:     nil,
+		IsAddOn:       nil,
 	}
 
 	pageNoStr := ctx.DefaultQuery("page", "1")
@@ -149,6 +152,33 @@ func (s *Server) listProductsHandler(ctx *gin.Context) {
 		filter.PriceTo = &priceToFloat
 	}
 
+	if isMessageCard := ctx.Query("is_message_card"); isMessageCard != "" {
+		isMessageCardBool, err := pkg.StringToBool(isMessageCard)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		filter.IsMessageCard = &isMessageCardBool
+	}
+
+	if isFlowers := ctx.Query("is_flowers"); isFlowers != "" {
+		isFlowersBool, err := pkg.StringToBool(isFlowers)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		filter.IsFlowers = &isFlowersBool
+	}
+
+	if isAddOn := ctx.Query("is_add_on"); isAddOn != "" {
+		isAddOnBool, err := pkg.StringToBool(isAddOn)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		filter.IsAddOn = &isAddOnBool
+	}
+
 	products, pagination, err := s.repo.ProductRepository.ListProducts(ctx, filter)
 	if err != nil {
 		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
@@ -156,6 +186,26 @@ func (s *Server) listProductsHandler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"data": products, "pagination": pagination})
+}
+
+func (s *Server) listAddOnProductsHandler(ctx *gin.Context) {
+	products, err := s.repo.ProductRepository.ListAddOns(ctx)
+	if err != nil {
+		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": products})
+}
+
+func (s *Server) listMessageCardProductsHandler(ctx *gin.Context) {
+	products, err := s.repo.ProductRepository.ListMessageCards(ctx)
+	if err != nil {
+		ctx.JSON(pkg.ErrorToStatusCode(err), errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"data": products})
 }
 
 func (s *Server) getProductHandler(ctx *gin.Context) {

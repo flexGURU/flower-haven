@@ -612,7 +612,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "11"
+									"value": "45"
 								}
 							]
 						}
@@ -625,7 +625,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/products?page=1&limit=10",
+							"raw": "{{base_url}}/products?page=1&limit=10&is_message_card=true",
 							"host": [
 								"{{base_url}}"
 							],
@@ -665,6 +665,20 @@
 									"key": "category_id",
 									"value": "2",
 									"disabled": true
+								},
+								{
+									"key": "is_add_on",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "is_message_card",
+									"value": "true"
+								},
+								{
+									"key": "is_flowers",
+									"value": "true",
+									"disabled": true
 								}
 							]
 						}
@@ -688,7 +702,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{ \n    // \"name\": \"Chocolate Bar\",\n    // \"description\": \"Milk Chocolate\", \n    // \"price\": 1.50 ,\n    // \"category_id\": 1 \n    \"image_url\": [\"tea.jpg\", \"bev1.jpg\"],\n    \"stems\": [\n        {\n            \"stem_count\": 100,\n            \"price\": 1.50\n        },\n         {\n            \"stem_count\": 10,\n            \"price\": 120.50\n        }\n    ]\n    // \"stock_quantity\": 10\n}",
+							"raw": "{ \n    // \"name\": \"Chocolate Bar\",\n    // \"description\": \"Milk Chocolate\", \n    // \"price\": 1.50 ,\n    // \"category_id\": 1 \n    // \"image_url\": [\"https://firebasestorage.googleapis.com/v0/b/copper-freedom-388209.appspot.com/o/postIMG%2F1758440604399_s-l1600.webp?alt=media&token=001f6f55-23ce-4675-b69f-2e1057f6be90\"],\n    // \"stems\": []\n    \"has_stems\": false\n    // \"stems\": [\n    //     {\n    //         \"stem_count\": 100,\n    //         \"price\": 1.50\n    //     },\n    //      {\n    //         \"stem_count\": 10,\n    //         \"price\": 120.50\n    //     }\n    // ]\n    // \"stock_quantity\": 10\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -707,7 +721,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "11"
+									"value": "37"
 								}
 							]
 						}
@@ -778,6 +792,42 @@
 									"key": "id",
 									"value": "3"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List AddOns",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/add-ons",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"add-ons"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Message Cards",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/products/message-cards",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"message-cards"
 							]
 						}
 					},
@@ -1790,9 +1840,21 @@
 				},
 				{
 					"name": "Get Paystack Payment",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
 						"method": "GET",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
 							"raw": "{{base_url}}/paystack/payments/:reference",
 							"host": [
@@ -1940,6 +2002,16 @@
 		{
 			"key": "access_token",
 			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "production_url",
+			"value": "https://flower-haven-production.up.railway.app/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "develpment_url",
+			"value": "https://flower-haven-development.up.railway.app/api/v1",
 			"type": "string"
 		}
 	]

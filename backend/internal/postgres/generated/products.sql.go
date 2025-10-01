@@ -143,26 +143,44 @@ WHERE
         OR p.price >= $2
     )
     AND (
-        $3::float IS NULL 
-        OR p.price <= $3
+        $3::boolean IS NULL 
+        OR p.is_message_card = $3
     )
     AND (
-        $4::int[] IS NULL 
-        OR p.category_id = ANY($4::int[])
+        $4::boolean IS NULL 
+        OR p.is_flowers = $4
+    )
+    AND (
+        $5::boolean IS NULL 
+        OR p.is_add_on = $5
+    )
+    AND (
+        $6::float IS NULL 
+        OR p.price <= $6
+    )
+    AND (
+        $7::int[] IS NULL 
+        OR p.category_id = ANY($7::int[])
     )
 `
 
 type ListCountProductsParams struct {
-	Search      interface{}   `json:"search"`
-	PriceFrom   pgtype.Float8 `json:"price_from"`
-	PriceTo     pgtype.Float8 `json:"price_to"`
-	CategoryIds []int32       `json:"category_ids"`
+	Search        interface{}   `json:"search"`
+	PriceFrom     pgtype.Float8 `json:"price_from"`
+	IsMessageCard pgtype.Bool   `json:"is_message_card"`
+	IsFlowers     pgtype.Bool   `json:"is_flowers"`
+	IsAddOn       pgtype.Bool   `json:"is_add_on"`
+	PriceTo       pgtype.Float8 `json:"price_to"`
+	CategoryIds   []int32       `json:"category_ids"`
 }
 
 func (q *Queries) ListCountProducts(ctx context.Context, arg ListCountProductsParams) (int64, error) {
 	row := q.db.QueryRow(ctx, listCountProducts,
 		arg.Search,
 		arg.PriceFrom,
+		arg.IsMessageCard,
+		arg.IsFlowers,
+		arg.IsAddOn,
 		arg.PriceTo,
 		arg.CategoryIds,
 	)
@@ -204,25 +222,40 @@ WHERE
         OR p.price >= $2
     )
     AND (
-        $3::float IS NULL 
-        OR p.price <= $3
+        $3::boolean IS NULL 
+        OR p.is_message_card = $3
     )
     AND (
-        $4::int[] IS NULL 
-        OR p.category_id = ANY($4::int[])
+        $4::boolean IS NULL 
+        OR p.is_flowers = $4
+    )
+    AND (
+        $5::boolean IS NULL 
+        OR p.is_add_on = $5
+    )
+    AND (
+        $6::float IS NULL 
+        OR p.price <= $6
+    )
+    AND (
+        $7::int[] IS NULL 
+        OR p.category_id = ANY($7::int[])
     )
 GROUP BY p.id, c.id, c.name, c.description
 ORDER BY p.created_at DESC
-LIMIT $6 OFFSET $5
+LIMIT $9 OFFSET $8
 `
 
 type ListProductsParams struct {
-	Search      interface{}   `json:"search"`
-	PriceFrom   pgtype.Float8 `json:"price_from"`
-	PriceTo     pgtype.Float8 `json:"price_to"`
-	CategoryIds []int32       `json:"category_ids"`
-	Offset      int32         `json:"offset"`
-	Limit       int32         `json:"limit"`
+	Search        interface{}   `json:"search"`
+	PriceFrom     pgtype.Float8 `json:"price_from"`
+	IsMessageCard pgtype.Bool   `json:"is_message_card"`
+	IsFlowers     pgtype.Bool   `json:"is_flowers"`
+	IsAddOn       pgtype.Bool   `json:"is_add_on"`
+	PriceTo       pgtype.Float8 `json:"price_to"`
+	CategoryIds   []int32       `json:"category_ids"`
+	Offset        int32         `json:"offset"`
+	Limit         int32         `json:"limit"`
 }
 
 type ListProductsRow struct {
@@ -304,6 +337,9 @@ func (q *Queries) ListProducts(ctx context.Context, arg ListProductsParams) ([]L
 	rows, err := q.db.Query(ctx, listProducts,
 		arg.Search,
 		arg.PriceFrom,
+		arg.IsMessageCard,
+		arg.IsFlowers,
+		arg.IsAddOn,
 		arg.PriceTo,
 		arg.CategoryIds,
 		arg.Offset,
