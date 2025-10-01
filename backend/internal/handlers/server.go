@@ -131,6 +131,8 @@ func (s *Server) setUpRoutes() {
 
 	// helpers routes
 	authRoute.GET("/dashboard", s.getDashboardDataHandler)
+	v1.GET("/products/add-ons", s.listAddOnProductsHandler)
+	v1.GET("/products/message-cards", s.listMessageCardProductsHandler)
 
 	s.srv = &http.Server{
 		Addr:         s.config.SERVER_ADDRESS,

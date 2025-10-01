@@ -119,6 +119,18 @@ WHERE
         OR p.price >= sqlc.narg('price_from')
     )
     AND (
+        sqlc.narg('is_message_card')::boolean IS NULL 
+        OR p.is_message_card = sqlc.narg('is_message_card')
+    )
+    AND (
+        sqlc.narg('is_flowers')::boolean IS NULL 
+        OR p.is_flowers = sqlc.narg('is_flowers')
+    )
+    AND (
+        sqlc.narg('is_add_on')::boolean IS NULL 
+        OR p.is_add_on = sqlc.narg('is_add_on')
+    )
+    AND (
         sqlc.narg('price_to')::float IS NULL 
         OR p.price <= sqlc.narg('price_to')
     )
@@ -143,6 +155,18 @@ WHERE
     AND (
         sqlc.narg('price_from')::float IS NULL 
         OR p.price >= sqlc.narg('price_from')
+    )
+    AND (
+        sqlc.narg('is_message_card')::boolean IS NULL 
+        OR p.is_message_card = sqlc.narg('is_message_card')
+    )
+    AND (
+        sqlc.narg('is_flowers')::boolean IS NULL 
+        OR p.is_flowers = sqlc.narg('is_flowers')
+    )
+    AND (
+        sqlc.narg('is_add_on')::boolean IS NULL 
+        OR p.is_add_on = sqlc.narg('is_add_on')
     )
     AND (
         sqlc.narg('price_to')::float IS NULL 
