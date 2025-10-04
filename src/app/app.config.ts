@@ -5,6 +5,7 @@ import {
 } from '@angular/core';
 import {
   provideRouter,
+  withComponentInputBinding,
   withEnabledBlockingInitialNavigation,
   withInMemoryScrolling,
 } from '@angular/router';
@@ -48,6 +49,7 @@ export const appConfig: ApplicationConfig = {
     }),
     provideRouter(
       routes,
+      withComponentInputBinding(),
       withEnabledBlockingInitialNavigation(),
       withInMemoryScrolling({
         scrollPositionRestoration: 'enabled',

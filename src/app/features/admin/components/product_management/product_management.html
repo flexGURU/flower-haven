@@ -28,11 +28,12 @@
           (input)="applyFilters()"
         />
       </div>
+      @if (!productToggleOptions()) {
       <div>
         <label class="block text-sm font-medium mb-2">Category</label>
         <p-select
           [(ngModel)]="selectedCategory"
-          [options]="categoryOptions"
+          [options]="categoryOptions()"
           optionLabel="name"
           optionValue="id"
           placeholder="All Categories"
@@ -40,8 +41,8 @@
           (onChange)="applyFilters()"
         ></p-select>
       </div>
-
-      <div>
+      } @if (!productToggleOptions()) {
+      <!-- <div>
         <label class="block text-sm font-medium mb-2">Stock Status</label>
         <p-select
           [(ngModel)]="stockFilter"
@@ -52,7 +53,8 @@
           class="w-full"
           (onChange)="applyFilters()"
         ></p-select>
-      </div>
+      </div> -->
+      }
 
       <div class="flex items-end">
         <button
@@ -64,9 +66,29 @@
         ></button>
       </div>
     </div>
+    <div class="mt-4 flex items-center gap-4">
+      <p-radioButton
+        name="addons"
+        value="addOn"
+        [(ngModel)]="productToggleOptions"
+        (onClick)="toggleProducts()"
+        label="Show Add-Ons"
+      ></p-radioButton>
+      <label for="showAddOns">Show Add-Ons</label>
+
+      <p-radioButton
+        name="addons"
+        value="messageCard"
+        [(ngModel)]="productToggleOptions"
+        (onClick)="toggleProducts()"
+        label="Hide Add-Ons"
+      ></p-radioButton>
+      <label for="showMessageCards">Show Message Cards</label>
+    </div>
   </div>
 
-  @if (productQueryData.isLoading()) {
+  @if (productQueryData.isLoading() || addOnsQueryData.isLoading() ||
+  messageCardsQueryData.isLoading()) {
   <div class="flex justify-center items-center py-8">
     <div class="card flex justify-center">
       <p-progress-spinner strokeWidth="6" fill="transparent" />
@@ -80,7 +102,7 @@
     <div class="bg-white rounded-lg shadow-sm px-5 flex justify-center">
       <p-table
         [tableStyle]="{ 'min-width': '80rem' }"
-        [value]="filteredProducts"
+        [value]="filteredProducts()"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="{first} out of  {totalRecords}"
         styleClass="p-datatable-striped"

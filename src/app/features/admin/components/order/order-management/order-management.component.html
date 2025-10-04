@@ -1,0 +1,95 @@
+<div class="">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-800 m-2">Order Management</h1>
+    </div>
+  </div>
+
+  @if (ordersData.isLoading()) {
+    <div class="flex justify-center items-center py-8">
+      <div class="card flex justify-center">
+        <p-progress-spinner strokeWidth="6" fill="transparent" />
+      </div>
+    </div>
+  }
+  @if (ordersData.isError()) {
+    <p-message severity="error">Failed to Fetch Categories</p-message>
+  }
+
+  @if (ordersData.data()) {
+    <div class="w-full flex flex-col gap-2 justify-center mb-4">
+      <div class="bg-white rounded-lg shadow-sm px-5 py-2 flex justify-center">
+        <p-table
+          [tableStyle]="{ 'min-width': '60rem' }"
+          [value]="ordersData.data() ?? []"
+          [paginator]="(ordersData.data()?.length ?? 0) > 10"
+          [rows]="10"
+          [showCurrentPageReport]="true"
+          currentPageReportTemplate="{first} out of {last}"
+          [rowsPerPageOptions]="[10, 25, 50]"
+          styleClass="p-datatable-striped"
+          [globalFilterFields]="['name', 'description']"
+          selectionMode="single"
+          (onRowSelect)="onOrderSelect($event)"
+          dataKey="id"
+
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th pSortableColumn="user_name">
+                Customer Name <p-sortIcon field="user_name"></p-sortIcon>
+              </th>
+              <th pSortableColumn="user_phone_number">
+                Phone Number <p-sortIcon field="user_phone_number"></p-sortIcon>
+              </th>
+              <th pSortableColumn="total_amount">
+                Total Amount <p-sortIcon field="total_amount"></p-sortIcon>
+              </th>
+              <th pSortableColumn="created_at">
+                Created At <p-sortIcon field="created_at"></p-sortIcon>
+              </th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-order>
+            <tr  [pSelectableRow]="order">
+              <td>
+                {{ order.user_name }}
+              </td>
+              <td>
+                {{ order.user_phone_number }}
+              </td>
+              <td>
+                {{ order.total_amount }}
+              </td>
+              <td>{{ order.created_at | date: "medium" }}</td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="4" class="text-center py-12">
+                <div class="text-gray-500">
+                  <i class="pi pi-tags text-5xl mb-4 block text-gray-300"></i>
+                  <p class="text-lg font-medium mb-2">No Orders found</p>
+                  <p class="text-sm">
+                    Try adjusting your search criteria or add a new order
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td colspan="4" class="text-center py-8">
+                <i class="pi pi-spin pi-spinner text-2xl text-blue-500"></i>
+                <p class="mt-2 text-gray-600">Loading order...</p>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  }
+</div>

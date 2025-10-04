@@ -28,12 +28,14 @@ export class CartService {
     if (existingItemIndex > -1) {
       currentCart.items[existingItemIndex].quantity += quantity;
     } else {
-      currentCart.items.push({ product, quantity });
+      currentCart.items.push({ product, quantity, amount: product.price * quantity });
     }
 
     this.updateCart(currentCart);
   }
 
+
+  
   removeFromCart(productId: string): void {
     const currentCart = this.cartSubject.value;
 

@@ -86,9 +86,9 @@
             Cart
           </button>
 
-          @if (cartItemCount > 0) {
+          @if (cartItemCount() > 0) {
           <p-badge
-            [value]="cartItemCount.toString()"
+            [value]="cartItemCount().toString()"
             severity="danger"
             class="absolute -top-2 -right-1 z-10"
           ></p-badge>
@@ -98,7 +98,7 @@
     </div>
   </div>
 
-  <nav class="bg-gray-800 text-white">
+  <nav class="bg-[#fbcfe8] text-slate-800">
     <div class="container mx-auto px-3">
       <div
         class="flex flex-col sm:flex-row sm:items-center sm:space-x-6 py-2 sm:py-3"
@@ -127,8 +127,8 @@
           >
             <a
               *ngFor="let category of categories()"
-              [routerLink]="['/category', category.id]"
-              class="block px-4 py-2 hover:bg-pink-50 hover:text-pink-600"
+              class="block px-1 py-2 hover:bg-pink-50 hover:text-pink-600 cursor-pointer"
+              (click)="viewCategory(category.id!)"
             >
               {{ category.name }}
             </a>

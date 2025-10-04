@@ -17,11 +17,14 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ProductFormComponent } from '../product-form/product-form';
 import { DialogModule } from 'primeng/dialog';
 import {
+  addonQuery,
   categoryQuery,
+  messageCardQuery,
   productQuery,
 } from '../../../../shared/services/product.query';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { RadioButtonModule } from 'primeng/radiobutton';
 
 @Component({
   selector: 'app-product-management',
@@ -44,24 +47,32 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
     ProgressSpinnerModule,
     PaginatorModule,
     MessageModule,
+    RadioButtonModule,
   ],
   providers: [ConfirmationService, MessageService],
 })
 export class ProductManagement {
   products: Product[] = [];
-  filteredProducts: Product[] = [];
   productForm = signal(false);
   productQueryData = productQuery();
+  addOnsQueryData = addonQuery();
+  messageCardsQueryData = messageCardQuery();
   categoryQueryData = categoryQuery();
   first = signal(0);
   loading = signal(false);
+  productToggleOptions = signal<'addOn' | 'messageCard' | ''>('');
 
-  // Filters
   searchTerm = signal('');
   selectedCategory = signal('');
   stockFilter = signal('');
 
-  categoryOptions: any[] = [];
+  categoryOptions = computed(() => {
+    return [
+      { name: 'All Categories', id: '001' },
+      ...(this.categoryQueryData.data() ?? []),
+    ];
+  });
+
   stockOptions = [
     { label: 'In Stock', value: 'inStock' },
     { label: 'Out of Stock', value: 'outOfStock' },
@@ -70,22 +81,55 @@ export class ProductManagement {
 
   #productService = inject(ProductService);
 
+  showAddonsToggle() {}
+
   total = computed(() => this.#productService.totalProducts());
+
   constructor(
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
-  ) {
-    effect(() => {
-      const products = this.productQueryData.data() ?? [];
-      this.products = products;
-      this.filteredProducts = [...products];
+  ) {}
 
-      this.categoryOptions = [
-        { name: 'All Categories', id: '' },
-        ...(this.categoryQueryData.data() ?? []),
-      ];
-    });
-  }
+  filteredProducts = computed<Product[]>(() => {
+    let products: Product[] = [];
+
+    if (this.productToggleOptions() === 'addOn') {
+      products = this.addOnsQueryData.data() ?? [];
+    } else if (this.productToggleOptions() === 'messageCard') {
+      products = this.messageCardsQueryData.data() ?? [];
+    } else {
+      return this.productQueryData.data() ?? [];
+    }
+
+    const term = this.searchTerm().toLowerCase();
+
+    if (term) {
+      products = products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term),
+      );
+    }
+
+    if (this.selectedCategory() && this.selectedCategory() !== '001') {
+      products = products.filter(
+        (p) => p.category_id === this.selectedCategory(),
+      );
+    }
+
+    const stock = this.stockFilter();
+    if (stock) {
+      products = products.filter((product) => {
+        if (stock === 'inStock') return product.stock_quantity > 10;
+        if (stock === 'lowStock')
+          return product.stock_quantity > 0 && product.stock_quantity <= 10;
+        if (stock === 'outOfStock') return product.stock_quantity === 0;
+        return true;
+      });
+    }
+
+    return products;
+  });
 
   onPageChange(event: any) {
     this.#productService.page.set(event.page + 1);
@@ -93,43 +137,35 @@ export class ProductManagement {
     this.first.set(event.first);
   }
 
-  searchProducts() {
-    this.#productService.search.set(this.searchTerm());
-  }
-
-  searchByCategory() {
-    if (this.selectedCategory()) {
-      this.#productService.categoryId.set([this.selectedCategory()]);
-    } else {
-      this.#productService.categoryId.set([]);
+  toggleProducts() {
+    if (this.productToggleOptions() === 'addOn') {
+      this.addOnsQueryData.refetch();
+    } else if (this.productToggleOptions() === 'messageCard') {
+      this.messageCardsQueryData.refetch();
     }
   }
 
-  searchByStock() {
-    const stock = this.stockFilter();
-
-    this.filteredProducts =
-      this.productQueryData.data()?.filter((product) => {
-        if (stock === 'inStock') return product.stock_quantity > 10;
-        if (stock === 'lowStock')
-          return product.stock_quantity > 0 && product.stock_quantity <= 10;
-        if (stock === 'outOfStock') return product.stock_quantity === 0;
-        return true;
-      }) ?? [];
-  }
-
   applyFilters() {
-    this.searchProducts();
-    this.searchByCategory();
-    this.searchByStock();
+    if (!this.productToggleOptions()) {
+      this.#productService.search.set(this.searchTerm());
+
+      if (this.selectedCategory() === '001') {
+        this.#productService.categoryId.set([]);
+      } else if (this.selectedCategory()) {
+        this.#productService.categoryId.set([this.selectedCategory()]);
+      } else {
+        this.#productService.categoryId.set([]);
+      }
+    }
   }
+
   clearFilters() {
     this.searchTerm.set('');
-    this.selectedCategory.set('');
     this.stockFilter.set('');
-    this.filteredProducts = [...this.products];
     this.#productService.search.set('');
     this.#productService.categoryId.set([]);
+    this.productQueryData.refetch();
+    this.productToggleOptions.set('');
   }
 
   getStockClass(
@@ -206,7 +242,6 @@ export class ProductManagement {
   }
 
   onProductSave(productData: Product) {
-    // Handle save logic
     this.productForm.set(false);
     this.messageService.add({
       severity: 'success',
@@ -240,6 +275,4 @@ export class ProductManagement {
     if (stock <= 10) return 'warn';
     return 'success';
   }
-
-  deleteProduct(productId: string) {}
 }

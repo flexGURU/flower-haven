@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, computed, inject, Input } from '@angular/core';
 import { CartService } from './cart.service';
 import { Cart } from './cart.model';
 import { CardModule } from 'primeng/card';
@@ -10,6 +10,8 @@ import { DividerModule } from 'primeng/divider';
 import { ButtonModule } from 'primeng/button';
 import { Dialog, DialogModule } from 'primeng/dialog';
 import { CheckoutComponent } from '../checkout/checkout.component';
+import { CartSignalService } from './cart.signal.service';
+import { Product } from '../../../../shared/models/models';
 
 @Component({
   selector: 'app-cart',
@@ -36,37 +38,35 @@ export class CartComponent {
   checkout = false;
   total: number = 0;
 
-
-
   constructor(private cartService: CartService) {}
+
+  #cartSignalService = inject(CartSignalService);
+  cartItems = computed(() => this.#cartSignalService.cart());
+  cartTotal = computed(() => this.#cartSignalService.cartTotal());
+  cartCount = computed(() => this.#cartSignalService.cartCount());
 
   ngOnInit() {
     this.cartService.cart$.subscribe((cart) => {
       this.cart = cart;
-      this.total = cart.total
+      this.total = cart.total;
     });
   }
 
-  updateQuantity(productId: string, quantity: number) {
-    this.cartService.updateQuantity(productId, quantity);
+  updateQuantity(productId: Product, quantity: number) {
+    this.#cartSignalService.updateCart(productId, quantity);
   }
 
   removeItem(productId: string) {
-    console.log(productId);
-
-    this.cartService.removeFromCart(productId);
+    this.#cartSignalService.removeFromCart(productId);
   }
 
   clearCart() {
-    this.cartService.clearCart();
-  }
-
-  getTotalItems(): number {
-    return this.cart.items.reduce((total, item) => total + item.quantity, 0);
+    this.#cartSignalService.clearCart();
   }
 
   checkOut() {
-    this.checkout = true
+    console.log('cart details', this.cart);
 
+    this.checkout = true;
   }
 }

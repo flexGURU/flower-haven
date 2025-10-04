@@ -23,6 +23,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { MessageModule } from 'primeng/message';
 import { Category, Product } from '../../../../shared/models/models';
 import { Popover, PopoverModule } from 'primeng/popover';
+import { CartSignalService } from '../../components/cart/cart.signal.service';
 
 @Component({
   selector: 'app-header',
@@ -43,7 +44,6 @@ import { Popover, PopoverModule } from 'primeng/popover';
 export class HeaderComponent {
   @ViewChild('op') op!: Popover;
   isMobileMenuOpen: boolean = false;
-  cartItemCount = 0;
   cartTotal = 10;
 
   productsQueryData = productQuery();
@@ -52,6 +52,7 @@ export class HeaderComponent {
   #router = inject(Router);
   #cartService = inject(CartService);
   #productsService = inject(ProductService);
+  #cartSignalService = inject(CartSignalService);
 
   searchQuery = signal('');
 
@@ -65,7 +66,6 @@ export class HeaderComponent {
     if (this.op) {
       this.op.toggle(event);
     }
-    console.log('searching for:', this.searchQuery());
 
     this.#productsService.search.set(this.searchQuery());
   }
@@ -75,21 +75,18 @@ export class HeaderComponent {
   categories = computed<Category[]>(() => this.categoryQueryData.data() ?? []);
   products = computed<Product[]>(() => this.productsQueryData.data() ?? []);
 
-  ngOnInit() {
-    this.#cartService.cart$.subscribe((cart) => {
-      this.cartItemCount = cart.items.reduce(
-        (count, item) => count + item.quantity,
-        0,
-      );
-    });
-  }
-
-  cartCount() {
-    this.cartItemCount = this.#cartService.getCartItemCount();
-  }
+  ngOnInit() {}
+  cartItemCount = computed(() => this.#cartSignalService.cartCount());
+  cartTotalAmount = computed(() => this.#cartSignalService.cartTotal());
 
   navigateToProduct(productId: string) {
     this.#router.navigate(['/product', productId]);
     this.searchQuery.set('');
+  }
+
+
+  viewCategory(categoryId: string) {
+    this.#productsService.categoryId.set([categoryId]);
+    this.#router.navigate(['/products']);
   }
 }

@@ -86,7 +86,6 @@ import { Router } from '@angular/router';
   template: `
     <div class="app-root-container">
       <section class="services-showcase py-16 bg-white">
-        <!-- Dot indicators using custom colors -->
         <div class="flex justify-center mb-4">
           <span
             class="inline-block w-2 h-2 bg-pink-600-custom rounded-full mx-1"
@@ -104,10 +103,8 @@ import { Router } from '@angular/router';
         </h1>
 
         <div class="container mx-auto px-4 max-w-6xl">
-          <!-- Service Block 1: Image Left, Text Right -->
           <div class="mb-20">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <!-- Image - Slides from Left -->
               <div
                 class="relative animate-start slide-left-start"
                 data-animate-target
@@ -120,7 +117,6 @@ import { Router } from '@angular/router';
                 />
               </div>
 
-              <!-- Text Content - Slides from Right -->
               <div
                 class="space-y-4 animate-start slide-right-start"
                 data-animate-target
@@ -142,10 +138,8 @@ import { Router } from '@angular/router';
             </div>
           </div>
 
-          <!-- Service Block 2: Text Left, Image Right (Order Reversed) -->
           <div class="mb-20">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <!-- Text Content - Slides from Left (Order 2 on large screens) -->
               <div
                 class="space-y-4 order-2 lg:order-1 animate-start slide-left-start"
                 data-animate-target
@@ -167,7 +161,6 @@ import { Router } from '@angular/router';
                 </div>
               </div>
 
-              <!-- Image - Slides from Right (Order 1 on large screens) -->
               <div
                 class="relative order-1 lg:order-2 animate-start slide-right-start"
                 data-animate-target

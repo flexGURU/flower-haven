@@ -1,15 +1,9 @@
-import { computed, effect, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { Category, Product } from '../models/models';
-import {
-  BehaviorSubject,
-  catchError,
-  map,
-  Observable,
-  tap,
-  throwError,
-} from 'rxjs';
+import { catchError, map, Observable, tap, throwError } from 'rxjs';
 import { apiUrl } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -17,8 +11,7 @@ import { HttpClient } from '@angular/common/http';
 export class ProductService {
   private readonly categoryApiUrl = `${apiUrl}/categories`;
   private readonly productApiUrl = `${apiUrl}/products`;
-  private addOnsSubject = new BehaviorSubject<Product[]>([]);
-  private messageCardSubject = new BehaviorSubject<Product[]>([]);
+  private router = inject(Router);
 
   page = signal(1);
   limit = signal(15);
@@ -28,6 +21,8 @@ export class ProductService {
   categoryId = signal<string[] | []>([]);
   totalProducts = signal(0);
   totalAddOns = signal(0);
+  is_add_on = signal(false);
+  is_message_card = signal(false);
 
   initialProductFilters = {
     page: this.page(),
@@ -36,6 +31,8 @@ export class ProductService {
     priceFrom: this.priceFrom(),
     priceTo: this.priceTo(),
     categoryId: this.categoryId(),
+    is_add_on: this.is_add_on(),
+    is_message_card: this.is_message_card(),
   };
 
   productBaseApiUrl = computed(() => {
@@ -44,12 +41,13 @@ export class ProductService {
     if (this.page()) params.set('page', this.page().toString());
     if (this.limit()) params.set('limit', this.limit().toString());
     if (this.search()) params.set('search', this.search());
-    if (this.priceFrom())
-      params.set('price_from', this.priceFrom()!.toString());
-    if (this.priceTo()) params.set('price_to', this.priceTo()!.toString());
+
     if (this.categoryId()) {
       this.categoryId()!.forEach((id) => params.append('category_id', id));
     }
+
+    params.set('is_add_on', this.is_add_on()!.toString());
+    params.set('is_message_card', this.is_message_card()!.toString());
 
     return `${this.productApiUrl}?${params.toString()}`;
   });
@@ -57,6 +55,7 @@ export class ProductService {
   constructor(private http: HttpClient) {
     this.fetchMessageCards().subscribe();
     effect(() => {});
+    const currentRoute = signal(this.router.url);
   }
 
   fetchProducts(): Observable<Product[]> {
@@ -79,11 +78,10 @@ export class ProductService {
 
   fetchAddOns(): Observable<Product[]> {
     return this.http
-      .get<{ data: Product[] }>(`${this.productApiUrl}?page=1&limit=500`)
+      .get<{ data: Product[] }>(`${this.productApiUrl}/add-ons`)
       .pipe(
         map((response) => {
-          const addOns = response.data.filter((product) => product.is_add_on);
-          return addOns;
+          return response.data;
         }),
         catchError((error) => {
           console.error('Error fetching add-ons:', error);
@@ -94,10 +92,10 @@ export class ProductService {
 
   fetchMessageCards(): Observable<Product[]> {
     return this.http
-      .get<{ data: Product[] }>(`${this.productApiUrl}?page=1&limit=500`)
+      .get<{ data: Product[] }>(`${this.productApiUrl}/message-cards`)
       .pipe(
         map((response) => {
-          return response.data.filter((product) => product.is_message_card);
+          return response.data;
         }),
         catchError((error) => {
           console.error('Error fetching message cards:', error);
@@ -190,6 +188,18 @@ export class ProductService {
       .pipe(
         tap(() => {
           this.fetchCategories().subscribe();
+        }),
+      );
+  }
+
+  getCategoryById(): Observable<Category> {
+    return this.http
+      .get<{ data: Category }>(`${this.categoryApiUrl}/${this.categoryId()}`)
+      .pipe(
+        map((response) => response.data),
+        catchError((error) => {
+          console.error('Error fetching category by ID:', error);
+          return throwError(() => new Error('Failed to fetch category by ID.'));
         }),
       );
   }

@@ -1,4 +1,11 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  Input,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { GalleriaModule } from 'primeng/galleria';
@@ -6,7 +13,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TabViewModule } from 'primeng/tabview';
 import { RatingModule } from 'primeng/rating';
 import { ActivatedRoute, Router } from '@angular/router';
-import { initialProd, Product } from '../../../../../shared/models/models';
+import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { CartService } from '../../cart/cart.service';
 import { Image } from 'primeng/image';
@@ -24,6 +31,7 @@ import { MessageService } from 'primeng/api';
 import { Breadcrumb, BreadcrumbModule } from 'primeng/breadcrumb';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { messageCardQuery } from '../../../../../shared/services/product.query';
+import { CartSignalService } from '../../cart/cart.signal.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -49,14 +57,15 @@ import { messageCardQuery } from '../../../../../shared/services/product.query';
   ],
 })
 export class ProductDetailComponent {
-  product = signal<Product>(initialProd);
-  quantity = 1;
+  product = signal<Product>({} as Product);
+  quantity = signal(1);
   rating = 4.5;
   reviewCount = 24;
   averageRating = 4.5;
   addonsVisible = false;
   messageCardQuery = messageCardQuery();
   loading = signal(false);
+  @Input('id') productId = '';
 
   home = { icon: 'pi pi-home', routerLink: '/' };
 
@@ -96,10 +105,7 @@ export class ProductDetailComponent {
     },
   ];
 
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-  ) {
+  constructor(private router: Router) {
     effect(() => {
       this.addMessageCardToCart();
 
@@ -121,27 +127,22 @@ export class ProductDetailComponent {
   private productService = inject(ProductService);
   private cartService = inject(CartService);
   private messageService = inject(MessageService);
+  private cartSignalService = inject(CartSignalService);
 
   messageCards = computed<Product[]>(() => this.messageCardQuery.data() ?? []);
 
   ngOnInit() {
-    this.route.params.subscribe((params) => {
-      this.loading.set(true);
-
-      const productId = params['id'];
-      if (productId) {
-        this.loadProduct(productId);
-        this.loading.set(false);
-      }
-    });
+    this.loadProduct(this.productId);
 
     this.selectedStemSize = this.stemSizes[0];
   }
 
   loadProduct(id: string) {
+    this.loading.set(true);
     if (id) {
       this.productService.getProductById(id).subscribe((response) => {
         this.product.set(response);
+        this.loading.set(false);
       });
       this.setupGallery();
     }
@@ -150,6 +151,17 @@ export class ProductDetailComponent {
   setupGallery() {
     if (this.product) {
       this.galleryImages = this.product().image_url;
+    }
+  }
+
+  addToCartSignal() {
+    if (this.product()) {
+      this.cartSignalService.addToCart(this.product(), this.quantity());
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Info',
+        detail: `${this.product().name} added to cart`,
+      });
     }
   }
 
@@ -166,7 +178,7 @@ export class ProductDetailComponent {
         purchaseType: this.purchaseType,
       };
 
-      this.cartService.addToCart(cartItem.product, cartItem.quantity);
+      this.cartService.addToCart(cartItem.product, cartItem.quantity());
       this.messageService.add({
         severity: 'success',
         summary: 'Info',
@@ -176,13 +188,9 @@ export class ProductDetailComponent {
   }
 
   getTotalPrice(): number {
-    if (!this.product) return 0;
+    if (!this.product()) return 0;
 
-    let total = this.product().price * this.quantity;
-
-    if (this.selectedStemSize) {
-      total += this.selectedStemSize.price;
-    }
+    let total = this.product().price * this.quantity();
 
     if (this.includeMessageCard() && this.selectedMessageCard()) {
       total += this.selectedMessageCard()?.price ?? 0;
@@ -190,6 +198,14 @@ export class ProductDetailComponent {
 
     return total;
   }
+
+  totalPrice = computed(() => {
+    let total = this.product().price * this.quantity();
+    if (this.includeMessageCard() && this.selectedMessageCard()) {
+      total += this.selectedMessageCard()?.price ?? 0;
+    }
+    return total;
+  });
 
   handleSubscription() {
     if (this.purchaseType === 'subscription') {

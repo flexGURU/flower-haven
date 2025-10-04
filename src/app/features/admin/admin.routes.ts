@@ -38,6 +38,22 @@ export const adminRoutes: Routes = [
             (m) => m.CategoryManagement,
           ),
       },
+      {
+        path: 'orders',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import(
+            './components/order/order-management/order-management.component'
+          ).then((m) => m.OrderManagementComponent),
+      },
+      {
+        path: 'order-detail/:id',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./components/order/order-detail/order-detail.component').then(
+            (m) => m.OrderDetailComponent,
+          ),
+      },
     ],
   },
 ];

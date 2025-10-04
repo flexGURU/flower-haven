@@ -1,8 +1,9 @@
-<div class="cart-page py-8">
+<div class="py-8">
   <div class="container mx-auto px-4">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">Shopping Cart</h1>
+    <h1 class="text-3xl font-bold text-gray-800 mt-8">Shopping Cart</h1>
 
-    <div *ngIf="cart.items.length === 0" class="text-center py-12">
+    @if (cartItems().length === 0) {
+    <div class="text-center py-12">
       <div class="mb-6">
         <i class="pi pi-shopping-cart text-6xl text-gray-300"></i>
       </div>
@@ -10,7 +11,7 @@
         Your cart is empty
       </h2>
       <p class="text-gray-500 mb-6">
-        Add some beautiful flowers to get started!
+        Your cart is waiting to be filled with fresh, beautiful flowers!
       </p>
       <button
         pButton
@@ -19,19 +20,18 @@
         routerLink="/products"
       ></button>
     </div>
+    }
 
     <div
-      *ngIf="cart.items.length > 0"
+      *ngIf="cartItems().length > 0"
       class="grid grid-cols-1 lg:grid-cols-3 gap-8"
     >
-      <!-- Cart Items -->
       <div class="lg:col-span-2">
         <div class="space-y-4">
-          @for (item of cart.items; track $index) {
+          @for (item of cartItems(); track $index) {
           <div
             class="bg-white p-4 rounded-lg shadow-md flex flex-wrap items-center gap-4"
           >
-            <!-- Product Image -->
             <div class="w-20 h-20 flex-shrink-0">
               <img
                 [src]="item.product.image_url"
@@ -40,7 +40,6 @@
               />
             </div>
 
-            <!-- Product Details -->
             <div class="flex-1 min-w-[150px]">
               <h3 class="font-semibold text-lg mb-1">
                 <a
@@ -56,21 +55,22 @@
             </div>
 
             <div class="flex flex-col items-center gap-2">
-              <p-inputNumber
-                [(ngModel)]="item.quantity"
-                [min]="1"
-                [max]="item.product.stock_quantity"
-                [showButtons]="true"
-                buttonLayout="horizontal"
-                (onInput)="updateQuantity(item.product.id!, item.quantity)"
-                class="w- text-center"
-              ></p-inputNumber>
+              <div class="-w-1/4 md:w-full">
+                <p-inputNumber
+                  [(ngModel)]="item.quantity"
+                  [min]="1"
+                  [max]="item.product.stock_quantity"
+                  [showButtons]="true"
+                  buttonLayout="horizontal"
+                  (onInput)="updateQuantity(item.product, item.quantity)"
+                  class="text-center"
+                ></p-inputNumber>
+              </div>
               <div class="text-right min-w-[100px] font-semibold text-lg">
                 KES {{ (item.product.price * item.quantity).toFixed(2) }}
               </div>
             </div>
 
-            <!-- Remove Button -->
             <div>
               <button
                 pButton
@@ -84,7 +84,6 @@
           }
         </div>
 
-        <!-- Cart Actions -->
         <div class="flex justify-between items-center mt-6">
           <button
             pButton
@@ -94,6 +93,7 @@
             routerLink="/products"
           ></button>
 
+          @if (cartItems().length > 0) {
           <button
             pButton
             type="button"
@@ -101,10 +101,10 @@
             class="p-button-outlined p-button-danger"
             (click)="clearCart()"
           ></button>
+          }
         </div>
       </div>
 
-      <!-- Order Summary -->
       <div class="lg:col-span-1">
         <p-card>
           <ng-template pTemplate="header">
@@ -118,7 +118,7 @@
 
             <div class="flex justify-between text-lg font-semibold">
               <span>Total</span>
-              <span class="text-pink-600">KES {{cart.total.toFixed(2)}}</span>
+              <span class="text-pink-600">KES {{cartTotal().toFixed(2)}}</span>
             </div>
 
             <button
@@ -140,5 +140,5 @@
   maskStyleClass="backdrop-blur-sm"
   [style]="{ width: '90vw', maxWidth: '600px' }"
 >
-  <app-checkout [sumOrderDetails]="cart" />
+  <app-checkout />
 </p-dialog>

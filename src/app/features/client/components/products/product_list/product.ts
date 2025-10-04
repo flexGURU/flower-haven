@@ -15,6 +15,7 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import {
+  categoryIdQuery,
   categoryQuery,
   productQuery,
 } from '../../../../../shared/services/product.query';
@@ -80,8 +81,12 @@ export class ProductComponent {
   private title = inject(Title);
   private meta = inject(Meta);
 
+  category = categoryIdQuery();
+
   total = computed(() => this.productService.totalProducts());
-  constructor() {}
+  constructor() {
+    effect(() => {});
+  }
   ngOnInit() {
     this.title.setTitle('Products - Floral Haven');
     this.meta.updateTag({
@@ -117,14 +122,11 @@ export class ProductComponent {
   }
   clearFilters() {
     this.productService.page.set(1);
-    this.productService.limit.set(10);
+    this.productService.limit.set(15);
     this.productService.categoryId.set([]);
-    this.productService.priceFrom.set(this.initialPriceFrom());
-    this.productService.priceTo.set(this.initialPriceTo());
     this.productService.search.set('');
-    this.initialPriceFrom.set(0);
-    this.initialPriceTo.set(500000);
-    this.priceRange.set([this.initialPriceFrom(), this.initialPriceTo()]);
+    this.productService.is_add_on.set(false);
+    this.productService.is_message_card.set(false);
   }
 
   refreshProducts() {

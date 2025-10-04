@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, computed, inject, Input, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -14,6 +14,13 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DatePicker } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { Cart } from '../cart/cart.model';
+import PaystackPop from '@paystack/inline-js';
+import { PaystackService } from '../../services/paystack.service';
+import { OrderPayload } from '../../../../shared/models/models';
+import { CartSignalService } from '../cart/cart.signal.service';
+import { OrderService } from '../../../../shared/services/order.service';
+import { MessageService } from 'primeng/api';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-checkout',
@@ -36,10 +43,15 @@ export class CheckoutComponent {
   minDate: Date;
   timeSlots: any[] = [];
   private readonly phoneNumber = '254794663008';
-
-  @Input() sumOrderDetails!: Cart;
+  today = new Date();
+  loading = signal(false);
 
   orderDetails!: FormGroup;
+  #payStackService = inject(PaystackService);
+  #cartSignalService = inject(CartSignalService);
+  #orderService = inject(OrderService);
+  #messageService = inject(MessageService);
+  #router = inject(Router);
 
   constructor(private fb: FormBuilder) {
     this.minDate = new Date();
@@ -50,16 +62,16 @@ export class CheckoutComponent {
       phoneNumber: ['', Validators.required],
       location: ['', Validators.required],
       address: ['', Validators.required],
-      rangeDates: [null, Validators.required],
-      selectedTimeSlot: [null, Validators.required],
-      total: 0,
+      expectedDeliveryDate: ['', Validators.required],
+      selectedTimeSlot: ['', Validators.required],
     });
   }
 
   ngOnInit() {
     this.timeSlots = this.generateTimeSlots();
-    this.orderDetails.patchValue({ total: this.sumOrderDetails.total });
   }
+
+  total = computed(() => this.#cartSignalService.cartTotal());
 
   generateTimeSlots(): any[] {
     const slots = [];
@@ -75,31 +87,112 @@ export class CheckoutComponent {
   formatHour(hour: number): string {
     return hour > 12 ? `${hour - 12} PM` : `${hour} AM`;
   }
-  submitOrder() {
+
+  confirmOrder() {
     const orderForm = this.orderDetails.getRawValue();
-    const cart = this.sumOrderDetails;
+    const total = this.total();
+    const items = this.#cartSignalService.cart();
+    const date = new Date(orderForm.expectedDeliveryDate);
 
-    let message = `🛒 *New Order Request* \n\n`;
+    const orderPayload = {
+      'Full Name': orderForm.fullName,
+      Email: orderForm.email,
+      'Phone Number': orderForm.phoneNumber,
+      Location: orderForm.location,
+      Address: orderForm.address,
+      'Expected Delivery Date': date.toISOString().split('T')[0],
+      'Selected Time Slot': orderForm.selectedTimeSlot.label,
+      'Total Amount': total,
+      Items: this.#cartSignalService.cart().map((item) => {
+        return {
+          'Product ID': item.product.id,
+          'Product Name': item.product.name,
+          Quantity: item.quantity,
+          Amount: item.amount,
+        };
+      }),
+    };
 
-    message += `👤 *Customer Details*:\n`;
-    message += `Full Name: ${orderForm.fullName}\n`;
-    message += `Email: ${orderForm.email}\n`;
-    message += `Phone: ${orderForm.phoneNumber}\n`;
-    message += `Location: ${orderForm.location}\n`;
-    message += `Address: ${orderForm.address}\n`;
-    message += `Delivery Range: ${orderForm.rangeDates}\n`;
-    message += `Time Slot: ${orderForm.selectedTimeSlot}\n\n`;
+    const message = encodeURIComponent(JSON.stringify(orderPayload, null, 2));
+    const whatsappUrl = `https://wa.me/${this.phoneNumber}?text=${message}`;
 
-    message += `📦 *Cart Details*:\n`;
-    cart.items.forEach((item: any, index: number) => {
-      message += `${index + 1}. ${item.name} (x${item.quantity}) - ${item.price}\n`;
-    });
-
-    message += `\n *Total*: ${cart.total}`;
-
-    const encodedMessage = encodeURIComponent(message);
-
-    // ✅ Directly open WhatsApp app if available
-    window.location.href = `https://wa.me/${this.phoneNumber}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   }
+  submitOrder() {
+    this.loading.set(true);
+    const orderForm = this.orderDetails.getRawValue();
+
+    this.#payStackService
+      .initializePayment(orderForm.email, this.total())
+      .subscribe({
+        next: (response) => {
+          const popup = new PaystackPop();
+          this.loading.set(false);
+          popup.resumeTransaction(response.access_code, {
+            onSuccess: (txn) => {
+              const orderPayload = this.buildOrderPayload(txn.reference);
+              this.saveOrder(orderPayload);
+            },
+            onError: (error) => {
+              console.log('Transaction error:', error);
+            },
+          });
+        },
+      });
+  }
+
+  private saveOrder = (order: OrderPayload) => {
+    this.#orderService.createOrder(order).subscribe({
+      next: () => {
+        this.#cartSignalService.clearCart();
+        this.loading.set(false);
+        this.handleTransactionStatus(true);
+        this.#router.navigate(['/order-success']);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.handleTransactionStatus(false);
+      },
+    });
+  };
+
+  private buildOrderPayload(tranxRef: string): OrderPayload {
+    const orderForm = this.orderDetails.getRawValue();
+    const date = new Date(orderForm.expectedDeliveryDate);
+    let order: OrderPayload = {
+      user_name: orderForm.fullName,
+      user_phone_number: orderForm.phoneNumber,
+      payment_status: false,
+      status: 'active',
+      delivery_date: date.toISOString().split('T')[0],
+      time_slot: orderForm.selectedTimeSlot.label,
+      total: this.total(),
+      reference: tranxRef,
+      items: this.#cartSignalService.cart().map((item) => ({
+        product_id: item.product.id!,
+        quantity: item.quantity,
+        amount: item.amount,
+        payment_method: 'one_time',
+        frequency: 'weekly',
+      })),
+    };
+
+    return order;
+  }
+
+  private handleTransactionStatus = (status: boolean) => {
+    if (status) {
+      this.#messageService.add({
+        severity: 'success',
+        summary: 'Payment Successful',
+        detail: 'Your payment was successful and your order has been placed.',
+      });
+    } else {
+      this.#messageService.add({
+        severity: 'error',
+        summary: 'Payment Failed',
+        detail: 'There was an issue with your payment. Please try again.',
+      });
+    }
+  };
 }

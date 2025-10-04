@@ -50,6 +50,35 @@ export const messageCardQuery = () => {
     queryFn: () => lastValueFrom(productService.fetchMessageCards()),
     staleTime: 300 * 1000,
     refetchOnWindowFocus: true,
+    enabled: false,
+  }));
+
+  return query;
+};
+
+export const categoryIdQuery = () => {
+  const productService = inject(ProductService);
+
+  const query = injectQuery(() => ({
+    queryKey: ['category-id', productService.categoryId()],
+    queryFn: () => lastValueFrom(productService.getCategoryById()),
+    staleTime: 300 * 1000,
+    refetchOnWindowFocus: true,
+    enabled: false,
+  }));
+
+  return query;
+};
+
+export const productIdQuery = (id: string) => {
+  const productService = inject(ProductService);
+
+  const query = injectQuery(() => ({
+    queryKey: ['product-id', id],
+    queryFn: () => lastValueFrom(productService.getProductById(id)),
+    staleTime: 300 * 1000,
+    refetchOnWindowFocus: true,
+    enabled: !!id,
   }));
 
   return query;
