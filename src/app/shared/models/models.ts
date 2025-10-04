@@ -15,6 +15,7 @@ export interface Product {
 }
 
 export interface Stem {
+  id?: number;
   stem_count: string;
   price: number;
 }
@@ -34,11 +35,22 @@ export interface User {
   is_admin: string;
 }
 
-export const initialProd: Product = {
-  name: '',
-  description: '',
-  price: 10,
-  image_url: [],
-  category_id: '',
-  stock_quantity: 0,
-};
+export interface OrderItem {
+  product_id: string;
+  quantity: number;
+  amount: number;
+  payment_method?: 'subscription' | 'one_time';
+  frequency?: 'weekly' | 'monthly';
+}
+
+export interface OrderPayload {
+  user_name: string;
+  user_phone_number: string;
+  payment_status: boolean;
+  status: string;
+  delivery_date: string;
+  time_slot: string;
+  total: number;
+  reference: string;
+  items: OrderItem[];
+}

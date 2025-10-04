@@ -9,3 +9,7 @@ export const firebaseConfig = {
 };
 
 export const apiUrl = 'https://flower-haven-production.up.railway.app/api/v1';
+export const payStackConfig = {
+  email: 'mukunajohn329@gmail.com',
+  amount: 37.13,
+};

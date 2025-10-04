@@ -1,0 +1,150 @@
+@if (orderDetail.isLoading()) {
+  <div class="flex justify-center items-center py-8">
+    <div class="card flex justify-center">
+      <p-progress-spinner strokeWidth="6" fill="transparent" />
+    </div>
+  </div>
+} @else if (orderDetail.isError()) {
+  <p-message severity="error">Failed to Fetch Order Details</p-message>
+
+} @else if (orderDetail.data()) {
+  <div class="max-w-6xl mx-auto p-6">
+    <!-- Order Header -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <div class="flex justify-between items-start mb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">
+            Order #{{ orderDetail.data().id }}
+          </h2>
+          <p class="text-gray-600">
+            Placed on {{ orderDetail.data().created_at | date: "medium" }}
+          </p>
+        </div>
+        <div class="text-right">
+          <p-tag
+            [value]="orderDetail.data().payment_status ? 'Paid' : 'Unpaid'"
+            [severity]="orderDetail.data().payment_status ? 'success' : 'warning'"
+          >
+          </p-tag>
+          <p-tag
+            [value]="orderDetail.data().status"
+            [severity]="orderDetail.data().status === 'active' ? 'info' : 'secondary'"
+            styleClass="ml-2"
+          >
+          </p-tag>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">
+            Customer Details
+          </h3>
+          <p class="text-lg font-medium text-gray-800">{{ orderDetail.data().user_name }}</p>
+          <p class="text-gray-600">{{ orderDetail.data().user_phone_number }}</p>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">
+            Order Summary
+          </h3>
+          <p class="text-2xl font-bold text-gray-800">
+            KSh {{ orderDetail.data().total_amount | number }}
+          </p>
+          @if (
+            orderDetail.data().delivery_date && orderDetail.data().delivery_date !== "0001-01-01T00:00:00Z"
+          ) {
+            <p class="text-gray-600 mt-1">
+              Delivery: {{ orderDetail.data().delivery_date | date: "fullDate" }}
+            </p>
+            @if (orderDetail.data().time_slot) {
+              <p class="text-gray-600">Time Slot: {{ orderDetail.data().time_slot }}</p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Items Table -->
+    <div class="bg-white rounded-lg shadow-sm p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Order Items</h3>
+      <p-table [value]="orderDetail.data().order_item_data" styleClass="p-datatable-striped">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Product</th>
+            <th>Description</th>
+            <th class="text-center">Quantity</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-item>
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                @if (item.current_product_details.image_url?.length > 0) {
+                  <img
+                    [src]="item.current_product_details.image_url[0]"
+                    [alt]="item.current_product_details.name"
+                    class="w-16 h-16 object-cover rounded"
+                  />
+                }
+                <div>
+                  <p class="font-medium text-gray-800">
+                    {{ item.current_product_details.name }}
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    Product ID: {{ item.product_id }}
+                  </p>
+                </div>
+              </div>
+            </td>
+            <td>
+              <p class="text-gray-600 text-sm max-w-md">
+                {{ item.current_product_details.description }}
+              </p>
+            </td>
+            <td class="text-center">
+              <span class="font-medium">{{ item.quantity }}</span>
+            </td>
+            <td class="text-right">
+              <span class="text-gray-600"
+                >KSh {{ item.current_product_details.price | number }}</span
+              >
+            </td>
+            <td class="text-right">
+              <span class="font-semibold">KSh {{ item.amount | number }}</span>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="footer">
+          <tr>
+            <td colspan="4" class="text-right font-semibold text-gray-700">
+              Total Amount:
+            </td>
+            <td class="text-right">
+              <span class="text-xl font-bold text-gray-800"
+                >KSh {{ orderDetail.data().total_amount | number }}</span
+              >
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center py-8">
+              <div class="text-gray-500">
+                <i
+                  class="pi pi-shopping-cart text-4xl mb-3 block text-gray-300"
+                ></i>
+                <p class="text-lg">No items in this order</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+}

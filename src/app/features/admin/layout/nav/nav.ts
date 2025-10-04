@@ -26,6 +26,11 @@ export class NavComponent {
         icon: 'pi pi-tags',
         routerLink: 'products',
       },
+      {
+        label: 'Orders',
+        icon: 'pi pi-shopping-cart',
+        routerLink: 'orders',
+      },
     ];
   }
 }

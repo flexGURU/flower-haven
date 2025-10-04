@@ -29,11 +29,12 @@ import { Message } from 'primeng/message';
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  private authService = inject(AuthService);
   returnUrl: string | null = null;
   loading = signal(false);
   severity = signal('');
   message = signal('');
+
+  #authService = inject(AuthService);
 
   constructor(
     private fb: FormBuilder,
@@ -47,9 +48,16 @@ export class LoginComponent {
   }
 
   ngOnInit() {
+    this.loginGuard();
     this.route.queryParams.subscribe((params) => {
       this.returnUrl = params['returnUrl'] || '/admin';
     });
+  }
+
+  loginGuard(){
+    if (this.#authService.isLoggedIn()) {
+      this.router.navigateByUrl('/admin');
+    }
   }
 
   get email() {
@@ -64,7 +72,7 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.loading.set(true);
       const { email, password } = this.loginForm.value;
-      this.authService.login(email, password).subscribe({
+      this.#authService.login(email, password).subscribe({
         next: () => {
           this.severity.set('success');
           this.message.set('Success');

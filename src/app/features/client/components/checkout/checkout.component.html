@@ -1,4 +1,4 @@
-<form [formGroup]="orderDetails" (ngSubmit)="submitOrder()">
+<form [formGroup]="orderDetails" (ngSubmit)="confirmOrder()">
   <div class="space-y-6">
     <div class="space-y-2">
       <label for="location" class="block text-sm font-semibold text-gray-700">
@@ -78,13 +78,11 @@
         <p-datepicker
           inputId="over_label"
           showIcon
-          formControlName="rangeDates"
-          selectionMode="range"
-          [readonlyInput]="true"
+          formControlName="expectedDeliveryDate"
           styleClass="w-full"
           appendTo="body"
           [showButtonBar]="true"
-          placeholder="08/27/2025 - 08/28/2025"
+          [placeholder]="(today | date: 'MM/dd/yyyy') ?? ''"
         />
       </div>
     </div>
@@ -114,8 +112,8 @@
         type="number"
         readonly
         pInputText
-        formControlName="total"
         class="w-full px-4 py-3"
+        [value]="total()"
       />
     </div>
   </div>
@@ -126,9 +124,10 @@
       pButton
       type="submit"
       class="w-full"
-      label="Confirm Order"
+      [label]="loading() ? 'Processing...' : 'Confirm Order'"
       icon="pi pi-check"
       [disabled]="orderDetails.invalid"
+      [loading]="loading()"
     ></button>
   </div>
 </form>

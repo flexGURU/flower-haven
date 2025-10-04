@@ -50,6 +50,13 @@ export const clientRoutes: Routes = [
             (m) => m.AboutComponent,
           ),
       },
+      {
+        path: 'order-success',
+        loadComponent: () =>
+          import('./components/order-success/order-success.component').then(
+            (m) => m.OrderSuccessComponent,
+          ),
+      },
     ],
   },
 ];
