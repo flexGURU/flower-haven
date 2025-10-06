@@ -12,22 +12,20 @@ import { GalleriaModule } from 'primeng/galleria';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TabViewModule } from 'primeng/tabview';
 import { RatingModule } from 'primeng/rating';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
 import { Image } from 'primeng/image';
 import { ProductAddonsComponent } from '../product-addons/product-addons';
 import { DialogModule } from 'primeng/dialog';
-import { DropdownModule } from 'primeng/dropdown';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TextareaModule } from 'primeng/textarea';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { CardModule } from 'primeng/card';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
-import { CartItem } from '../../cart/cart.model';
 import { MessageService } from 'primeng/api';
-import { Breadcrumb, BreadcrumbModule } from 'primeng/breadcrumb';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { messageCardQuery } from '../../../../../shared/services/product.query';
 import { CartSignalService } from '../../cart/cart.signal.service';
@@ -53,6 +51,7 @@ import { CartSignalService } from '../../cart/cart.signal.service';
     CardModule,
     BreadcrumbModule,
     ProgressSpinnerModule,
+    RouterLink,
   ],
 })
 export class ProductDetailComponent {
