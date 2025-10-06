@@ -15,7 +15,6 @@ import { RatingModule } from 'primeng/rating';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Product } from '../../../../../shared/models/models';
 import { ProductService } from '../../../../../shared/services/product.service';
-import { CartService } from '../../cart/cart.service';
 import { Image } from 'primeng/image';
 import { ProductAddonsComponent } from '../product-addons/product-addons';
 import { DialogModule } from 'primeng/dialog';
@@ -63,7 +62,7 @@ export class ProductDetailComponent {
   reviewCount = 24;
   averageRating = 4.5;
   addonsVisible = false;
-  messageCardQuery = messageCardQuery();
+  messageCardData = messageCardQuery();
   loading = signal(false);
   @Input('id') productId = '';
 
@@ -107,8 +106,6 @@ export class ProductDetailComponent {
 
   constructor(private router: Router) {
     effect(() => {
-      this.addMessageCardToCart();
-
       this.items.set([
         {
           label: 'Products',
@@ -125,11 +122,8 @@ export class ProductDetailComponent {
   }
 
   private productService = inject(ProductService);
-  private cartService = inject(CartService);
-  private messageService = inject(MessageService);
   private cartSignalService = inject(CartSignalService);
-
-  messageCards = computed<Product[]>(() => this.messageCardQuery.data() ?? []);
+  private messageService = inject(MessageService);
 
   ngOnInit() {
     this.loadProduct(this.productId);
@@ -154,37 +148,26 @@ export class ProductDetailComponent {
     }
   }
 
-  addToCartSignal() {
-    if (this.product()) {
-      this.cartSignalService.addToCart(this.product(), this.quantity());
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Info',
-        detail: `${this.product().name} added to cart`,
-      });
+  onMessageChange(message: string) {
+    const currentCard = this.selectedMessageCard();
+    if (currentCard) {
+      this.selectedMessageCard.set({ ...currentCard, message });
     }
   }
-
-  addToCart() {
-    if (this.product()) {
-      const cartItem = {
-        product: this.product(),
-        quantity: this.quantity,
-        stemSize: this.selectedStemSize,
-        messageCard: this.includeMessageCard()
-          ? this.selectedMessageCard
-          : null,
-        giftMessage: this.giftMessage,
-        purchaseType: this.purchaseType,
-      };
-
-      this.cartService.addToCart(cartItem.product, cartItem.quantity());
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Info',
-        detail: `${cartItem.product.name} added to cart`,
-      });
+  addToCartSignal() {
+    if (this.includeMessageCard() && this.selectedMessageCard()) {
+      this.cartSignalService.addToCart(this.selectedMessageCard()!);
     }
+
+    if (this.product()) {
+      this.cartSignalService.addToCart(this.product(), this.quantity());
+    }
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Info',
+      detail: `Added to cart`,
+    });
   }
 
   getTotalPrice(): number {
@@ -219,16 +202,13 @@ export class ProductDetailComponent {
     addon.selected = !addon.selected;
   }
 
-  addMessageCardToCart() {
-    const card = this.selectedMessageCard();
-    if (card) {
-      this.cartService.addToCart(card);
-    }
-  }
+  addMessageCardToCart = (event: any) => {
+    this.selectedMessageCard.set(event.value);
+  };
 
   onAddonAddedToCart(product: Product) {
     if (product) {
-      this.cartService.addToCart(product);
+      this.cartSignalService.addToCart(product);
       this.messageService.add({
         severity: 'success',
         summary: 'Info',
@@ -238,7 +218,7 @@ export class ProductDetailComponent {
   }
   onAddonRemovedFromCart(product: Product) {
     if (product.id) {
-      this.cartService.removeFromCart(product.id);
+      this.cartSignalService.removeFromCart(product.id);
       this.messageService.add({
         severity: 'info',
         summary: 'Info',

@@ -12,6 +12,7 @@ export interface Product {
   is_add_on?: boolean;
   has_stems?: boolean;
   stems?: Stem[];
+  message?: string;
 }
 
 export interface Stem {
