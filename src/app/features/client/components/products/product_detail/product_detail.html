@@ -225,6 +225,15 @@
               [disabled]="!product().stock_quantity || quantity() > product().stock_quantity"
               (click)="addToCartSignal(); purchaseType === 'subscription' && handleSubscription()"
             ></button>
+
+            <button
+              routerLink="/cart"
+              pButton
+              type="button"
+              label="Go To Checkout"
+              icon="pi pi-arrow-right"
+              class="p-button-primary p-button-outlined p-button-lg w-full"
+            ></button>
           </div>
 
           <div class="features grid grid-cols-1 gap-3">
