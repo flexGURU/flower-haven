@@ -20,7 +20,7 @@ export const orderByIdQuery = (orderId: Signal<string>) => {
   const orderService = inject(OrderService);
 
   const query = injectQuery(() => ({
-    queryKey: ['order', orderId],
+    queryKey: ['order', orderId()],
     queryFn: () => lastValueFrom(orderService.getOrderById(orderId())),
     staleTime: 300 * 1000,
     refetchOnWindowFocus: true,

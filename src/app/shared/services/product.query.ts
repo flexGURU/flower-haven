@@ -50,7 +50,7 @@ export const messageCardQuery = () => {
     queryFn: () => lastValueFrom(productService.fetchMessageCards()),
     staleTime: 300 * 1000,
     refetchOnWindowFocus: true,
-    enabled: false,
+    enabled: true,
   }));
 
   return query;

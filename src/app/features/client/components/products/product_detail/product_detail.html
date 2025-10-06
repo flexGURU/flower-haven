@@ -106,8 +106,8 @@
                   >Select Message Card:</label
                 >
                 <p-select
-                  [(ngModel)]="selectedMessageCard"
-                  [options]="messageCards()"
+                  (onChange)="addMessageCardToCart($event)"
+                  [options]="messageCardData.data()"
                   optionLabel="name"
                   placeholder="Choose a message card"
                   class="w-full"
@@ -120,7 +120,8 @@
                 >
                 <textarea
                   pTextarea
-                  [(ngModel)]="giftMessage"
+                  [ngModel]="selectedMessageCard()?.message"
+                  (ngModelChange)="onMessageChange($event)"
                   rows="4"
                   placeholder="Type your message here..."
                   class="w-full"

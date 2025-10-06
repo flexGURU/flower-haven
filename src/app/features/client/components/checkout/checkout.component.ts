@@ -94,30 +94,36 @@ export class CheckoutComponent {
     const items = this.#cartSignalService.cart();
     const date = new Date(orderForm.expectedDeliveryDate);
 
-    const orderPayload = {
-      'Full Name': orderForm.fullName,
-      Email: orderForm.email,
-      'Phone Number': orderForm.phoneNumber,
-      Location: orderForm.location,
-      Address: orderForm.address,
-      'Expected Delivery Date': date.toISOString().split('T')[0],
-      'Selected Time Slot': orderForm.selectedTimeSlot.label,
-      'Total Amount': total,
-      Items: this.#cartSignalService.cart().map((item) => {
-        return {
-          'Product ID': item.product.id,
-          'Product Name': item.product.name,
-          Quantity: item.quantity,
-          Amount: item.amount,
-        };
-      }),
-    };
+    const formattedDate = date.toISOString().split('T')[0];
 
-    const message = encodeURIComponent(JSON.stringify(orderPayload, null, 2));
-    const whatsappUrl = `https://wa.me/${this.phoneNumber}?text=${message}`;
+    let message = `*🌸 New Order Request 🌸*\n\n`;
+    message += `*Customer Details:*\n`;
+    message += `👤 *Name:* ${orderForm.fullName}\n`;
+    message += `📧 *Email:* ${orderForm.email}\n`;
+    message += `📞 *Phone:* ${orderForm.phoneNumber}\n`;
+    message += `📍 *Location:* ${orderForm.location}\n`;
+    message += `🏠 *Address:* ${orderForm.address}\n`;
+    message += `📅 *Expected Delivery:* ${formattedDate}\n`;
+    message += `🕓 *Time Slot:* ${orderForm.selectedTimeSlot.label}\n\n`;
+
+    message += `*🛒 Order Items:*\n`;
+
+    items.forEach((item, index) => {
+      message += `${index + 1}. ${item.product.name}\n`;
+      message += `   • Quantity: ${item.quantity}\n`;
+      message += `   • Price: ${item.amount.toFixed(2)}\n`;
+      message += `   • Message: ${item.product.message || 'N/A'}\n\n`;
+    });
+
+    message += `💰 *Total Amount:* ${total.toFixed(2)}\n`;
+    message += `\nThank you for shopping with us! 🌷`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${this.phoneNumber}?text=${encodedMessage}`;
 
     window.open(whatsappUrl, '_blank');
   }
+
   submitOrder() {
     this.loading.set(true);
     const orderForm = this.orderDetails.getRawValue();

@@ -65,8 +65,6 @@ export class CartComponent {
   }
 
   checkOut() {
-    console.log('cart details', this.cart);
-
     this.checkout = true;
   }
 }

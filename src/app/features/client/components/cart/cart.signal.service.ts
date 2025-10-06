@@ -58,8 +58,6 @@ export class CartSignalService {
   }
 
   private saveToCartStorage(): void {
-    console.log('saving to storage', this.cart());
-
     localStorage.setItem('floral-cart', JSON.stringify(this.cart()));
   }
 
